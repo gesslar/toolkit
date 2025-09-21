@@ -13,7 +13,9 @@ export default class Util {
    * @returns {string} Text with first letter capitalized
    */
   static capitalize(text) {
-    return `${text.slice(0,1).toUpperCase()}${text.slice(1)}`
+    return typeof text === "string"
+      && `${text.slice(0,1).toUpperCase()}${text.slice(1)}`
+      || text
   }
 
   /**
@@ -90,7 +92,7 @@ export default class Util {
         return key
           .split(",")
           .map(o => o.trim())
-          .map(o => o.match(/^(?<sign>--?)(?<option>[\w-]+)/).groups)
+          .map(o => o.match(/^(?<sign>--?)(?<option>[\w-]+)/)?.groups ?? {})
           .reduce((acc, curr) => acc.sign === "--" ? acc : curr, {})
           ?.option
       })
