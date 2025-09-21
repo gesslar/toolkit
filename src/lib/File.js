@@ -11,10 +11,10 @@ import path from "node:path"
 import url from "node:url"
 import YAML from "yaml"
 
-import Sass from "./Sass.js"
 import Data from "./Data.js"
 import DirectoryObject from "./DirectoryObject.js"
 import FileObject from "./FileObject.js"
+import Sass from "./Sass.js"
 import Valid from "./Valid.js"
 
 export default class File {
@@ -37,7 +37,7 @@ export default class File {
   static pathToUri(pathName) {
     try {
       return url.pathToFileURL(pathName).href
-    } catch (e) {
+    } catch(e) {
       void e // stfu linter
 
       return pathName
@@ -55,7 +55,7 @@ export default class File {
       await fs.access(file.path, fs.constants.R_OK)
 
       return true
-    } catch (_) {
+    } catch(_) {
       return false
     }
   }
@@ -71,7 +71,7 @@ export default class File {
       await fs.access(file.path, fs.constants.W_OK)
 
       return true
-    } catch (_error) {
+    } catch(_) {
       return false
     }
   }
@@ -84,10 +84,10 @@ export default class File {
    */
   static async fileExists(file) {
     try {
-      await fs.access(file.path, fs.constants.R_OK)
+      await fs.access(file.path, fs.constants.F_OK)
 
       return true
-    } catch (_) {
+    } catch(_) {
       return false
     }
   }
@@ -103,7 +103,7 @@ export default class File {
       const stat = await fs.stat(file.path)
 
       return stat.size
-    } catch (_) {
+    } catch(_) {
       return null
     }
   }
@@ -120,7 +120,7 @@ export default class File {
       const stat = await fs.stat(file.path)
 
       return stat.mtime
-    } catch (_) {
+    } catch(_) {
       return null
     }
   }
@@ -136,7 +136,7 @@ export default class File {
       (await fs.opendir(dirObject.path)).close()
 
       return true
-    } catch (_) {
+    } catch(_) {
       return false
     }
   }
@@ -150,7 +150,7 @@ export default class File {
   static uriToPath(pathName) {
     try {
       return url.fileURLToPath(pathName)
-    } catch (_) {
+    } catch(_) {
       return pathName
     }
   }
@@ -211,11 +211,10 @@ export default class File {
       !globbyArray.length
     )
       throw Sass.new(
-        `Invalid glob pattern: Array must contain only strings. Got ${JSON.stringify(glob)}`,
+        `Invalid glob pattern: Array cannot be empty. Got ${JSON.stringify(glob)}`,
       )
 
     // Use Globby to fetch matching files
-
     const filesArray = await globby(globbyArray)
     const files = filesArray.map(file => new FileObject(file))
 
@@ -310,20 +309,18 @@ export default class File {
    * @async
    * @param {DirectoryObject} dirObject - The path or DirMap of the directory to assure exists
    * @param {object} [options] - Any options to pass to mkdir
-   * @returns {Promise<boolean>} True if directory exists, false otherwise
+   * @returns {Promise<void>}
    * @throws {Sass} If directory creation fails
    */
   static async assureDirectory(dirObject, options = {}) {
     if(await dirObject.exists)
-      return true
+      return
 
     try {
       await fs.mkdir(dirObject.path, options)
-    } catch (e) {
+    } catch(e) {
       throw Sass.new(`Unable to create directory '${dirObject.path}': ${e.message}`)
     }
-
-    return dirObject.exists
   }
 
   /**
