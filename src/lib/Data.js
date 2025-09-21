@@ -3,8 +3,8 @@
  * Provides comprehensive utilities for working with JavaScript data types and structures.
  */
 
-import TypeSpec from "./Type.js"
 import Sass from "./Sass.js"
+import TypeSpec from "./Type.js"
 import Valid from "./Valid.js"
 
 export default class Data {
