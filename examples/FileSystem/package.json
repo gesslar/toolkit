@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@gesslar/toolkit": "file:../.."
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.1"
+  }
+}

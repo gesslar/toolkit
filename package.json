@@ -1,0 +1,67 @@
+{
+  "name": "@gesslar/toolkit",
+  "version": "0.0.1",
+  "description": "Get in, bitches, we're going toolkitting.",
+  "main": "./src/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/types/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./file": {
+      "types": "./src/types/FileObject.d.ts",
+      "default": "./src/lib/FileObject.js"
+    },
+    "./directory": {
+      "types": "./src/types/DirectoryObject.d.ts",
+      "default": "./src/lib/DirectoryObject.js"
+    },
+    "./data": {
+      "types": "./src/types/Data.d.ts",
+      "default": "./src/lib/Data.js"
+    },
+    "./utilities": {
+      "types": "./src/types/utilities.d.ts",
+      "default": "./src/lib/File.js"
+    }
+  },
+  "files": [
+    "src/",
+    "README.md",
+    "UNLICENSE.txt"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node examples/FileSystem/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gesslar/toolkit.git"
+  },
+  "keywords": [
+    "class",
+    "javascript",
+    "toolkit",
+    "iwasbornonapirateship"
+  ],
+  "author": "gesslar",
+  "license": "Unlicense",
+  "homepage": "https://github.com/gesslar/toolkit#readme",
+  "dependencies": {
+    "globby": "^14.0.2",
+    "json5": "^2.2.3",
+    "yaml": "^2.4.5"
+  },
+  "devDependencies": {
+    "@stylistic/eslint-plugin-js": "^4.4.0",
+    "@types/node": "^24.2.1",
+    "@typescript-eslint/eslint-plugin": "^8.33.0",
+    "@typescript-eslint/parser": "^8.33.0",
+    "eslint": "^9.28.0",
+    "eslint-plugin-jsdoc": "^50.6.17"
+  }
+}
