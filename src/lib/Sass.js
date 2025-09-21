@@ -73,20 +73,20 @@ export default class Sass extends Error {
    */
   report(nerdMode=false) {
     Term.error(
-      `${Term.terminalBracket(["error", "Something Went Wrong"])}\\n` +
-      this.trace.join("\\n")
+      `${Term.terminalBracket(["error", "Something Went Wrong"])}\n` +
+      this.trace.join("\n")
     )
 
     if(nerdMode) {
       Term.error(
-        "\\n" +
-        `${Term.terminalBracket(["error", "Nerd Vittles"])}\\n` +
+        "\n" +
+        `${Term.terminalBracket(["error", "Nerd Vittles"])}\n` +
         this.#fullBodyMassage(this.stack)
       )
 
       this.cause?.stack && Term.error(
-        "\\n" +
-        `${Term.terminalBracket(["error", "Rethrown From"])}\\n` +
+        "\n" +
+        `${Term.terminalBracket(["error", "Rethrown From"])}\n` +
         this.#fullBodyMassage(this.cause?.stack)
       )
     }
@@ -106,15 +106,15 @@ export default class Sass extends Error {
 
     stack = stack ?? ""
 
-    const {rest} = stack.match(/^.*?\\n(?<rest>[\\s\\S]+)$/m)?.groups ?? {}
+    const {rest} = stack.match(/^.*?\n(?<rest>[\s\S]+)$/m)?.groups ?? {}
     const lines = []
 
     if(rest) {
       lines.push(
         ...rest
-          .split("\\n")
+          .split("\n")
           .map(line => {
-            const at = line.match(/^\\s{4}at\\s(?<at>.*)$/)?.groups?.at ?? {}
+            const at = line.match(/^\s{4}at\s(?<at>.*)$/)?.groups?.at ?? {}
 
             return at
               ? `* ${at}`
@@ -123,7 +123,7 @@ export default class Sass extends Error {
       )
     }
 
-    return lines.join("\\n")
+    return lines.join("\n")
   }
 
   /**

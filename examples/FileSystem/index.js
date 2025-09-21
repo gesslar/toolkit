@@ -6,7 +6,7 @@
  * Demonstrates file system operations using FileObject and DirectoryObject
  * from the @gesslar/toolkit package.
  */
-import {FileObject, DirectoryObject, File, Data, Term} from "../../src/index.js"
+import {FileObject, DirectoryObject, File, Data, Term, Sass} from "../../src/index.js"
 
 !(async() => {
   Term.info("=== @gesslar/toolkit FileSystem Example ===")
@@ -118,6 +118,23 @@ import {FileObject, DirectoryObject, File, Data, Term} from "../../src/index.js"
   Term.info("File module:", projectFile.module)
   Term.info("File extension:", projectFile.extension)
   Term.info("File directory:", projectFile.directory.path)
+
+  // Demonstrate Sass error handling
+  Term.info("\n--- Sass Error Handling Demo ---")
+  try {
+    try {
+      throw Sass.new("This is a test error")
+    } catch(firstError) {
+      Term.info("Caught first error, rethrowing with additional context...")
+      throw Sass.new("Error occurred while testing", firstError)
+    }
+  } catch(finalError) {
+    Term.info("\nError caught! Reporting in normal mode:")
+    finalError.report(false)
+    
+    Term.info("\nSame error in nerd mode:")
+    finalError.report(true)
+  }
 
   Term.info("\n=== Example completed successfully! ===")
 })()
