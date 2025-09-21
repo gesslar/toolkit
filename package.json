@@ -22,7 +22,7 @@
       "default": "./src/lib/Data.js"
     },
     "./utilities": {
-      "types": "./src/types/utilities.d.ts",
+      "types": "./src/types/File.d.ts",
       "default": "./src/lib/File.js"
     }
   },
@@ -43,9 +43,17 @@
     "url": "git+https://github.com/gesslar/toolkit.git"
   },
   "keywords": [
-    "class",
-    "javascript",
     "toolkit",
+    "utilities",
+    "file",
+    "directory",
+    "data",
+    "flavaflav",
+    "chuck",
+    "norris",
+    "validation",
+    "typescript",
+    "nodejs",
     "iwasbornonapirateship"
   ],
   "author": "gesslar",
