@@ -8,22 +8,6 @@
     ".": {
       "types": "./src/types/index.d.ts",
       "default": "./src/index.js"
-    },
-    "./file": {
-      "types": "./src/types/FileObject.d.ts",
-      "default": "./src/lib/FileObject.js"
-    },
-    "./directory": {
-      "types": "./src/types/DirectoryObject.d.ts",
-      "default": "./src/lib/DirectoryObject.js"
-    },
-    "./data": {
-      "types": "./src/types/Data.d.ts",
-      "default": "./src/lib/Data.js"
-    },
-    "./utilities": {
-      "types": "./src/types/File.d.ts",
-      "default": "./src/lib/File.js"
     }
   },
   "files": [
@@ -36,6 +20,9 @@
     "node": ">=20"
   },
   "scripts": {
+    "lint": "eslint src/",
+    "submit": "npm publish --access public",
+    "update": "npx npm-check-updates -u && npm install",
     "test": "node examples/FileSystem/index.js"
   },
   "repository": {
@@ -65,7 +52,7 @@
     "yaml": "^2.4.5"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin-js": "^4.4.0",
+    "@stylistic/eslint-plugin": "^4.4.0",
     "@types/node": "^24.2.1",
     "@typescript-eslint/eslint-plugin": "^8.33.0",
     "@typescript-eslint/parser": "^8.33.0",

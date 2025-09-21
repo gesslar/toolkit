@@ -37,7 +37,7 @@ export default class File {
   static pathToUri(pathName) {
     try {
       return url.pathToFileURL(pathName).href
-    } catch(e) {
+    } catch (e) {
       void e // stfu linter
 
       return pathName
@@ -55,7 +55,7 @@ export default class File {
       await fs.access(file.path, fs.constants.R_OK)
 
       return true
-    } catch(_) {
+    } catch (_) {
       return false
     }
   }
@@ -71,7 +71,7 @@ export default class File {
       await fs.access(file.path, fs.constants.W_OK)
 
       return true
-    } catch(_error) {
+    } catch (_error) {
       return false
     }
   }
@@ -87,7 +87,7 @@ export default class File {
       await fs.access(file.path, fs.constants.R_OK)
 
       return true
-    } catch(_) {
+    } catch (_) {
       return false
     }
   }
@@ -103,7 +103,7 @@ export default class File {
       const stat = await fs.stat(file.path)
 
       return stat.size
-    } catch(_) {
+    } catch (_) {
       return null
     }
   }
@@ -120,7 +120,7 @@ export default class File {
       const stat = await fs.stat(file.path)
 
       return stat.mtime
-    } catch(_) {
+    } catch (_) {
       return null
     }
   }
@@ -136,7 +136,7 @@ export default class File {
       (await fs.opendir(dirObject.path)).close()
 
       return true
-    } catch(_) {
+    } catch (_) {
       return false
     }
   }
@@ -150,7 +150,7 @@ export default class File {
   static uriToPath(pathName) {
     try {
       return url.fileURLToPath(pathName)
-    } catch(_) {
+    } catch (_) {
       return pathName
     }
   }
@@ -319,7 +319,7 @@ export default class File {
 
     try {
       await fs.mkdir(dirObject.path, options)
-    } catch(e) {
+    } catch (e) {
       throw Sass.new(`Unable to create directory '${dirObject.path}': ${e.message}`)
     }
 
