@@ -90,7 +90,7 @@ export default class TypeSpec {
    * Creates a new array with all type specifications that pass the provided test function.
    *
    * @param {function(unknown): boolean} callback - Function to test each spec
-   * @returns {Array} New array with filtered specs
+   * @returns {Array<unknown>} New array with filtered specs
    */
   filter(callback) {
     return this.#specs.filter(callback)
@@ -100,7 +100,7 @@ export default class TypeSpec {
    * Creates a new array populated with the results of calling the provided function on every spec.
    *
    * @param {function(unknown): unknown} callback - Function to call on each spec
-   * @returns {Array} New array with mapped values
+   * @returns {Array<unknown>} New array with mapped values
    */
   map(callback) {
     return this.#specs.map(callback)

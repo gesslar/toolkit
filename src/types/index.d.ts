@@ -1,3 +1,4 @@
+// Implementation: ../index.js
 // Core file system abstractions
 export { default as FileObject } from './FileObject.js'
 export { default as DirectoryObject } from './DirectoryObject.js'

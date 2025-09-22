@@ -91,7 +91,7 @@ export default class Term {
    * Recursion: array input is normalised into a single string then re-dispatched
    * through `status` to leverage the string branch (keeps logic DRY).
    *
-   * @param {string | Array<string, string> | Array<string, string, string>} argList - Message spec.
+   * @param {string | Array<string | [string, string] | [string, string, string]>} argList - Message spec.
    * @returns {void}
    */
   static terminalMessage(argList) {
@@ -142,7 +142,7 @@ export default class Term {
    * This method does not append trailing spaces; callers are responsible for
    * joining multiple segments with appropriate separators.
    *
-   * @param {string[]} parts - Tuple: [level, text]. Additional entries ignored.
+   * @param {Array<string>} parts - Tuple: [level, text]. Additional entries ignored.
    * @returns {string} Colourised bracketed segment (e.g. "[TEXT]").
    * @throws {Sass} If any element of `parts` is not a string.
    */

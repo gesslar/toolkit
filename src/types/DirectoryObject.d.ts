@@ -1,3 +1,4 @@
+// Implementation: ../lib/DirectoryObject.js
 // Type definitions for DirectoryObject
 
 /**

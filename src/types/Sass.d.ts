@@ -1,13 +1,14 @@
+// Implementation: ../lib/Sass.js
 // Type definitions for Sass error class
 
 /**
  * Custom error class for toolkit errors.
  */
 export default class Sass extends Error {
-  constructor(message: string, ...arg: any[])
+  constructor(message: string, ...arg: Array<any>)
 
   /** Array of trace messages */
-  readonly trace: string[]
+  readonly trace: Array<string>
 
   /** Add a trace message and return this instance for chaining */
   addTrace(message: string): this
