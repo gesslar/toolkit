@@ -66,9 +66,6 @@ export default class FileObject {
     if(!directory)
       directory = new DirectoryObject(dir)
 
-    if(!(directory instanceof DirectoryObject))
-      directory = new DirectoryObject(directory)
-
     const final = path.isAbsolute(fixedFile)
       ? fixedFile
       : path.resolve(directory.path, fixedFile)
