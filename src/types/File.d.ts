@@ -1,3 +1,4 @@
+// Implementation: ../lib/File.js
 // Type definitions for File utilities
 
 import FileObject from './FileObject.js'
@@ -14,9 +15,9 @@ export interface FileParts {
 
 export interface DirectoryListing {
   /** Array of FileObject instances */
-  files: FileObject[]
+  files: Array<FileObject>
   /** Array of DirectoryObject instances */
-  directories: DirectoryObject[]
+  directories: Array<DirectoryObject>
 }
 
 /**
@@ -54,7 +55,7 @@ export default class File {
   static deconstructFilenameToParts(fileName: string): FileParts
 
   /** Retrieve files matching glob pattern(s) */
-  static getFiles(glob: string | string[]): Promise<FileObject[]>
+  static getFiles(glob: string | Array<string>): Promise<Array<FileObject>>
 
   /** List the contents of a directory */
   static ls(directory: string): Promise<DirectoryListing>

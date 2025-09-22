@@ -84,7 +84,7 @@ export default class Util {
    *     (filtered out).
    *
    * @param {object} object - Mapping of option strings to descriptions.
-   * @returns {string[]} Array of canonical option names (long preferred, short if no long present).
+   * @returns {Array<string>} Array of canonical option names (long preferred, short if no long present).
    */
   static generateOptionNames(object) {
     return Object.keys(object)
@@ -103,8 +103,8 @@ export default class Util {
    * Asynchronously awaits all promises in parallel.
    * Wrapper around Promise.all for consistency with other utility methods.
    *
-   * @param {Promise[]} promises - Array of promises to await
-   * @returns {Promise<unknown[]>} Results of all promises
+   * @param {Array<Promise<unknown>>} promises - Array of promises to await
+   * @returns {Promise<Array<unknown>>} Results of all promises
    */
   static async awaitAll(promises) {
     return await Promise.all(promises)
@@ -114,8 +114,8 @@ export default class Util {
    * Settles all promises (both fulfilled and rejected) in parallel.
    * Wrapper around Promise.allSettled for consistency with other utility methods.
    *
-   * @param {Promise[]} promises - Array of promises to settle
-   * @returns {Promise<Array>} Results of all settled promises with status and value/reason
+   * @param {Array<Promise<unknown>>} promises - Array of promises to settle
+   * @returns {Promise<Array<object>>} Results of all settled promises with status and value/reason
    */
   static async settleAll(promises) {
     return await Promise.allSettled(promises)
@@ -125,7 +125,7 @@ export default class Util {
    * Returns the first promise to resolve or reject from an array of promises.
    * Wrapper around Promise.race for consistency with other utility methods.
    *
-   * @param {Promise[]} promises - Array of promises to race
+   * @param {Array<Promise<unknown>>} promises - Array of promises to race
    * @returns {Promise<unknown>} Result of the first settled promise
    */
   static async race(promises) {

@@ -1,3 +1,5 @@
+// Implementation: ../lib/Util.js
+
 /**
  * Utility class providing common helper functions for string manipulation,
  * timing, hashing, and option parsing.
@@ -51,7 +53,7 @@ declare class Util {
    * @param object - Mapping of option strings to descriptions.
    * @returns Array of canonical option names (long preferred, short if no long present).
    */
-  static generateOptionNames(object: Record<string, any>): string[]
+  static generateOptionNames(object: Record<string, any>): Array<string>
 
   /**
    * Asynchronously awaits all promises in parallel.
@@ -60,7 +62,7 @@ declare class Util {
    * @param promises - Array of promises to await
    * @returns Results of all promises
    */
-  static awaitAll<T>(promises: Promise<T>[]): Promise<T[]>
+  static awaitAll<T>(promises: Array<Promise<T>>): Promise<Array<T>>
 
   /**
    * Settles all promises (both fulfilled and rejected) in parallel.
@@ -69,7 +71,7 @@ declare class Util {
    * @param promises - Array of promises to settle
    * @returns Results of all settled promises with status and value/reason
    */
-  static settleAll<T>(promises: Promise<T>[]): Promise<PromiseSettledResult<T>[]>
+  static settleAll<T>(promises: Array<Promise<T>>): Promise<Array<PromiseSettledResult<T>>>
 
   /**
    * Returns the first promise to resolve or reject from an array of promises.
@@ -78,7 +80,7 @@ declare class Util {
    * @param promises - Array of promises to race
    * @returns Result of the first settled promise
    */
-  static race<T>(promises: Promise<T>[]): Promise<T>
+  static race<T>(promises: Array<Promise<T>>): Promise<T>
 }
 
 export default Util

@@ -1,4 +1,5 @@
-import FileObject from '../lib/FileObject.js'
+// Implementation: ../lib/Cache.js
+import FileObject from './FileObject.js'
 
 /**
  * File system cache for theme compilation data with automatic invalidation.

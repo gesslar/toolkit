@@ -178,7 +178,7 @@ export default class File {
   /**
    * Retrieve all files matching a specific glob pattern.
    *
-   * @param {string|string[]} glob - The glob pattern(s) to search.
+   * @param {string|Array<string>} glob - The glob pattern(s) to search.
    * @returns {Promise<Array<FileObject>>} A promise that resolves to an array of file objects
    * @throws {Sass} If the input is not a string or array of strings.
    * @throws {Sass} If the glob pattern array is empty or for other search failures.

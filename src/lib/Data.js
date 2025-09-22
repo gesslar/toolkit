@@ -12,7 +12,7 @@ export default class Data {
  * Array of JavaScript primitive type names.
  * Includes basic types and object categories from the typeof operator.
  *
- * @type {string[]}
+ * @type {Array<string>}
  */
   static primitives = Object.freeze([
   // Primitives
@@ -32,7 +32,7 @@ export default class Data {
    * Array of JavaScript constructor names for built-in objects.
    * Includes common object types and typed arrays.
    *
-   * @type {string[]}
+   * @type {Array<string>}
    */
   static constructors = Object.freeze([
   // Object Constructors
@@ -57,7 +57,7 @@ export default class Data {
    * Combined array of all supported data types (primitives and constructors in lowercase).
    * Used for type validation throughout the utility functions.
    *
-   * @type {string[]}
+   * @type {Array<string>}
    */
   static dataTypes = Object.freeze([
     ...Data.primitives,
@@ -68,7 +68,7 @@ export default class Data {
    * Array of type names that can be checked for emptiness.
    * These types have meaningful empty states that can be tested.
    *
-   * @type {string[]}
+   * @type {Array<string>}
    */
   static emptyableTypes = Object.freeze(["string", "array", "object"])
 
@@ -204,7 +204,7 @@ export default class Data {
    * Allocates an object from a source array and a spec array or function.
    *
    * @param {unknown} source The source array
-   * @param {Array|function(unknown): unknown} spec The spec array or function
+   * @param {Array<unknown>|function(Array<unknown>): Promise<Array<unknown>>|Array<unknown>} spec The spec array or function
    * @returns {Promise<object>} The allocated object
    */
   static async allocateObject(source, spec) {
@@ -289,7 +289,7 @@ export default class Data {
    *
    * @param {string} string - The string to parse into a type spec.
    * @param {object} options - Additional options for parsing.
-   * @returns {object[]} An array of type specs.
+   * @returns {Array<object>} An array of type specs.
    */
   static newTypeSpec(string, options) {
     return new TypeSpec(string, options)

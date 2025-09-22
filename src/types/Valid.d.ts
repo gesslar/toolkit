@@ -1,3 +1,4 @@
+// Implementation: ../lib/Valid.js
 // Type definitions for Valid utility class
 
 export default class Valid {

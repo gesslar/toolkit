@@ -1,3 +1,4 @@
+// Implementation: ../lib/FileObject.js
 // Type definitions for FileObject
 
 import DirectoryObject from './DirectoryObject.js'
