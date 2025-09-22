@@ -66,13 +66,12 @@ export default class FileObject {
     if(!directory)
       directory = new DirectoryObject(dir)
 
-    let final
+    if(!(directory instanceof DirectoryObject))
+      directory = new DirectoryObject(directory)
 
-    if(path.isAbsolute(fixedFile)) {
-      final = fixedFile
-    } else {
-      final = path.resolve(directory.path, fixedFile)
-    }
+    const final = path.isAbsolute(fixedFile)
+      ? fixedFile
+      : path.resolve(directory.path, fixedFile)
 
     const resolved = final
     const fileUri = File.pathToUri(resolved)
