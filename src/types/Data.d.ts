@@ -94,4 +94,10 @@ export default class Data {
 
   /** Filter an array asynchronously */
   static asyncFilter<T>(arr: Array<T>, predicate: (item: T) => Promise<boolean>): Promise<Array<T>>
+
+  /** Ensures a value is within a specified range */
+  static clamp(val: number, min: number, max: number): number
+
+  /** Checks if a value is within a specified range (inclusive) */
+  static clamped(val: number, min: number, max: number): boolean
 }

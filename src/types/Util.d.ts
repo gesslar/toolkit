@@ -81,6 +81,33 @@ declare class Util {
    * @returns Result of the first settled promise
    */
   static race<T>(promises: Array<Promise<T>>): Promise<T>
+
+  /**
+   * Emits an event asynchronously and waits for all listeners to complete.
+   * Unlike the standard EventEmitter.emit() which is synchronous, this method
+   * properly handles async event listeners by waiting for all of them to
+   * resolve or reject using Promise.allSettled().
+   *
+   * Uses strict instanceof checking to ensure the emitter is a genuine EventEmitter.
+   *
+   * @param emitter - The EventEmitter instance to emit on
+   * @param event - The event name to emit
+   * @param args - Arguments to pass to event listeners
+   * @returns Resolves when all listeners have completed
+   */
+  static asyncEmit(emitter: import('events').EventEmitter, event: string, ...args: unknown[]): Promise<void>
+
+  /**
+   * Emits an event asynchronously and waits for all listeners to complete.
+   * Like asyncEmit, but uses duck typing for more flexible emitter validation.
+   * Accepts any object that has the required EventEmitter-like methods.
+   *
+   * @param emitter - Any object with EventEmitter-like interface
+   * @param event - The event name to emit
+   * @param args - Arguments to pass to event listeners
+   * @returns Resolves when all listeners have completed
+   */
+  static asyncEmitAnon(emitter: { listeners(event: string): Function[], on(event: string, listener: Function): any, emit(event: string, ...args: unknown[]): any }, event: string, ...args: unknown[]): Promise<void>
 }
 
 export default Util
