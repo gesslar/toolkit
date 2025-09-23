@@ -1,4 +1,4 @@
-# @gesslar/toolkit
+# npm i @gesslar/toolkit
 
 This package is intended to be a collection of useful utilities for any
 project's consumption. Not the kind that gives you bleeding, hacking coughs,
