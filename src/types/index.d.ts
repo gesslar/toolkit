@@ -7,6 +7,7 @@ export { default as File } from './File.js'
 // Utility classes
 export { default as Cache } from './Cache.js'
 export { default as Data } from './Data.js'
+export { default as Glog } from './Glog.js'
 export { default as Sass } from './Sass.js'
 export { default as Term } from './Term.js'
 export { default as Type } from './Type.js'
