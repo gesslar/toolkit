@@ -1,6 +1,9 @@
 /**
- * @file Data utility functions for type checking, object manipulation, and array operations.
- * Provides comprehensive utilities for working with JavaScript data types and structures.
+ * @file Data utility functions for type checking, object manipulation, and
+ * array operations.
+ *
+ * Provides comprehensive utilities for working with JavaScript data types and
+ * structures.
  */
 
 import Sass from "./Sass.js"
@@ -54,7 +57,9 @@ export default class Data {
   ])
 
   /**
-   * Combined array of all supported data types (primitives and constructors in lowercase).
+   * Combined array of all supported data types (primitives and constructors in
+   * lowercase).
+   *
    * Used for type validation throughout the utility functions.
    *
    * @type {Array<string>}
@@ -530,4 +535,27 @@ export default class Data {
     return arr.filter((_, index) => results[index])
   }
 
+  /**
+   * Ensures a value is within a specified range.
+   *
+   * @param {number} val - The value to check.
+   * @param {number} min - The minimum value.
+   * @param {number} max - The maximum value.
+   * @returns {number} The value, constrained within the range of `min` to `max`.
+   */
+  static clamp(val, min, max) {
+    return val >= min ? val <= max ? val : max : min
+  }
+
+  /**
+   * Checks if a value is within a specified range (inclusive).
+   *
+   * @param {number} val - The value to check.
+   * @param {number} min - The minimum value (inclusive).
+   * @param {number} max - The maximum value (inclusive).
+   * @returns {boolean} True if the value is within the range, false otherwise.
+   */
+  static clamped(val, min, max) {
+    return val >= min && val <= max
+  }
 }

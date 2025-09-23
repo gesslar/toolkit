@@ -1,5 +1,7 @@
 import {createHash} from "node:crypto"
 import {performance} from "node:perf_hooks"
+import {EventEmitter} from "node:events"
+import Sass from "./Sass.js"
 
 /**
  * Utility class providing common helper functions for string manipulation,
@@ -130,5 +132,92 @@ export default class Util {
    */
   static async race(promises) {
     return await Promise.race(promises)
+  }
+
+  /**
+   * Private method that performs the actual async emission logic.
+   * Handles listener execution, error aggregation, and result processing.
+   *
+   * @param {object} emitter - The emitter object (already validated)
+   * @param {string} event - The event name to emit
+   * @param {...unknown} args - Arguments to pass to event listeners
+   * @returns {Promise<void>} Resolves when all listeners have completed
+   */
+  static async #performAsyncEmit(emitter, event, ...args) {
+    const listeners = emitter.listeners(event)
+
+    if(listeners.length === 0)
+      return // No listeners, nothing to do
+
+    const settled =
+      await Promise.allSettled(listeners.map(listener => listener(...args)))
+
+    const rejected = settled.filter(result => result.status === "rejected")
+
+    if(rejected.length > 0) {
+      if(rejected[0].reason instanceof Error)
+        throw rejected[0].reason
+      else
+        throw Sass.new(rejected[0].reason)
+    }
+  }
+
+  /**
+   * Emits an event asynchronously and waits for all listeners to complete.
+   * Unlike the standard EventEmitter.emit() which is synchronous, this method
+   * properly handles async event listeners by waiting for all of them to
+   * resolve or reject using Promise.allSettled().
+   *
+   * Uses strict instanceof checking to ensure the emitter is a genuine EventEmitter.
+   *
+   * @param {EventEmitter} emitter - The EventEmitter instance to emit on
+   * @param {string} event - The event name to emit
+   * @param {...unknown} args - Arguments to pass to event listeners
+   * @returns {Promise<void>} Resolves when all listeners have completed
+   */
+  static async asyncEmit(emitter, event, ...args) {
+    try {
+      if(!(emitter instanceof EventEmitter))
+        throw Sass.new("First argument must be an EventEmitter instance")
+
+      await this.#performAsyncEmit(emitter, event, ...args)
+    } catch(error) {
+      const argsDesc = args.length > 0 ? `with arguments: ${args.map(String).join(", ")}` : "with no arguments"
+
+      throw Sass.new(
+        `Processing '${event}' event ${argsDesc}.`,
+        error
+      )
+    }
+  }
+
+  /**
+   * Emits an event asynchronously and waits for all listeners to complete.
+   * Like asyncEmit, but uses duck typing for more flexible emitter validation.
+   * Accepts any object that has the required EventEmitter-like methods.
+   *
+   * @param {object} emitter - Any object with EventEmitter-like interface
+   * @param {string} event - The event name to emit
+   * @param {...unknown} args - Arguments to pass to event listeners
+   * @returns {Promise<void>} Resolves when all listeners have completed
+   */
+  static async asyncEmitAnon(emitter, event, ...args) {
+    try {
+      if(!emitter ||
+         typeof emitter.listeners !== "function" ||
+         typeof emitter.on !== "function" ||
+         typeof emitter.emit !== "function") {
+        throw Sass.new("First argument must be an EventEmitter-like object")
+      }
+
+      await this.#performAsyncEmit(emitter, event, ...args)
+    } catch(error) {
+      const argsDesc = args.length > 0 ? `with arguments: ${args.map(String).join(", ")}` : "with no arguments"
+
+      throw Sass.new(
+        `Processing '${event}' event ${argsDesc}.`,
+        error
+      )
+    }
   }
 }
