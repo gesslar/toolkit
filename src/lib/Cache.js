@@ -1,4 +1,4 @@
-import File from "./File.js"
+import File from "./FS.js"
 import FileObject from "./FileObject.js"
 import Sass from "./Sass.js"
 

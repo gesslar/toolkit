@@ -1,11 +1,21 @@
 // Implementation: ../lib/DirectoryObject.js
 // Type definitions for DirectoryObject
 
+import FS from './FS.js'
+import FileObject from './FileObject.js'
+
+export interface DirectoryListing {
+  /** Array of FileObject instances */
+  files: Array<FileObject>
+  /** Array of DirectoryObject instances */
+  directories: Array<DirectoryObject>
+}
+
 /**
  * DirectoryObject encapsulates metadata and operations for a directory,
  * including path resolution and existence checks.
  */
-export default class DirectoryObject {
+export default class DirectoryObject extends FS {
   /**
    * Create a new DirectoryObject instance.
    * @param directory - The directory path
@@ -53,4 +63,10 @@ export default class DirectoryObject {
     isFile: boolean
     isDirectory: boolean
   }
+
+  /** List the contents of this directory */
+  read(): Promise<DirectoryListing>
+
+  /** Ensure this directory exists, creating it if necessary */
+  assureExists(options?: any): Promise<void>
 }

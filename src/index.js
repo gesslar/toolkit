@@ -1,7 +1,7 @@
 // Core file system abstractions
 export {default as FileObject} from "./lib/FileObject.js"
 export {default as DirectoryObject} from "./lib/DirectoryObject.js"
-export {default as File} from "./lib/File.js"
+export {default as FS} from "./lib/FS.js"
 
 // Utility classes
 export {default as Cache} from "./lib/Cache.js"

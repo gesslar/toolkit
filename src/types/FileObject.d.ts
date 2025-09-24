@@ -1,6 +1,7 @@
 // Implementation: ../lib/FileObject.js
 
 import DirectoryObject from './DirectoryObject.js'
+import FS from './FS.js'
 
 /**
  * FileObject encapsulates metadata and operations for a file, providing intelligent
@@ -60,7 +61,7 @@ import DirectoryObject from './DirectoryObject.js'
  *
  * for (const fileItem of files) {
  *   console.log(`${fileItem.module}${fileItem.extension} -> ${fileItem.path}`)
- *   
+ *
  *   // Type-based processing
  *   switch (fileItem.extension) {
  *     case '.json':
@@ -99,7 +100,7 @@ import DirectoryObject from './DirectoryObject.js'
  * inherits the directory's resolved path, ensuring consistency in hierarchical
  * file operations.
  */
-export default class FileObject {
+export default class FileObject extends FS {
   /**
    * Create a new FileObject instance with intelligent path resolution.
    *
@@ -142,8 +143,8 @@ export default class FileObject {
    * // Complex directory structures and nested files
    * const projectRoot = new DirectoryObject('./my-project')
    * const srcDir = new DirectoryObject('src', projectRoot)
-   * 
-   * // Create files within nested directory structure  
+   *
+   * // Create files within nested directory structure
    * const mainApp = new FileObject('App.tsx', srcDir)
    * const stylesheet = new FileObject('styles/main.css', srcDir)
    * const testFile = new FileObject('__tests__/App.test.tsx', srcDir)
@@ -151,7 +152,7 @@ export default class FileObject {
    * console.log('Main app:', mainApp.path)     // /absolute/path/my-project/src/App.tsx
    * console.log('Stylesheet:', stylesheet.path) // /absolute/path/my-project/src/styles/main.css
    * console.log('Test file:', testFile.path)   // /absolute/path/my-project/src/__tests__/App.test.tsx
-   * 
+   *
    * // All files share the same parent directory reference
    * console.log('Same parent?', mainApp.directory === srcDir) // true
    * ```
@@ -160,7 +161,7 @@ export default class FileObject {
 
   /**
    * The original user-supplied path string used during construction.
-   * 
+   *
    * Preserves the exact path string passed to the constructor, including
    * any relative path indicators (./, ../) or path separators. Useful
    * for debugging, logging, or when you need to recreate the original
@@ -170,7 +171,7 @@ export default class FileObject {
    * ```typescript
    * const file1 = new FileObject('./config.json')
    * const file2 = new FileObject('../package.json')
-   * 
+   *
    * console.log(file1.supplied) // './config.json'
    * console.log(file2.supplied) // '../package.json'
    * console.log(file1.path)     // '/absolute/path/to/config.json'
@@ -181,7 +182,7 @@ export default class FileObject {
 
   /**
    * The fully resolved absolute file path with normalized separators.
-   * 
+   *
    * Automatically resolved during construction using Node.js path utilities.
    * Always uses forward slashes on Unix systems and backslashes on Windows.
    * This is the canonical path that should be used for all file operations.
@@ -189,9 +190,9 @@ export default class FileObject {
    * @example
    * ```typescript
    * // Different inputs, same resolved path
-   * const file1 = new FileObject('./src/../config.json')  
+   * const file1 = new FileObject('./src/../config.json')
    * const file2 = new FileObject('config.json')
-   * 
+   *
    * console.log(file1.path) // '/absolute/path/config.json'
    * console.log(file2.path) // '/absolute/path/config.json'
    * console.log(file1.path === file2.path) // true
@@ -201,7 +202,7 @@ export default class FileObject {
 
   /**
    * The file URI representation following RFC 3986 standard.
-   * 
+   *
    * Converts the absolute file path to a proper file:// URI scheme,
    * handling URL encoding for special characters and proper formatting
    * for cross-platform file URI access.
@@ -209,9 +210,9 @@ export default class FileObject {
    * @example
    * ```typescript
    * const file = new FileObject('./my project/config file.json')
-   * console.log(file.uri) 
+   * console.log(file.uri)
    * // 'file:///absolute/path/my%20project/config%20file.json'
-   * 
+   *
    * // Can be used with URL constructor or file:// handlers
    * const url = new URL(file.uri)
    * console.log(url.pathname) // '/absolute/path/my project/config file.json'
@@ -221,7 +222,7 @@ export default class FileObject {
 
   /**
    * The complete filename including extension.
-   * 
+   *
    * Extracted from the resolved path using Node.js path utilities.
    * Includes the file extension but excludes any directory components.
    *
@@ -229,7 +230,7 @@ export default class FileObject {
    * ```typescript
    * const jsFile = new FileObject('./src/components/Button.tsx')
    * const configFile = new FileObject('../.env.production')
-   * 
+   *
    * console.log(jsFile.name)    // 'Button.tsx'
    * console.log(configFile.name) // '.env.production'
    * ```
@@ -238,7 +239,7 @@ export default class FileObject {
 
   /**
    * The filename without its extension, suitable for module identification.
-   * 
+   *
    * Useful for generating module names, import statements, or when you need
    * the base name without file type information. Handles complex extensions
    * and dotfiles appropriately.
@@ -247,7 +248,7 @@ export default class FileObject {
 
   /**
    * The file extension including the leading dot.
-   * 
+   *
    * Extracted using Node.js path utilities, always includes the dot prefix.
    * Returns an empty string for files without extensions. Handles multiple
    * extensions by returning only the last one.
@@ -262,7 +263,7 @@ export default class FileObject {
 
   /**
    * The parent DirectoryObject containing this file.
-   * 
+   *
    * Automatically created during FileObject construction based on the resolved
    * file path. Provides access to parent directory operations and maintains
    * the hierarchical relationship between files and directories.
@@ -271,7 +272,7 @@ export default class FileObject {
 
   /**
    * Promise that resolves to whether the file exists on the filesystem.
-   * 
+   *
    * Performs an asynchronous filesystem check to determine file existence.
    * The Promise will resolve to true if the file exists and is accessible,
    * false otherwise. Always await this property before using the result.
@@ -290,4 +291,25 @@ export default class FileObject {
     isDirectory: boolean
     directory: string | null
   }
+
+  /** Check if a file can be read */
+  canRead(): Promise<boolean>
+
+  /** Check if a file can be written */
+  canWrite(): Promise<boolean>
+
+  /** Get the size of a file */
+  size(): Promise<number | null>
+
+  /** Get the last modification time of a file */
+  modified(): Promise<Date | null>
+
+  /** Read the content of a file */
+  read(encoding?: string): Promise<string>
+
+  /** Write content to a file */
+  write(content: string, encoding?: string): Promise<void>
+
+  /** Load an object from JSON5 or YAML file with type specification */
+  loadData(type?: 'json' | 'json5' | 'yaml' | 'any', encoding?: string): Promise<any>
 }

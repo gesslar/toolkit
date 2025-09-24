@@ -2,7 +2,7 @@
 // Core file system abstractions
 export { default as FileObject } from './FileObject.js'
 export { default as DirectoryObject } from './DirectoryObject.js'
-export { default as File } from './File.js'
+export { default as FS } from './FS.js'
 
 // Utility classes
 export { default as Cache } from './Cache.js'
@@ -15,4 +15,4 @@ export { default as Util } from './Util.js'
 export { default as Valid } from './Valid.js'
 
 // Type exports
-export type { FileParts } from './File.js'
+export type { FileParts } from './FS.js'
