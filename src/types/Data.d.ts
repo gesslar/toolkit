@@ -19,16 +19,164 @@ export default class Data {
   /** Array of type names that can be checked for emptiness */
   static readonly emptyableTypes: ReadonlyArray<string>
 
-  /** Append a string if it doesn't already end with it */
+  /**
+   * Append a suffix string to the end of a string if it doesn't already end with it.
+   * 
+   * Useful for ensuring strings have consistent endings like file extensions, 
+   * URL paths, or punctuation. Performs case-sensitive comparison and only appends
+   * if the string doesn't already end with the specified suffix.
+   *
+   * @param string - The base string to potentially append to. Can be empty string.
+   * @param append - The suffix to append if not already present. Cannot be empty.
+   * @returns The string with the suffix appended, or the original string if suffix already present
+   * 
+   * @throws {Error} When append parameter is empty or undefined
+   *
+   * @example
+   * ```typescript
+   * import { Data } from '@gesslar/toolkit'
+   * 
+   * // Basic usage with file extensions
+   * const filename = Data.appendString('config', '.json')
+   * console.log(filename) // 'config.json'
+   * 
+   * // No double-appending
+   * const alreadyHasExt = Data.appendString('package.json', '.json')  
+   * console.log(alreadyHasExt) // 'package.json' (unchanged)
+   * 
+   * // URL path handling
+   * const apiPath = Data.appendString('/api/users', '/')
+   * console.log(apiPath) // '/api/users/'
+   * 
+   * // Works with empty strings
+   * const fromEmpty = Data.appendString('', '.txt')
+   * console.log(fromEmpty) // '.txt'
+   * ```
+   */
   static appendString(string: string, append: string): string
 
-  /** Prepend a string if it doesn't already start with it */
+  /**
+   * Prepend a prefix string to the beginning of a string if it doesn't already start with it.
+   * 
+   * Useful for ensuring strings have consistent beginnings like protocol prefixes,
+   * path separators, or formatting markers. Performs case-sensitive comparison and 
+   * only prepends if the string doesn't already start with the specified prefix.
+   *
+   * @param string - The base string to potentially prepend to. Can be empty string.
+   * @param prepend - The prefix to prepend if not already present. Cannot be empty.
+   * @returns The string with the prefix prepended, or the original string if prefix already present
+   * 
+   * @throws {Error} When prepend parameter is empty or undefined
+   *
+   * @example
+   * ```typescript
+   * import { Data } from '@gesslar/toolkit'
+   * 
+   * // Basic usage with protocols
+   * const url = Data.prependString('example.com', 'https://')
+   * console.log(url) // 'https://example.com'
+   * 
+   * // No double-prepending
+   * const alreadyHasProtocol = Data.prependString('https://api.example.com', 'https://')
+   * console.log(alreadyHasProtocol) // 'https://api.example.com' (unchanged)
+   * 
+   * // File path handling
+   * const absolutePath = Data.prependString('home/user/docs', '/')
+   * console.log(absolutePath) // '/home/user/docs'
+   * 
+   * // CSS class prefixing
+   * const className = Data.prependString('button-primary', 'css-')
+   * console.log(className) // 'css-button-primary'
+   * ```
+   */
   static prependString(string: string, prepend: string): string
 
-  /** Check if all elements in an array are of a specified type */
+  /**
+   * Check if all elements in an array are of a specified type or all the same type.
+   * 
+   * Performs type checking on every element in the array using the toolkit's type
+   * system. If no type is specified, checks that all elements are of the same type.
+   * Useful for validating data structures and ensuring type consistency before processing.
+   *
+   * @param arr - The array to check for type uniformity. Can be empty (returns true).
+   * @param type - Optional type name to check against. If not provided, checks that all
+   *              elements have the same type. Must be a valid type from Data.dataTypes.
+   * @returns True if all elements match the specified type or are all the same type,
+   *         false if there's any type mismatch or if type parameter is invalid
+   * 
+   * @example
+   * ```typescript
+   * import { Data } from '@gesslar/toolkit'
+   * 
+   * // Check for specific type uniformity
+   * const numbers = [1, 2, 3, 4, 5]
+   * const strings = ['a', 'b', 'c']
+   * const mixed = [1, 'a', true]
+   * 
+   * console.log(Data.isArrayUniform(numbers, 'number'))  // true
+   * console.log(Data.isArrayUniform(strings, 'string'))  // true
+   * console.log(Data.isArrayUniform(mixed, 'number'))    // false
+   * 
+   * // Check that all elements are the same type (any type)
+   * console.log(Data.isArrayUniform(numbers))     // true (all numbers)
+   * console.log(Data.isArrayUniform(strings))     // true (all strings) 
+   * console.log(Data.isArrayUniform(mixed))       // false (mixed types)
+   * console.log(Data.isArrayUniform([]))          // true (empty array)
+   * 
+   * // Useful for validation before processing
+   * function processNumbers(data: unknown[]) {
+   *   if (!Data.isArrayUniform(data, 'number')) {
+   *     throw new Error('Array must contain only numbers')
+   *   }
+   *   return data.reduce((sum, num) => sum + num, 0)
+   * }
+   * ```
+   */
   static isArrayUniform(arr: Array<unknown>, type?: string): boolean
 
-  /** Remove duplicates from an array */
+  /**
+   * Remove duplicate elements from an array, returning a new array with unique values.
+   * 
+   * Creates a new array containing only the first occurrence of each unique value,
+   * preserving the original order of first appearances. Uses strict equality (===)
+   * for primitive comparisons and shallow comparison for objects.
+   *
+   * @param arr - The array to remove duplicates from. Can be empty or contain any types.
+   * @returns A new array with duplicate elements removed, preserving order of first occurrence
+   * 
+   * @example
+   * ```typescript
+   * import { Data } from '@gesslar/toolkit'
+   * 
+   * // Basic duplicate removal
+   * const numbers = [1, 2, 2, 3, 3, 4]
+   * const uniqueNumbers = Data.isArrayUnique(numbers)
+   * console.log(uniqueNumbers) // [1, 2, 3, 4]
+   * 
+   * // Mixed types
+   * const mixed = ['a', 1, 'a', 2, 1, 'b']
+   * const uniqueMixed = Data.isArrayUnique(mixed)
+   * console.log(uniqueMixed) // ['a', 1, 2, 'b']
+   * 
+   * // Object arrays (shallow comparison)
+   * const users = [
+   *   { id: 1, name: 'Alice' },
+   *   { id: 2, name: 'Bob' },
+   *   { id: 1, name: 'Alice' }  // Different object reference, not filtered
+   * ]
+   * const uniqueUsers = Data.isArrayUnique(users)
+   * console.log(uniqueUsers.length) // 3 (objects compared by reference)
+   * 
+   * // Empty and single element arrays
+   * console.log(Data.isArrayUnique([])) // []
+   * console.log(Data.isArrayUnique(['single'])) // ['single']
+   * 
+   * // String array deduplication
+   * const tags = ['javascript', 'node', 'javascript', 'typescript', 'node']
+   * const uniqueTags = Data.isArrayUnique(tags)
+   * console.log(uniqueTags) // ['javascript', 'node', 'typescript']
+   * ```
+   */
   static isArrayUnique<T>(arr: Array<T>): Array<T>
 
   /** Get the intersection of two arrays */

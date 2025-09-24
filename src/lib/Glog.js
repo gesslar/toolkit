@@ -107,6 +107,19 @@ class Glog {
   }
 }
 
+/**
+ * Global logging utility with proxy-based dual interface.
+ * Can be used as both a class and a function for maximum flexibility.
+ *
+ * @class Glog
+ * @example
+ * // Use as function
+ * Glog('Hello world')
+ * Glog(2, 'Debug message')
+ *
+ * // Use class methods
+ * Glog.setLogLevel(3).setLogPrefix('[App]')
+ */
 // Wrap the class in a proxy
 export default new Proxy(Glog, {
   apply(target, thisArg, argumentsList) {

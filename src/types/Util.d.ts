@@ -10,15 +10,36 @@ declare class Util {
    *
    * @param text - The text to capitalize
    * @returns Text with first letter capitalized
+   *
+   * @example
+   * ```typescript
+   * const result = Util.capitalize("hello world")
+   * console.log(result) // "Hello world"
+   *
+   * // Works with empty strings and single characters
+   * Util.capitalize("") // ""
+   * Util.capitalize("a") // "A"
+   * ```
    */
   static capitalize(text: string): string
 
   /**
    * Measure wall-clock time for an async function.
+   * Useful for performance monitoring and debugging async operations.
    *
    * @template T
    * @param fn - Thunk returning a promise.
    * @returns Object containing result and elapsed ms (number, 1 decimal).
+   *
+   * @example
+   * ```typescript
+   * const {result, cost} = await Util.time(async () => {
+   *   await new Promise(resolve => setTimeout(resolve, 100))
+   *   return "completed"
+   * })
+   * console.log(`Operation took ${cost}ms`) // "Operation took 100.2ms"
+   * console.log(result) // "completed"
+   * ```
    */
   static time<T>(fn: () => Promise<T>): Promise<{result: T, cost: number}>
 
@@ -37,6 +58,12 @@ declare class Util {
    *
    * @param s - Input string.
    * @returns 64-char hexadecimal digest.
+   *
+   * @example
+   * ```typescript
+   * const hash = Util.hashOf("hello world")
+   * console.log(hash) // "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+   * ```
    */
   static hashOf(s: string): string
 
@@ -52,6 +79,23 @@ declare class Util {
    *
    * @param object - Mapping of option strings to descriptions.
    * @returns Array of canonical option names (long preferred, short if no long present).
+   *
+   * @example
+   * ```typescript
+   * const options = {
+   *   "-w, --watch": "Watch for changes",
+   *   "-v": "Verbose output",
+   *   "--config": "Config file path"
+   * }
+   * const names = Util.generateOptionNames(options)
+   * console.log(names) // ["watch", "v", "config"]
+   * ```
+   *
+   * @remarks
+   * Edge cases:
+   * - If a key contains only a short option ("-v"), that short name will be included
+   * - If multiple long options are present, only the first is used
+   * - Malformed option strings may return undefined (filtered out)
    */
   static generateOptionNames(object: Record<string, any>): Array<string>
 
@@ -84,9 +128,11 @@ declare class Util {
 
   /**
    * Emits an event asynchronously and waits for all listeners to complete.
+   *
    * Unlike the standard EventEmitter.emit() which is synchronous, this method
    * properly handles async event listeners by waiting for all of them to
-   * resolve or reject using Promise.allSettled().
+   * resolve or reject using Promise.allSettled(). If any listener throws an
+   * error, the first error encountered will be re-thrown.
    *
    * Uses strict instanceof checking to ensure the emitter is a genuine EventEmitter.
    *
@@ -94,6 +140,26 @@ declare class Util {
    * @param event - The event name to emit
    * @param args - Arguments to pass to event listeners
    * @returns Resolves when all listeners have completed
+   *
+   * @example
+   * ```typescript
+   * import { EventEmitter } from 'events'
+   * import { Util } from '@gesslar/toolkit'
+   *
+   * const emitter = new EventEmitter()
+   *
+   * emitter.on('data', async (payload) => {
+   *   console.log('Processing:', payload.id)
+   *   await new Promise(resolve => setTimeout(resolve, 100))
+   *   console.log('Completed:', payload.id)
+   * })
+   *
+   * // Wait for all async listeners to complete
+   * await Util.asyncEmit(emitter, 'data', { id: 'task-1' })
+   * console.log('All listeners finished')
+   * ```
+   *
+   * @throws Will throw an error if any listener rejects or throws
    */
   static asyncEmit(emitter: import('events').EventEmitter, event: string, ...args: unknown[]): Promise<void>
 

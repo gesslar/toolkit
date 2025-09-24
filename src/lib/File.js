@@ -225,12 +225,12 @@ export default class File {
   /**
    * Lists the contents of a directory.
    *
-   * @param {string} directory - The directory to list.
+   * @param {DirectoryObject} directory - The directory to list.
    * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} The files and
    * directories in the directory.
    */
   static async ls(directory) {
-    const found = await fs.readdir(directory, {withFileTypes: true})
+    const found = await fs.readdir(directory.uri, {withFileTypes: true})
     const results = await Promise.all(
       found.map(async dirent => {
         const fullPath = path.join(directory, dirent.name)

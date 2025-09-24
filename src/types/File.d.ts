@@ -58,7 +58,7 @@ export default class File {
   static getFiles(glob: string | Array<string>): Promise<Array<FileObject>>
 
   /** List the contents of a directory */
-  static ls(directory: string): Promise<DirectoryListing>
+  static ls(directory: DirectoryObject): Promise<DirectoryListing>
 
   /** Read the content of a file */
   static readFile(fileObject: FileObject): Promise<string>
