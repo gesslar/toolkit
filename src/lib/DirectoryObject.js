@@ -4,10 +4,13 @@
  * resolution and existence checks.
  */
 
+import fs from "node:fs/promises"
 import path from "node:path"
 import util from "node:util"
 
-import File from "./File.js"
+import FS from "./FS.js"
+import FileObject from "./FileObject.js"
+import Sass from "./Sass.js"
 
 /**
  * DirectoryObject encapsulates metadata and operations for a directory,
@@ -23,7 +26,7 @@ import File from "./File.js"
  * @property {boolean} isDirectory - Always true
  * @property {Promise<boolean>} exists - Whether the directory exists (async)
  */
-export default class DirectoryObject {
+export default class DirectoryObject extends FS {
   /**
    * @type {object}
    * @private
@@ -54,10 +57,12 @@ export default class DirectoryObject {
    * @param {string} directory - The directory path
    */
   constructor(directory) {
-    const fixedDir = File.fixSlashes(directory ?? ".")
+    super(directory)
+
+    const fixedDir = FS.fixSlashes(directory ?? ".")
     const absolutePath = path.resolve(fixedDir)
-    const fileUri = File.pathToUri(absolutePath)
-    const filePath = File.uriToPath(fileUri)
+    const fileUri = FS.pathToUri(absolutePath)
+    const filePath = FS.uriToPath(fileUri)
     const baseName = path.basename(absolutePath) || "."
 
     this.#meta.supplied = fixedDir
@@ -112,7 +117,7 @@ export default class DirectoryObject {
    * @returns {Promise<boolean>} - A Promise that resolves to true or false
    */
   get exists() {
-    return File.directoryExists(this)
+    return this.#directoryExists()
   }
 
   /**
@@ -185,5 +190,67 @@ export default class DirectoryObject {
    */
   get isDirectory() {
     return this.#meta.isDirectory
+  }
+
+  /**
+   * Check if a directory exists
+   *
+   * @returns {Promise<boolean>} Whether the directory exists
+   */
+  async #directoryExists() {
+    try {
+      (await fs.opendir(this.path)).close()
+
+      return true
+    } catch(_) {
+      return false
+    }
+  }
+
+  /**
+   * Lists the contents of a directory.
+   *
+   * @param {DirectoryObject} directory - The directory to list.
+   * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} The files and directories in the directory.
+   */
+  async read(directory) {
+    const found = await fs.readdir(directory.uri, {withFileTypes: true})
+    const results = await Promise.all(
+      found.map(async dirent => {
+        const fullPath = path.join(directory.uri, dirent.name)
+        const stat = await fs.stat(fullPath)
+
+        return {dirent, stat, fullPath}
+      }),
+    )
+
+    const files = results
+      .filter(({stat}) => stat.isFile())
+      .map(({fullPath}) => new FileObject(fullPath))
+
+    const directories = results
+      .filter(({stat}) => stat.isDirectory())
+      .map(({fullPath}) => new DirectoryObject(fullPath))
+
+    return {files, directories}
+  }
+
+  /**
+   * Ensures a directory exists, creating it if necessary
+   *
+   * @async
+   * @param {object} [options] - Any options to pass to mkdir
+   * @returns {Promise<void>}
+   * @throws {Sass} If directory creation fails
+   */
+  async assureExists(options = {}) {
+    if(await this.exists)
+      return
+
+    try {
+      await fs.mkdir(this.path, options)
+    } catch(e) {
+      throw Sass.new(`Unable to create directory '${this.path}': ${e.message}`)
+    }
   }
 }
