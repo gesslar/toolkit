@@ -233,7 +233,7 @@ export default class File {
     const found = await fs.readdir(directory.uri, {withFileTypes: true})
     const results = await Promise.all(
       found.map(async dirent => {
-        const fullPath = path.join(directory, dirent.name)
+        const fullPath = path.join(directory.path, dirent.name)
         const stat = await fs.stat(fullPath)
 
         return {dirent, stat, fullPath}
