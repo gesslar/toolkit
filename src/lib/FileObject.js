@@ -68,7 +68,7 @@ export default class FileObject {
 
     const final = path.isAbsolute(fixedFile)
       ? fixedFile
-      : path.resolve(directory.path, fixedFile)
+      : path.resolve(directory?.path ?? ".", fixedFile)
 
     const resolved = final
     const fileUri = File.pathToUri(resolved)
