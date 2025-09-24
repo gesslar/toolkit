@@ -7,7 +7,9 @@ export default [
   js.configs.recommended,
   jsdoc.configs['flat/recommended'], {
     name: "gesslar/uglier/ignores",
-    ignores: [],
+    ignores: [
+      "docs/**",
+    ],
   }, {
     name: "gesslar/uglier/languageOptions",
     languageOptions: {

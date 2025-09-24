@@ -9,16 +9,36 @@
  * The Glog class uses a proxy to enable both class-style and function-style
  * usage patterns, making it convenient for different coding preferences.
  *
+ * Log levels range from 0 (critical/always shown) to 5 (verbose debug).
+ * Messages with levels higher than the configured threshold are filtered out.
+ *
  * @example
  * ```typescript
- * // Set up logging configuration
+ * import { Glog } from '@gesslar/toolkit'
+ *
+ * // Configure logging once at startup
  * Glog.setLogLevel(3).setLogPrefix('[MyApp]')
  *
- * // Log messages with different levels
- * Glog(0, 'Critical error')  // Always shown
- * Glog(2, 'Debug info')      // Shown if logLevel >= 2
- * Glog('Simple message')     // Level 0 by default
+ * // Use as a function (most common)
+ * Glog(0, 'Critical error - system failure!')  // Always shown
+ * Glog(1, 'Warning: deprecated API used')      // Shown if level >= 1
+ * Glog(2, 'Info: processing user request')     // Shown if level >= 2
+ * Glog(3, 'Debug: cache hit for key:', key)    // Shown if level >= 3
+ * Glog('Simple message')                       // Level 0 by default
+ *
+ * // Method chaining for configuration
+ * Glog.setLogLevel(2)
+ *     .setLogPrefix('[API]')
+ *
+ * // Different contexts can use different prefixes
+ * const dbLogger = Glog.setLogPrefix('[DB]')
+ * const apiLogger = Glog.setLogPrefix('[API]')
  * ```
+ *
+ * @remarks
+ * The proxy implementation allows Glog to be called directly as a function
+ * while still providing static methods for configuration. This makes it
+ * extremely convenient for quick logging without ceremony.
  */
 interface GlogInterface {
   /**
@@ -57,7 +77,7 @@ interface GlogInterface {
 interface GlogCallable {
   /**
    * Log a message with optional level specification.
-   * 
+   *
    * @param args - Either (level: number, ...messages) or (...messages)
    */
   (...args: any[]): void
