@@ -74,4 +74,10 @@ export default class File {
 
   /** Compute relative path between two file system objects */
   static relativeOrAbsolutePath(from: FileObject | DirectoryObject, to: FileObject | DirectoryObject): string
+
+  /** Merge two paths by finding overlapping segments and combining them efficiently */
+  static mergeOverlappingPaths(path1: string, path2: string, sep?: string): string
+
+  /** Resolve a path relative to another path using various strategies. Handles absolute paths, relative navigation, and overlap-based merging */
+  static resolvePath(fromPath: string, toPath: string): string
 }

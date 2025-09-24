@@ -340,4 +340,75 @@ export default class File {
       ? to.path
       : relative
   }
+
+  /**
+   * Merge two paths by finding overlapping segments and combining them efficiently
+   *
+   * @param {string} path1 - The first path
+   * @param {string} path2 - The second path to merge with the first
+   * @param {string} [sep] - The path separator to use (defaults to system separator)
+   * @returns {string} The merged path
+   */
+  static mergeOverlappingPaths(path1, path2, sep=path.sep) {
+    const from = path1.split(sep).filter(Boolean)
+    const to = path2.split(sep).filter(Boolean)
+
+    // If they're the same, just return path1
+    if(to.length === from.length && from.every((f, i) => to[i] === f)) {
+      return path1
+    }
+
+    const overlapIndex = from.findLastIndex((curr, index) => {
+      const left = from.at(index)
+      const right = to.at(0)
+
+      return left === right
+    })
+
+    // If overlap is found, slice and join
+    if(overlapIndex !== -1) {
+      const prefix = from.slice(0, overlapIndex)
+
+      return path.join(...prefix, ...to)
+    }
+
+    // If no overlap, just join the paths
+    return path.join(path1, path2)
+  }
+
+  /**
+   * Resolve a path relative to another path using various strategies
+   * Handles absolute paths, relative navigation, and overlap-based merging
+   *
+   * @param {string} fromPath - The base path to resolve from
+   * @param {string} toPath - The target path to resolve
+   * @returns {string} The resolved path
+   */
+  static resolvePath(fromPath, toPath) {
+    // Normalize inputs
+    const from = fromPath.trim()
+    const to = toPath.trim()
+
+    // Handle empty cases
+    if(!from && !to)
+      return ""
+
+    if(!from)
+      return to
+
+    if(!to)
+      return from
+
+    // Strategy 1: If 'to' is absolute, it's standalone
+    if(path.isAbsolute(to))
+      return to
+
+    // Strategy 2: If 'to' contains relative navigation (./ or ../)
+    if(to.includes("./") || to.includes("../") || to.startsWith(".") || to.startsWith(".."))
+      return path.resolve(from, to)
+
+    // Strategy 3: Try overlap-based merging, which will default to a basic
+    // join if no overlap
+    return File.mergeOverlappingPaths(from, to)
+  }
 }
