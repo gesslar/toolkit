@@ -565,4 +565,45 @@ export default class Data {
   static clamped(val, min, max) {
     return val >= min && val <= max
   }
+
+  /**
+   * Checks if a value is a plain object - created with object literals {},
+   * new Object(), or Object.create(null).
+   *
+   * Distinguishes plain objects from objects created by custom constructors, built-ins,
+   * or primitives. Plain objects only have Object.prototype or null in their prototype chain.
+   *
+   * @param {unknown} value - The value to check
+   * @returns {boolean} True if the value is a plain object, false otherwise
+   *
+   * @example
+   * isPlainObject({}) // true
+   * isPlainObject(new Object()) // true
+   * isPlainObject(Object.create(null)) // true
+   * isPlainObject([]) // false
+   * isPlainObject(new Date()) // false
+   * isPlainObject(null) // false
+   * isPlainObject("string") // false
+   * isPlainObject(class Person{}) // false
+   */
+  static isPlainObject(value) {
+    // First, check if it's an object and not null
+    if(typeof value !== "object" || value === null)
+      return false
+
+    // If it has no prototype, it's plain (created with Object.create(null))
+    const proto = Object.getPrototypeOf(value)
+
+    if(proto === null)
+      return true
+
+    // Check if the prototype chain ends at Object.prototype
+    // This handles objects created with {} or new Object()
+    let current = proto
+
+    while(Object.getPrototypeOf(current) !== null)
+      current = Object.getPrototypeOf(current)
+
+    return proto === current
+  }
 }

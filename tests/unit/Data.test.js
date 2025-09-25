@@ -333,6 +333,94 @@ describe("Data", () => {
       assert.equal(Data.clamped(0, 1, 10), false)
       assert.equal(Data.clamped(11, 1, 10), false)
     })
+
+    it("isPlainObject identifies plain objects correctly", () => {
+      // Plain objects should return true
+      assert.equal(Data.isPlainObject({}), true)
+      assert.equal(Data.isPlainObject(new Object()), true)
+      assert.equal(Data.isPlainObject(Object.create(null)), true)
+      assert.equal(Data.isPlainObject({a: 1, b: 2}), true)
+      assert.equal(Data.isPlainObject({nested: {object: true}}), true)
+
+      // Non-object types should return false
+      assert.equal(Data.isPlainObject(null), false)
+      assert.equal(Data.isPlainObject(undefined), false)
+      assert.equal(Data.isPlainObject("string"), false)
+      assert.equal(Data.isPlainObject(123), false)
+      assert.equal(Data.isPlainObject(true), false)
+      assert.equal(Data.isPlainObject(Symbol("test")), false)
+      assert.equal(Data.isPlainObject(BigInt(123)), false)
+
+      // Built-in objects should return false
+      assert.equal(Data.isPlainObject([]), false)
+      assert.equal(Data.isPlainObject([1, 2, 3]), false)
+      assert.equal(Data.isPlainObject(new Date()), false)
+      assert.equal(Data.isPlainObject(/regex/), false)
+      assert.equal(Data.isPlainObject(new RegExp("test")), false)
+      assert.equal(Data.isPlainObject(new Error("test")), false)
+      assert.equal(Data.isPlainObject(new Map()), false)
+      assert.equal(Data.isPlainObject(new Set()), false)
+      assert.equal(Data.isPlainObject(new WeakMap()), false)
+      assert.equal(Data.isPlainObject(new WeakSet()), false)
+      assert.equal(Data.isPlainObject(Promise.resolve()), false)
+      assert.equal(Data.isPlainObject(new Int8Array()), false)
+      assert.equal(Data.isPlainObject(new Float32Array()), false)
+
+      // Functions should return false
+      assert.equal(Data.isPlainObject(function() {}), false)
+      assert.equal(Data.isPlainObject(() => {}), false)
+      assert.equal(Data.isPlainObject(async function() {}), false)
+      assert.equal(Data.isPlainObject(function* generator() {}), false)
+
+      // Custom constructor instances should return false
+      class CustomClass {
+        constructor() {
+          this.prop = "value"
+        }
+      }
+      assert.equal(Data.isPlainObject(new CustomClass()), false)
+
+      // Objects with custom prototypes should return false
+      const proto = { customProto: true }
+      const customObj = Object.create(proto)
+      assert.equal(Data.isPlainObject(customObj), false)
+
+      // Edge case: Object.create(Object.prototype) should be plain
+      assert.equal(Data.isPlainObject(Object.create(Object.prototype)), true)
+    })
+
+    it("isPlainObject handles edge cases and complex prototype chains", () => {
+      // Test objects created with Object.setPrototypeOf
+      const obj1 = {}
+      Object.setPrototypeOf(obj1, { custom: true })
+      assert.equal(Data.isPlainObject(obj1), false)
+
+      // Test objects with null prototype are considered plain
+      const nullProtoObj = Object.create(null)
+      nullProtoObj.prop = "value"
+      assert.equal(Data.isPlainObject(nullProtoObj), true)
+
+      // Test deeply nested prototype chain that ends at Object.prototype
+      const deepProtoObj = Object.create(Object.prototype)
+      assert.equal(Data.isPlainObject(deepProtoObj), true)
+
+      // Test object with multiple prototype levels (should be false)
+      const level1 = { level: 1 }
+      const level2 = Object.create(level1)
+      const level3 = Object.create(level2)
+      assert.equal(Data.isPlainObject(level3), false)
+
+      // Test object created via Object.assign
+      const assigned = Object.assign({}, { a: 1 })
+      assert.equal(Data.isPlainObject(assigned), true)
+
+      // Test frozen objects (should still be plain if originally plain)
+      const frozenPlain = Object.freeze({ a: 1 })
+      assert.equal(Data.isPlainObject(frozenPlain), true)
+
+      const frozenCustom = Object.freeze(new Date())
+      assert.equal(Data.isPlainObject(frozenCustom), false)
+    })
   })
 
   describe("edge cases and error handling", () => {
