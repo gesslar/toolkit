@@ -24,7 +24,7 @@ declare class Cache {
    * @returns The parsed file data (JSON5 or YAML)
    * @throws If the file cannot be found or accessed
    */
-  loadCachedData(fileObject: FileObject): Promise<object>
+  loadCachedData(fileObject: FileObject): Promise<unknown>
 }
 
 export default Cache

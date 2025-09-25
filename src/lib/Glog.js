@@ -21,9 +21,9 @@ import console from "node:console"
  */
 class Glog {
   /** @type {number} Current log level threshold (0-5) */
-  logLevel = 0
+  static logLevel = 0
   /** @type {string} Prefix to prepend to all log messages */
-  logPrefix = ""
+  static logPrefix = ""
 
   /**
    * Sets the log prefix for all subsequent log messages.
@@ -39,7 +39,7 @@ class Glog {
   static setLogPrefix(prefix) {
     this.logPrefix = prefix
 
-    return Glog
+    return this
   }
 
   /**
@@ -57,7 +57,7 @@ class Glog {
   static setLogLevel(level) {
     this.logLevel = Data.clamp(level, 0, 5)
 
-    return Glog
+    return this
   }
 
   /**
@@ -75,11 +75,11 @@ class Glog {
     let level, rest
 
     if(args.length === 0) {
-      ;[level=0, rest=[""]] = null
+      ;[level=0, rest=[""]] = []
     } else if(args.length === 1) {
       ;[rest, level=0] = [args, 0]
     } else {
-      ;[level, ...rest] = args
+      ;[level, ...rest] = typeof args[0] === "number" ? args : [0, ...args]
     }
 
     if(level > this.logLevel)
@@ -123,10 +123,18 @@ class Glog {
 // Wrap the class in a proxy
 export default new Proxy(Glog, {
   apply(target, thisArg, argumentsList) {
-    // When called as function: MyClass(things, and, stuff)
+    // When called as function: call execute method internally
     return target.execute(...argumentsList)
   },
   construct(target, argumentsList) {
     return new target(...argumentsList)
+  },
+  get(target, prop) {
+    // Hide execute method from public API
+    if(prop === "execute") {
+      return undefined
+    }
+
+    return target[prop]
   }
 })
