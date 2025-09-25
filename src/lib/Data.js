@@ -20,6 +20,7 @@ export default class Data {
   static primitives = Object.freeze([
   // Primitives
     "undefined",
+    "null",
     "boolean",
     "number",
     "bigint",
@@ -196,10 +197,18 @@ export default class Data {
     const result = {}
 
     for(const [key, value] of Object.entries(obj)) {
-      if(Data.isType(value, "object"))
+      if(Data.isType(value, "array")) {
+        // Clone arrays by mapping over them
+        result[key] = value.map(item =>
+          Data.isType(item, "object") || Data.isType(item, "array")
+            ? Data.cloneObject(item)
+            : item
+        )
+      } else if(Data.isType(value, "object")) {
         result[key] = Data.cloneObject(value)
-      else
+      } else {
         result[key] = value
+      }
     }
 
     return freeze ? Object.freeze(result) : result
@@ -340,30 +349,16 @@ export default class Data {
       return false
 
     const valueType = Data.typeOf(value)
+    const normalizedType = type.toLowerCase()
 
-    switch(type.toLowerCase()) {
-      case "array":
-        return Array.isArray(value) // Native array check
-      case "string":
-        return valueType === "string"
-      case "boolean":
-        return valueType === "boolean"
+    // Special cases that need extra validation
+    switch(normalizedType) {
       case "number":
         return valueType === "number" && !isNaN(value) // Excludes NaN
       case "object":
-        return value !== null && valueType === "object" && !Array.isArray(value) // Excludes arrays and null
-      case "function":
-        return valueType === "function"
-      case "symbol":
-        return valueType === "symbol" // ES6 Symbol type
-      case "bigint":
-        return valueType === "bigint" // BigInt support
-      case "null":
-        return value === null // Explicit null check
-      case "undefined":
-        return valueType === "undefined" // Explicit undefined check
+        return valueType === "object" && value !== null && !Array.isArray(value) // Excludes arrays and null
       default:
-        return false // Unknown type
+        return valueType === normalizedType
     }
   }
 
@@ -374,7 +369,13 @@ export default class Data {
    * @returns {string} The type of the value
    */
   static typeOf(value) {
-    return Array.isArray(value) ? "array" : typeof value
+    if(value === null)
+      return "null"
+
+    if(Array.isArray(value))
+      return "array"
+
+    return typeof value
   }
 
   /**
@@ -397,10 +398,15 @@ export default class Data {
    * @returns {boolean} Whether the value is empty
    */
   static isEmpty(value, checkForNothing = true) {
-    const type = Data.typeOf(value)
-
     if(checkForNothing && Data.isNothing(value))
       return true
+
+    // When checkForNothing is false, null/undefined should not be treated as empty
+    // They should be processed like regular values
+    if(!checkForNothing && Data.isNothing(value))
+      return false
+
+    const type = Data.typeOf(value)
 
     if(!Data.emptyableTypes.includes(type))
       return false
@@ -409,6 +415,7 @@ export default class Data {
       case "array":
         return value.length === 0
       case "object":
+        // null was already handled above, so this should only be real objects
         return Object.keys(value).length === 0
       case "string":
         return value.trim().length === 0

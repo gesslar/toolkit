@@ -48,7 +48,6 @@ export default class DirectoryObject extends FS {
     extension: null,
     isFile: false,
     isDirectory: true,
-    directory: null,
   })
 
   /**
@@ -57,7 +56,7 @@ export default class DirectoryObject extends FS {
    * @param {string} directory - The directory path
    */
   constructor(directory) {
-    super(directory)
+    super()
 
     const fixedDir = FS.fixSlashes(directory ?? ".")
     const absolutePath = path.resolve(fixedDir)
@@ -214,10 +213,14 @@ export default class DirectoryObject extends FS {
    * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} The files and directories in the directory.
    */
   async read(directory) {
-    const found = await fs.readdir(directory.uri, {withFileTypes: true})
+    const found = await fs.readdir(
+      new URL(directory.uri),
+      {withFileTypes: true}
+    )
+
     const results = await Promise.all(
       found.map(async dirent => {
-        const fullPath = path.join(directory.uri, dirent.name)
+        const fullPath = path.join(directory.path, dirent.name)
         const stat = await fs.stat(fullPath)
 
         return {dirent, stat, fullPath}

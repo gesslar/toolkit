@@ -1,4 +1,3 @@
-import File from "./FS.js"
 import FileObject from "./FileObject.js"
 import Sass from "./Sass.js"
 
@@ -41,11 +40,11 @@ export default class Cache {
    * parallel processing.
    *
    * @param {FileObject} fileObject - The file object to load and cache
-   * @returns {Promise<object>} The parsed file data (JSON5 or YAML)
+   * @returns {Promise<unknown>} The parsed file data (JSON5 or YAML)
    * @throws {Sass} If the file cannot be found or accessed
    */
   async loadCachedData(fileObject) {
-    const lastModified = await File.fileModified(fileObject)
+    const lastModified = await fileObject.modified()
 
     if(lastModified === null)
       throw Sass.new(`Unable to find file '${fileObject.path}'`)
@@ -64,7 +63,7 @@ export default class Cache {
       }
     }
 
-    const data = await File.loadDataFile(fileObject)
+    const data = await fileObject.loadData()
 
     this.#modifiedTimes.set(fileObject.path, lastModified)
     this.#dataCache.set(fileObject.path, data)

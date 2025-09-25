@@ -123,6 +123,7 @@ export default class FS {
    * @returns {string} The merged path
    */
   static mergeOverlappingPaths(path1, path2, sep=path.sep) {
+    const isAbsolutePath1 = path.isAbsolute(path1)
     const from = path1.split(sep).filter(Boolean)
     const to = path2.split(sep).filter(Boolean)
 
@@ -131,18 +132,17 @@ export default class FS {
       return path1
     }
 
-    const overlapIndex = from.findLastIndex((curr, index) => {
-      const left = from.at(index)
-      const right = to.at(0)
-
-      return left === right
-    })
+    const overlapIndex = from.findLastIndex(curr => curr === to.at(0))
 
     // If overlap is found, slice and join
     if(overlapIndex !== -1) {
       const prefix = from.slice(0, overlapIndex)
+      const result = path.join(...prefix, ...to)
 
-      return path.join(...prefix, ...to)
+      // If original path1 was absolute, ensure result is also absolute
+      return isAbsolutePath1 && !path.isAbsolute(result)
+        ? path.sep + result
+        : result
     }
 
     // If no overlap, just join the paths
@@ -159,8 +159,8 @@ export default class FS {
    */
   static resolvePath(fromPath, toPath) {
     // Normalize inputs
-    const from = fromPath.trim()
-    const to = toPath.trim()
+    const from = fromPath?.trim() ?? ""
+    const to = toPath?.trim() ?? ""
 
     // Handle empty cases
     if(!from && !to)
@@ -172,16 +172,20 @@ export default class FS {
     if(!to)
       return from
 
-    // Strategy 1: If 'to' is absolute, it's standalone
-    if(path.isAbsolute(to))
-      return to
+    const normalizedTo = /^\.\//.test(to)
+      ? path.normalize(to)
+      : to
 
-    // Strategy 2: If 'to' contains relative navigation (./ or ../)
-    if(to.includes("./") || to.includes("../") || to.startsWith(".") || to.startsWith(".."))
-      return path.resolve(from, to)
+    // Strategy 1: If 'to' is absolute, it's standalone
+    if(path.isAbsolute(normalizedTo))
+      return normalizedTo
+
+    // Strategy 2: If 'to' contains relative navigation
+    if(to.startsWith("../"))
+      return path.resolve(from, normalizedTo)
 
     // Strategy 3: Try overlap-based merging, which will default to a basic
     // join if no overlap
-    return FS.mergeOverlappingPaths(from, to)
+    return FS.mergeOverlappingPaths(from, normalizedTo)
   }
 }

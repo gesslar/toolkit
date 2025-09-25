@@ -1,0 +1,6 @@
+valid: start
+broken_indent:
+  - item1
+ - item2  # Invalid indentation
+incomplete:
+  - value: [unclosed

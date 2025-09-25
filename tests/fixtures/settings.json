@@ -1,0 +1,52 @@
+{
+  "eslint.format.enable": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[xml]": {
+    "editor.defaultFormatter": "redhat.vscode-xml"
+  },
+  "eslint.options": {
+    "overrideConfigFile": "eslint.config.mjs"
+  },
+  "eslint.useFlatConfig": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.trimFinalNewlines": true,
+  "files.eol": "\n",
+  "editor.tabSize": 2,
+  "github.copilot.enable": {
+    "*": false
+  },
+  "editor.fontFamily": "MonoLisa Variable",
+  // When lineHeight is set to zero, VS Code will figure out the
+  // the height automatically based on the font
+  "editor.lineHeight": 0,
+  "workbench.tree.renderIndentGuides": "always",
+  "zenMode.hideActivityBar": true,
+  "workbench.colorCustomizations": {
+    "panel.background": "#0d0d0d",
+    "panel.border": "#007ba12d",
+    "panel.dropBorder": "#00000000",
+    "panelTitle.activeBorder": "#007ba1",
+    "panelTitle.activeForeground": "#bebebe",
+    "panelTitle.inactiveForeground": "#808080",
+    "panelTitle.border": "#007ba12d",
+    "panelTitleBadge.background": "#35566d",
+    "panelTitleBadge.foreground": "#f5f5f5",
+    "panelSectionHeader.background": "#080808",
+    "panelSectionHeader.foreground": "#b1b1b1",
+    "panelSectionHeader.border": "#007ba12d",
+    "panelSection.border": "#007ba12d",
+    "panelSection.dropBackground": "#007ba140",
+    "panelInput.border": "#007ba1",
+    "panelStickyScroll.background": "#0a0a0ae6",
+    "panelStickyScroll.border": "#00000000",
+    "panelStickyScroll.shadow": "#007ba130",
+  },
+}

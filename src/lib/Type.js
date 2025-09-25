@@ -156,20 +156,33 @@ export default class TypeSpec {
     const matchingTypeSpec = this.filter(spec => {
       const {typeName: allowedType, array: allowedArray} = spec
 
-      if(valueType === allowedType && !isArray && !allowedArray)
-        return !allowEmpty ? !empty : true
+      // Handle non-array values
+      if(!isArray && !allowedArray) {
+        if(valueType === allowedType)
+          return allowEmpty || !empty
 
+        return false
+      }
+
+      // Handle array values
       if(isArray) {
-        if(allowedType === "array")
-          if(!allowedArray)
-            return true
+        // Special case for generic "array" type
+        if(allowedType === "array" && !allowedArray)
+          return allowEmpty || !empty
 
+        // Must be an array type specification
+        if(!allowedArray)
+          return false
+
+        // Handle empty arrays
         if(empty)
-          if(allowEmpty)
-            return true
+          return allowEmpty
 
+        // Check if array elements match the required type
         return Data.isArrayUniform(value, allowedType)
       }
+
+      return false
     })
 
     return matchingTypeSpec.length > 0

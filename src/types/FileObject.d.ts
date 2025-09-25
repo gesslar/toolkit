@@ -4,6 +4,14 @@ import DirectoryObject from './DirectoryObject.js'
 import FS from './FS.js'
 
 /**
+ * Configuration for data loading parsers in loadData method.
+ * Maps supported data types to their respective parser functions.
+ */
+export interface DataLoaderConfig {
+  [type: string]: Array<{ parse: (content: string) => unknown }>
+}
+
+/**
  * FileObject encapsulates metadata and operations for a file, providing intelligent
  * path resolution, metadata extraction, and file system operations. This class serves
  * as the primary abstraction for file handling in the toolkit.
@@ -101,6 +109,12 @@ import FS from './FS.js'
  * file operations.
  */
 export default class FileObject extends FS {
+  /**
+   * Configuration for data parsing in the loadData method.
+   * Maps data type names to arrays of parser functions.
+   */
+  static readonly dataLoaderConfig: DataLoaderConfig
+
   /**
    * Create a new FileObject instance with intelligent path resolution.
    *
@@ -311,5 +325,5 @@ export default class FileObject extends FS {
   write(content: string, encoding?: string): Promise<void>
 
   /** Load an object from JSON5 or YAML file with type specification */
-  loadData(type?: 'json' | 'json5' | 'yaml' | 'any', encoding?: string): Promise<any>
+  loadData(type?: 'json' | 'json5' | 'yaml' | 'any', encoding?: string): Promise<unknown>
 }

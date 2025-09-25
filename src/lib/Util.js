@@ -98,7 +98,7 @@ export default class Util {
           .reduce((acc, curr) => acc.sign === "--" ? acc : curr, {})
           ?.option
       })
-      .filter(Boolean)
+      .filter(option => option && /^[a-zA-Z0-9]/.test(option)) // Filter out options that don't start with alphanumeric
   }
 
   /**
@@ -184,6 +184,11 @@ export default class Util {
     } catch(error) {
       const argsDesc = args.length > 0 ? `with arguments: ${args.map(String).join(", ")}` : "with no arguments"
 
+      // If it's already a Sass error, just re-throw to avoid double-wrapping
+      if(error instanceof Sass) {
+        throw error
+      }
+
       throw Sass.new(
         `Processing '${event}' event ${argsDesc}.`,
         error
@@ -213,6 +218,11 @@ export default class Util {
       await this.#performAsyncEmit(emitter, event, ...args)
     } catch(error) {
       const argsDesc = args.length > 0 ? `with arguments: ${args.map(String).join(", ")}` : "with no arguments"
+
+      // If it's already a Sass error, just re-throw to avoid double-wrapping
+      if(error instanceof Sass) {
+        throw error
+      }
 
       throw Sass.new(
         `Processing '${event}' event ${argsDesc}.`,

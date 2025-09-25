@@ -33,6 +33,19 @@ import Valid from "./Valid.js"
 
 export default class FileObject extends FS {
   /**
+   * Configuration mapping data types to their respective parser modules for loadData method.
+   * Each parser module must have a .parse() method that accepts a string and returns parsed data.
+   *
+   * @type {{[key: string]: Array<typeof JSON5 | typeof YAML>}}
+   */
+  static dataLoaderConfig = Object.freeze({
+    json5: [JSON5],
+    json: [JSON5],
+    yaml: [YAML],
+    any: [JSON5, YAML]
+  })
+
+  /**
    * @type {object}
    * @private
    * @property {string|null} supplied - User-supplied path
@@ -64,18 +77,23 @@ export default class FileObject extends FS {
    * @param {DirectoryObject|string|null} [directory] - The parent directory (object or string)
    */
   constructor(fileName, directory=null) {
-    super(fileName, directory)
+    super()
+
+    if(!fileName || typeof fileName !== "string" || fileName.length === 0) {
+      throw Sass.new("fileName must be a non-empty string")
+    }
 
     const fixedFile = FS.fixSlashes(fileName)
 
     const {dir,base,ext} = this.#deconstructFilenameToParts(fixedFile)
 
-    if(!directory)
+    if(!directory) {
       directory = new DirectoryObject(dir)
+    } else if(typeof directory === "string") {
+      directory = new DirectoryObject(directory)
+    }
 
-    const final = path.isAbsolute(fixedFile)
-      ? fixedFile
-      : path.resolve(directory?.path ?? ".", fixedFile)
+    const final = FS.resolvePath(directory?.path ?? ".", fixedFile)
 
     const resolved = final
     const fileUri = FS.pathToUri(resolved)
@@ -99,6 +117,9 @@ export default class FileObject extends FS {
    *
    * @returns {string} string representation of the FileObject
    */
+  toString() {
+    return `[FileObject: ${this.path}]`
+  }
 
   /**
    * Returns a JSON representation of the FileObject.
@@ -360,7 +381,7 @@ export default class FileObject extends FS {
    *
    * @param {string} [type] - The expected type of data to parse.
    * @param {string} [encoding] - The encoding to read the file as.
-   * @returns {object} The parsed data object.
+   * @returns {Promise<unknown>} The parsed data object.
    */
   async loadData(type="any", encoding="utf8") {
     const content = await this.read(encoding)
@@ -371,7 +392,11 @@ export default class FileObject extends FS {
       any: [JSON5,YAML]
     }[type.toLowerCase()]
 
-    for(const [format] of toTry) {
+    if(!toTry) {
+      throw Sass.new(`Unsupported data type '${type}'. Supported types: json, json5, yaml, any`)
+    }
+
+    for(const format of toTry) {
       try {
         const result = format.parse(content)
 

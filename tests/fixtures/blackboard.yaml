@@ -1,0 +1,31 @@
+# Theme Config
+config:
+  $schema: vscode://schemas/color-theme
+  name: blackboard
+  type: dark
+
+  import:
+    - ../import/palette.yaml
+    - ../import/variables.yaml
+    - ../import/colors.yaml
+    - ../import/tokenColors-$(type).yaml
+
+  custom:
+    semanticHighlighting: true
+    colorSpaceName: sRGB
+
+vars:
+  main: $colors.white
+  inverse: invert($main)
+
+  # The following define primary basics that can be relied upon by the
+  # variables definitions. Dark and light themes will define these
+  # differently. Anything expressed here will override anything being
+  # imported.
+
+  theme:
+    fg: $main
+    bg: $colors.black
+    accent: $colors.blue
+    accentSecondary: $colors.teal
+    shadow: alpha($theme.accent, 0.25)
