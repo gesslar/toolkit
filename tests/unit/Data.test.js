@@ -1,7 +1,7 @@
-import { describe, it } from "node:test"
 import assert from "node:assert/strict"
+import {describe,it} from "node:test"
 
-import { Data, Sass, Type } from "../../src/index.js"
+import {Data,Sass,Type} from "../../src/index.js"
 
 describe("Data", () => {
   describe("static properties", () => {
@@ -84,7 +84,7 @@ describe("Data", () => {
       assert.deepEqual(Data.arrayPad([1, 2], 4, 0), [0, 0, 1, 2]) // prepend by default
       assert.deepEqual(Data.arrayPad([1, 2], 4, 0, -1), [1, 2, 0, 0]) // append
       assert.deepEqual(Data.arrayPad([1, 2, 3], 2, 0), [1, 2, 3]) // no change if already long enough
-      
+
       assert.throws(() => {
         Data.arrayPad([1, 2], 4, 0, 1) // invalid position
       }, Sass)
@@ -99,7 +99,7 @@ describe("Data", () => {
       assert.deepEqual(cloned, original)
       assert.notStrictEqual(cloned, original)
       assert.notStrictEqual(cloned.b, original.b)
-      
+
       // Modify original to verify independence
       original.b.c = 99
       assert.equal(cloned.b.c, 2) // unchanged
@@ -124,7 +124,7 @@ describe("Data", () => {
     it("assureObjectPath creates nested structure", () => {
       const obj = {}
       const result = Data.assureObjectPath(obj, ["a", "b", "c"])
-      
+
       assert.deepEqual(obj, { a: { b: { c: {} } } })
       assert.strictEqual(result, obj.a.b.c)
     })
@@ -132,9 +132,9 @@ describe("Data", () => {
     it("setNestedValue sets deep property values", () => {
       const obj = {}
       Data.setNestedValue(obj, ["a", "b", "c"], "value")
-      
+
       assert.deepEqual(obj, { a: { b: { c: "value" } } })
-      
+
       // Update existing path
       Data.setNestedValue(obj, ["a", "b", "d"], "other")
       assert.equal(obj.a.b.d, "other")
@@ -147,7 +147,7 @@ describe("Data", () => {
 
       const expected = { a: 1, b: { c: 4, d: 3, e: 5 }, f: 6 }
       assert.deepEqual(result, expected)
-      
+
       // Arrays are replaced, not merged
       const arr1 = { a: [1, 2] }
       const arr2 = { a: [3, 4] }
@@ -205,7 +205,7 @@ describe("Data", () => {
   describe("mapObject", () => {
     it("transforms object values with async function", async () => {
       const original = { a: 1, b: 2, c: { d: 3 } }
-      const transformer = async (key, value) => 
+      const transformer = async (key, value) =>
         typeof value === "number" ? value * 2 : value
 
       const result = await Data.mapObject(original, transformer)
@@ -291,13 +291,13 @@ describe("Data", () => {
       assert.equal(Data.isEmpty("   "), true) // whitespace-only
       assert.equal(Data.isEmpty([]), true)
       assert.equal(Data.isEmpty({}), true)
-      
+
       // Non-empty values
       assert.equal(Data.isEmpty("hello"), false)
       assert.equal(Data.isEmpty([1]), false)
       assert.equal(Data.isEmpty({ a: 1 }), false)
       assert.equal(Data.isEmpty(0), false) // number not emptyable
-      
+
       // Without checkForNothing
       assert.equal(Data.isEmpty(null, false), false)
       assert.equal(Data.isEmpty(undefined, false), false)

@@ -1,33 +1,33 @@
-import { describe, it, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
 import path from "node:path"
+import {afterEach,beforeEach,describe,it} from "node:test"
 
-import { FS, FileObject, Sass, fdType, upperFdTypes, fdTypes } from "../../src/index.js"
-import { TestUtils } from "../helpers/test-utils.js"
+import {FS,FileObject,Sass} from "../../src/index.js"
+import {TestUtils} from "../helpers/test-utils.js"
 
 describe("FS", () => {
 
   describe("file descriptor types", () => {
     it("fdTypes contains expected lowercase types", () => {
-      assert.deepEqual(fdTypes, ["file", "directory"])
-      assert.ok(Object.isFrozen(fdTypes))
+      assert.deepEqual(FS.fdTypes, ["file", "directory"])
+      assert.ok(Object.isFrozen(FS.fdTypes))
     })
 
     it("upperFdTypes contains expected uppercase types", () => {
-      assert.deepEqual(upperFdTypes, ["FILE", "DIRECTORY"])
-      assert.ok(Object.isFrozen(upperFdTypes))
+      assert.deepEqual(FS.upperFdTypes, ["FILE", "DIRECTORY"])
+      assert.ok(Object.isFrozen(FS.upperFdTypes))
     })
 
     it("fdType maps uppercase to lowercase types", () => {
-      assert.equal(fdType.FILE, "file")
-      assert.equal(fdType.DIRECTORY, "directory")
-      assert.ok(Object.isFrozen(fdType))
+      assert.equal(FS.fdType.FILE, "file")
+      assert.equal(FS.fdType.DIRECTORY, "directory")
+      assert.ok(Object.isFrozen(FS.fdType))
     })
 
     it("fdType has correct structure", () => {
-      assert.equal(Object.keys(fdType).length, 2)
-      assert.ok("FILE" in fdType)
-      assert.ok("DIRECTORY" in fdType)
+      assert.equal(Object.keys(FS.fdType).length, 2)
+      assert.ok("FILE" in FS.fdType)
+      assert.ok("DIRECTORY" in FS.fdType)
     })
   })
 

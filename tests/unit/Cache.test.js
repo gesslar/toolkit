@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import {describe, it, before, after, beforeEach} from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import {after,before,beforeEach,describe,it} from 'node:test'
 
 import Cache from '../../src/lib/Cache.js'
 import FileObject from '../../src/lib/FileObject.js'
@@ -24,11 +24,11 @@ describe('Cache', () => {
     yamlFile = new FileObject('palette.yaml', fixturesDir)
     brokenJsonFile = new FileObject('broken.json5', fixturesDir)
     brokenYamlFile = new FileObject('broken.yaml', fixturesDir)
-    
+
     // Create a temporary directory for test files that need modification
     testDir = path.join(process.cwd(), 'test-cache-files')
     await fs.mkdir(testDir, { recursive: true })
-    
+
     nonExistentFile = new FileObject(path.join(testDir, 'does-not-exist.json'))
   })
 
@@ -63,7 +63,7 @@ describe('Cache', () => {
   describe('loadCachedData', () => {
     it('loads and caches JSON data', async () => {
       const data = await cache.loadCachedData(jsonFile)
-      
+
       assert.equal(typeof data, 'object')
       assert.equal(data['eslint.format.enable'], true)
       assert.equal(data['editor.formatOnSave'], true)
@@ -72,7 +72,7 @@ describe('Cache', () => {
 
     it('loads and caches YAML data', async () => {
       const data = await cache.loadCachedData(yamlFile)
-      
+
       assert.equal(typeof data, 'object')
       assert.ok(data.vars)
       assert.ok(data.vars.colors)
@@ -83,10 +83,10 @@ describe('Cache', () => {
     it('returns cached data on subsequent calls', async () => {
       // First call - loads from file
       const data1 = await cache.loadCachedData(jsonFile)
-      
+
       // Second call - should return cached data
       const data2 = await cache.loadCachedData(jsonFile)
-      
+
       assert.deepEqual(data1, data2)
       assert.equal(data1['editor.tabSize'], 2)
     })
@@ -108,7 +108,7 @@ describe('Cache', () => {
       const originalContent = await fs.readFile(jsonFile.path, 'utf8')
       await fs.writeFile(copyPath, originalContent)
       const modifiableFile = new FileObject(copyPath)
-      
+
       // Load initial data
       const initialData = await cache.loadCachedData(modifiableFile)
       assert.equal(initialData['editor.tabSize'], 2)
@@ -136,7 +136,7 @@ describe('Cache', () => {
       // Both should be cached independently
       assert.equal(jsonData['editor.tabSize'], 2)
       assert.equal(yamlData.vars.colors.black, 'oklch(.145 0 0)')
-      
+
       // They have different structures
       assert.ok(jsonData['eslint.format.enable']) // JSON has this
       assert.equal(yamlData['eslint.format.enable'], undefined) // YAML doesn't
@@ -146,12 +146,12 @@ describe('Cache', () => {
   describe('cache consistency', () => {
     it('handles race conditions gracefully', async () => {
       // Simulate concurrent access
-      const promises = Array(5).fill(null).map(() => 
+      const promises = Array(5).fill(null).map(() =>
         cache.loadCachedData(jsonFile)
       )
 
       const results = await Promise.all(promises)
-      
+
       // All results should be identical
       results.forEach(result => {
         assert.deepEqual(result, results[0])
@@ -163,7 +163,7 @@ describe('Cache', () => {
       const copyPath = path.join(testDir, 'cleanup-test.json')
       await fs.writeFile(copyPath, '{"initial": true}')
       const modifiableFile = new FileObject(copyPath)
-      
+
       // Load data to populate cache
       await cache.loadCachedData(modifiableFile)
 
@@ -181,10 +181,10 @@ describe('Cache', () => {
     it('handles corrupted cache state gracefully', async () => {
       // This test simulates a scenario where modification time exists
       // but cached data doesn't (which shouldn't happen normally)
-      
+
       // Load data first to populate cache
       await cache.loadCachedData(jsonFile)
-      
+
       // File should load normally
       const data = await cache.loadCachedData(jsonFile)
       assert.equal(typeof data, 'object')
@@ -220,7 +220,7 @@ describe('Cache', () => {
           message: /Content is neither valid JSON5 nor valid YAML/
         }
       )
-      
+
       await assert.rejects(
         () => cache.loadCachedData(brokenYamlFile),
         {
