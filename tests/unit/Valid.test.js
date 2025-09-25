@@ -79,20 +79,20 @@ describe("Valid", () => {
     })
   })
 
-  describe("validType", () => {
+  describe("type", () => {
     it("passes for valid basic types", () => {
       // These should not throw
-      Valid.validType("hello", "string")
-      Valid.validType(123, "number")
-      Valid.validType(true, "boolean")
-      Valid.validType([], "array")
-      Valid.validType({}, "object")
-      Valid.validType(() => {}, "function")
+      Valid.type("hello", "string")
+      Valid.type(123, "number")
+      Valid.type(true, "boolean")
+      Valid.type([], "array")
+      Valid.type({}, "object")
+      Valid.type(() => {}, "function")
     })
 
     it("throws Sass error for invalid types", () => {
       assert.throws(() => {
-        Valid.validType(123, "string")
+        Valid.type(123, "string")
       }, (error) => {
         return error instanceof Sass &&
                error.message.includes("Invalid type") &&
@@ -100,7 +100,7 @@ describe("Valid", () => {
       })
 
       assert.throws(() => {
-        Valid.validType("hello", "number")
+        Valid.type("hello", "number")
       }, (error) => {
         return error instanceof Sass &&
                error.message.includes("Invalid type") &&
@@ -110,35 +110,35 @@ describe("Valid", () => {
 
     it("works with type specifications", () => {
       // Array types
-      Valid.validType([1, 2, 3], "number[]") // Should not throw
-      Valid.validType(["a", "b"], "string[]") // Should not throw
+      Valid.type([1, 2, 3], "number[]") // Should not throw
+      Valid.type(["a", "b"], "string[]") // Should not throw
 
       assert.throws(() => {
-        Valid.validType([1, "mixed"], "number[]")
+        Valid.type([1, "mixed"], "number[]")
       }, Sass)
     })
 
     it("works with union types", () => {
-      Valid.validType("hello", "string|number") // Should not throw
-      Valid.validType(123, "string|number") // Should not throw
+      Valid.type("hello", "string|number") // Should not throw
+      Valid.type(123, "string|number") // Should not throw
 
       assert.throws(() => {
-        Valid.validType(true, "string|number")
+        Valid.type(true, "string|number")
       }, Sass)
     })
 
     it("passes options to underlying type checking", () => {
       // Test with allowEmpty option
-      Valid.validType("", "string", { allowEmpty: true }) // Should not throw
+      Valid.type("", "string", { allowEmpty: true }) // Should not throw
 
       assert.throws(() => {
-        Valid.validType("", "string", { allowEmpty: false })
+        Valid.type("", "string", { allowEmpty: false })
       }, Sass)
     })
 
     it("provides detailed error messages", () => {
       assert.throws(() => {
-        Valid.validType([1, "mixed"], "number[]")
+        Valid.type([1, "mixed"], "number[]")
       }, (error) => {
         return error instanceof Sass &&
                error.message.includes("Invalid type") &&
@@ -168,9 +168,9 @@ describe("Valid", () => {
         }
       }
 
-      Valid.validType(complexObject, "object") // Should not throw
-      Valid.validType(complexObject.values, "number[]") // Should not throw
-      Valid.validType(complexObject.nested.flag, "boolean") // Should not throw
+      Valid.type(complexObject, "object") // Should not throw
+      Valid.type(complexObject.values, "number[]") // Should not throw
+      Valid.type(complexObject.nested.flag, "boolean") // Should not throw
     })
   })
 })
