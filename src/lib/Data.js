@@ -7,7 +7,7 @@
  */
 
 import Sass from "./Sass.js"
-import TypeSpec from "./Type.js"
+import TypeSpec from "./TypeSpec.js"
 import Valid from "./Valid.js"
 
 export default class Data {

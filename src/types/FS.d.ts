@@ -29,3 +29,18 @@ export default class FS {
   /** Resolve a path relative to another path using various strategies. Handles absolute paths, relative navigation, and overlap-based merging */
   static resolvePath(fromPath: string, toPath: string): string
 }
+
+/**
+ * File descriptor types as lowercase strings
+ */
+export const fdTypes: readonly ["file", "directory"]
+
+/**
+ * File descriptor types as uppercase strings
+ */
+export const upperFdTypes: readonly ["FILE", "DIRECTORY"]
+
+/**
+ * Mapping from uppercase file descriptor types to lowercase
+ */
+export const fdType: Readonly<Record<"FILE" | "DIRECTORY", "file" | "directory">>
