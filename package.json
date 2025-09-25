@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "0.0.13",
+  "version": "0.1.0",
   "description": "Get in, bitches, we're going toolkitting.",
   "main": "./src/index.js",
   "type": "module",
@@ -21,19 +21,11 @@
   },
   "scripts": {
     "lint": "eslint src/",
-    "lint:docs": "cd docs && npm run lint",
     "lint:fix": "eslint src/ --fix",
-    "lint:fix:docs": "cd docs && npm run lint:fix",
     "submit": "npm publish --access public",
     "update": "npx npm-check-updates -u && npm install",
     "test": "node --test tests/unit/*.test.js",
-    "test:unit": "node --test tests/unit/*.test.js",
-    "docs:dev": "npm run docs:build && cd docs && npm run start",
-    "docs:build": "npm run docs:clean && npm run docs:generate && cd docs && npm run build",
-    "docs:serve": "cd docs && npm run serve",
-    "docs:clean": "cd docs && npm run docs:clean",
-    "docs:generate": "npx typedoc src/types/index.d.ts --out docs/docs/api --plugin typedoc-plugin-markdown --readme none --excludePrivate --excludeProtected --excludeInternal --includeVersion",
-    "docs:install": "cd docs && npm install"
+    "test:unit": "node --test tests/unit/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -67,8 +59,6 @@
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
     "eslint": "^9.36.0",
-    "eslint-plugin-jsdoc": "^60.1.0",
-    "typedoc": "^0.28.13",
-    "typedoc-plugin-markdown": "^4.9.0"
+    "eslint-plugin-jsdoc": "^60.1.0"
   }
 }
