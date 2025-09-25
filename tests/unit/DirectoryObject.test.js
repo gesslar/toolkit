@@ -172,7 +172,7 @@ describe("DirectoryObject", () => {
     })
 
     it("returns files and directories", async () => {
-      const result = await testDirObj.read(testDirObj)
+      const result = await testDirObj.read()
 
       assert.ok(Array.isArray(result.files))
       assert.ok(Array.isArray(result.directories))
@@ -181,14 +181,14 @@ describe("DirectoryObject", () => {
     })
 
     it("returned files are FileObject instances", async () => {
-      const { files } = await testDirObj.read(testDirObj)
+      const { files } = await testDirObj.read()
 
       // Note: This might fail due to circular import
       assert.ok(files[0].constructor.name === "FileObject")
     })
 
     it("returned directories are DirectoryObject instances", async () => {
-      const { directories } = await testDirObj.read(testDirObj)
+      const { directories } = await testDirObj.read()
 
       assert.ok(directories[0] instanceof DirectoryObject)
     })
@@ -198,7 +198,7 @@ describe("DirectoryObject", () => {
       await fs.mkdir(emptyDir)
       const emptyDirObj = new DirectoryObject(emptyDir)
 
-      const result = await emptyDirObj.read(emptyDirObj)
+      const result = await emptyDirObj.read()
       assert.equal(result.files.length, 0)
       assert.equal(result.directories.length, 0)
     })
