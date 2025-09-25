@@ -1,7 +1,7 @@
-import { describe, it } from "node:test"
 import assert from "node:assert/strict"
+import {describe,it} from "node:test"
 
-import { Valid, Sass } from "../../src/index.js"
+import {Sass,Valid} from "../../src/index.js"
 
 describe("Valid", () => {
   describe("assert", () => {
@@ -42,7 +42,7 @@ describe("Valid", () => {
       }, /Condition must be a boolean/)
 
       assert.throws(() => {
-        Valid.assert(123, "message") 
+        Valid.assert(123, "message")
       }, /Condition must be a boolean/)
 
       assert.throws(() => {
@@ -94,15 +94,15 @@ describe("Valid", () => {
       assert.throws(() => {
         Valid.validType(123, "string")
       }, (error) => {
-        return error instanceof Sass && 
+        return error instanceof Sass &&
                error.message.includes("Invalid type") &&
                error.message.includes("Expected string")
       })
 
       assert.throws(() => {
-        Valid.validType("hello", "number") 
+        Valid.validType("hello", "number")
       }, (error) => {
-        return error instanceof Sass && 
+        return error instanceof Sass &&
                error.message.includes("Invalid type") &&
                error.message.includes("Expected number")
       })
@@ -130,7 +130,7 @@ describe("Valid", () => {
     it("passes options to underlying type checking", () => {
       // Test with allowEmpty option
       Valid.validType("", "string", { allowEmpty: true }) // Should not throw
-      
+
       assert.throws(() => {
         Valid.validType("", "string", { allowEmpty: false })
       }, Sass)
@@ -140,7 +140,7 @@ describe("Valid", () => {
       assert.throws(() => {
         Valid.validType([1, "mixed"], "number[]")
       }, (error) => {
-        return error instanceof Sass && 
+        return error instanceof Sass &&
                error.message.includes("Invalid type") &&
                error.message.includes("Expected number[]")
       })
@@ -151,7 +151,7 @@ describe("Valid", () => {
     it("handles null and undefined in assert", () => {
       Valid.assert(true, "message", null)
       Valid.assert(true, "message", undefined)
-      
+
       assert.throws(() => {
         Valid.assert(false, "message", null)
       }, (error) => {

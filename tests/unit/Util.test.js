@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import { describe, it } from "node:test"
 import assert from "node:assert/strict"
-import { EventEmitter } from "node:events"
+import {EventEmitter} from "node:events"
+import {describe, it} from "node:test"
 
-import { Util, Sass } from "../../src/index.js"
+import {Sass,Util} from "../../src/index.js"
 
 
 describe("Util", () => {
@@ -33,7 +33,7 @@ describe("Util", () => {
       assert.equal(Util.capitalize(undefined), undefined) // Returns undefined unchanged!
       assert.equal(Util.capitalize(123), 123) // Returns number unchanged!
       assert.deepEqual(Util.capitalize([1, 2, 3]), [1, 2, 3]) // Returns array unchanged!
-      
+
       // This is problematic - should these be errors instead?
     })
 
@@ -101,7 +101,7 @@ describe("Util", () => {
   describe("rightAlignText()", () => {
     it("right-aligns text within default width (80)", () => {
       const result = Util.rightAlignText("hello")
-      
+
       assert.equal(result.length, 80)
       assert.ok(result.endsWith("hello"))
       assert.ok(result.startsWith("     ")) // Should start with spaces
@@ -109,14 +109,14 @@ describe("Util", () => {
 
     it("right-aligns with custom width", () => {
       const result = Util.rightAlignText("test", 10)
-      
+
       assert.equal(result.length, 10)
       assert.equal(result, "      test")
     })
 
     it("handles numbers by converting to strings", () => {
       const result = Util.rightAlignText(123, 10)
-      
+
       assert.equal(result.length, 10)
       assert.equal(result, "       123")
     })
@@ -124,7 +124,7 @@ describe("Util", () => {
     it("returns unchanged if text exceeds width", () => {
       const longText = "This text is definitely longer than 10 characters"
       const result = Util.rightAlignText(longText, 10)
-      
+
       assert.equal(result, longText) // Should return unchanged
       assert.ok(result.length > 10)
     })
@@ -132,10 +132,10 @@ describe("Util", () => {
     it("handles edge cases", () => {
       // Zero width
       assert.equal(Util.rightAlignText("test", 0), "test")
-      
-      // Negative width  
+
+      // Negative width
       assert.equal(Util.rightAlignText("test", -5), "test")
-      
+
       // Exact width match
       assert.equal(Util.rightAlignText("1234567890", 10), "1234567890")
     })
@@ -151,7 +151,7 @@ describe("Util", () => {
     it("generates consistent SHA256 hashes", () => {
       const hash1 = Util.hashOf("hello world")
       const hash2 = Util.hashOf("hello world")
-      
+
       assert.equal(hash1, hash2) // Should be deterministic
       assert.equal(hash1.length, 64) // SHA256 is 64 hex chars
       assert.match(hash1, /^[a-f0-9]{64}$/) // Should be valid hex
@@ -160,13 +160,13 @@ describe("Util", () => {
     it("generates different hashes for different inputs", () => {
       const hash1 = Util.hashOf("hello")
       const hash2 = Util.hashOf("world")
-      
+
       assert.notEqual(hash1, hash2)
     })
 
     it("handles empty strings", () => {
       const hash = Util.hashOf("")
-      
+
       assert.equal(hash.length, 64)
       assert.match(hash, /^[a-f0-9]{64}$/)
       // SHA256 of empty string is known value
@@ -176,7 +176,7 @@ describe("Util", () => {
     it("handles unicode and special characters", () => {
       const hash1 = Util.hashOf("🚀 rocket")
       const hash2 = Util.hashOf("émilie café")
-      
+
       assert.equal(hash1.length, 64)
       assert.equal(hash2.length, 64)
       assert.notEqual(hash1, hash2)
@@ -199,10 +199,10 @@ describe("Util", () => {
     it("extracts long option names", () => {
       const options = {
         "-w, --watch": "Watch for changes",
-        "-b, --build": "Build the project", 
+        "-b, --build": "Build the project",
         "--config": "Config file path"
       }
-      
+
       const names = Util.generateOptionNames(options)
       assert.deepEqual(names.sort(), ["build", "config", "watch"])
     })
@@ -212,7 +212,7 @@ describe("Util", () => {
         "-v, --verbose": "Verbose output",
         "-q, --quiet": "Quiet mode"
       }
-      
+
       const names = Util.generateOptionNames(options)
       assert.deepEqual(names.sort(), ["quiet", "verbose"])
       // Should not include "v" or "q"
@@ -224,7 +224,7 @@ describe("Util", () => {
         "-h": "Help",
         "--config": "Config file"
       }
-      
+
       const names = Util.generateOptionNames(options)
       assert.deepEqual(names.sort(), ["config", "h", "v"])
     })
@@ -237,7 +237,7 @@ describe("Util", () => {
         "--": "Just double dash",
         "-w, --watch": "Valid option"
       }
-      
+
       const names = Util.generateOptionNames(options)
       // Should filter out malformed options and only return valid ones
       // After fix: empty option names like "-" should be filtered out
@@ -250,7 +250,7 @@ describe("Util", () => {
         "  -v  ,  --verbose  ": "Spaces around options",
         "-f,--file": "No space after comma"
       }
-      
+
       const names = Util.generateOptionNames(options)
       assert.deepEqual(names.sort(), ["file", "verbose", "watch"])
     })
@@ -265,11 +265,11 @@ describe("Util", () => {
       const options = {
         "-123": "Numeric option",
         "--multi-word-option": "Multi word",
-        "-_": "Underscore option", 
+        "-_": "Underscore option",
         "--": "Empty long option",
         "not-an-option": "No dashes"
       }
-      
+
       const names = Util.generateOptionNames(options)
       // Let's see what gets through the filter
       console.log("Edge case results:", names)
@@ -284,7 +284,7 @@ describe("Util", () => {
           Promise.resolve(2),
           Promise.resolve(3)
         ]
-        
+
         const results = await Util.awaitAll(promises)
         assert.deepEqual(results, [1, 2, 3])
       })
@@ -295,7 +295,7 @@ describe("Util", () => {
           Promise.reject(new Error("Test error")),
           Promise.resolve(3)
         ]
-        
+
         await assert.rejects(
           () => Util.awaitAll(promises),
           /Test error/
@@ -315,9 +315,9 @@ describe("Util", () => {
           Promise.reject(new Error("failure")),
           Promise.resolve(42)
         ]
-        
+
         const results = await Util.settleAll(promises)
-        
+
         assert.equal(results.length, 3)
         assert.equal(results[0].status, "fulfilled")
         assert.equal(results[0].value, "success")
@@ -335,7 +335,7 @@ describe("Util", () => {
           Promise.resolve("fast"),
           new Promise(resolve => setTimeout(() => resolve("medium"), 50))
         ]
-        
+
         const result = await Util.race(promises)
         assert.equal(result, "fast")
       })
@@ -346,7 +346,7 @@ describe("Util", () => {
           Promise.reject(new Error("fast error")),
           Promise.resolve("success")
         ]
-        
+
         await assert.rejects(
           () => Util.race(promises),
           /fast error/
@@ -368,13 +368,13 @@ describe("Util", () => {
         })
 
         emitter.on("test", async () => {
-          executionOrder.push("listener2-start") 
+          executionOrder.push("listener2-start")
           await new Promise(resolve => setTimeout(resolve, 25))
           executionOrder.push("listener2-end")
         })
 
         await Util.asyncEmit(emitter, "test", "payload")
-        
+
         // All listeners should have completed
         assert.ok(executionOrder.includes("listener1-end"))
         assert.ok(executionOrder.includes("listener2-end"))
@@ -412,7 +412,7 @@ describe("Util", () => {
 
       it("handles events with no listeners", async () => {
         const emitter = new EventEmitter()
-        
+
         // Should not throw for events with no listeners
         await Util.asyncEmit(emitter, "nonexistent")
       })
@@ -426,7 +426,7 @@ describe("Util", () => {
         })
 
         await Util.asyncEmit(emitter, "test", "arg1", 42, {key: "value"})
-        
+
         assert.deepEqual(receivedArgs, ["arg1", 42, {key: "value"}])
       })
     })

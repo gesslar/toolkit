@@ -1,7 +1,7 @@
-import { describe, it } from "node:test"
 import assert from "node:assert/strict"
+import {describe,it} from "node:test"
 
-import { Type, Sass } from "../../src/index.js"
+import {Sass,Type} from "../../src/index.js"
 
 describe("Type", () => {
   describe("constructor and basic properties", () => {
@@ -54,7 +54,7 @@ describe("Type", () => {
       assert.throws(() => {
         spec.length = 99
       }, TypeError)
-      
+
       assert.throws(() => {
         spec.specs = []
       }, TypeError)
@@ -271,11 +271,11 @@ describe("Type", () => {
       assert.equal(spec.match("hello"), true)
       assert.equal(spec.match(true), true)
       assert.equal(spec.match([1, 2, 3]), true)
-      
+
       // Should NOT match array types not in union
       assert.equal(spec.match(["a", "b"]), false)
       assert.equal(spec.match([true, false]), false)
-      
+
       // Should handle mixed arrays correctly
       assert.equal(spec.match([1, "mixed"]), false)
     })
@@ -283,12 +283,12 @@ describe("Type", () => {
     it("respects allowEmpty for different value types", () => {
       const stringSpec = new Type("string")
       const arraySpec = new Type("string[]")
-      
+
       // String emptiness
       assert.equal(stringSpec.match("", { allowEmpty: true }), true)
       assert.equal(stringSpec.match("", { allowEmpty: false }), false)
       assert.equal(stringSpec.match("  ", { allowEmpty: false }), false) // whitespace-only is empty
-      
+
       // Array emptiness
       assert.equal(arraySpec.match([], { allowEmpty: true }), true)
       assert.equal(arraySpec.match([], { allowEmpty: false }), false)

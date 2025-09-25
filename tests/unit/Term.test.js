@@ -1,7 +1,7 @@
-import { describe, it } from "node:test"
 import assert from "node:assert/strict"
+import {describe,it} from "node:test"
 
-import { Term, Sass } from "../../src/index.js"
+import {Sass, Term} from "../../src/index.js"
 
 /**
  * Helper to capture console output for testing
@@ -72,19 +72,19 @@ describe("Term", () => {
   describe("terminalBracket", () => {
     it("creates basic bracketed text", () => {
       const result = Term.terminalBracket(["success", "COMPILED"])
-      
+
       assert.equal(result, "[COMPILED]")
     })
 
     it("uses custom brackets when provided", () => {
       const result = Term.terminalBracket(["info", "STATUS", ["<", ">"]])
-      
+
       assert.equal(result, "<STATUS>")
     })
 
     it("defaults to square brackets", () => {
       const result = Term.terminalBracket(["error", "FAILED"])
-      
+
       assert.equal(result, "[FAILED]")
     })
 
@@ -100,13 +100,13 @@ describe("Term", () => {
   describe("terminalMessage", () => {
     it("returns string input unchanged", () => {
       const result = Term.terminalMessage("simple message")
-      
+
       assert.equal(result, "simple message")
     })
 
     it("processes array with plain strings", () => {
       const result = Term.terminalMessage(["Hello", "world"])
-      
+
       assert.equal(result, "Hello world")
     })
 
@@ -116,7 +116,7 @@ describe("Term", () => {
         ["success", "OK"],
         "- processing complete"
       ])
-      
+
       assert.equal(result, "Status: [OK] - processing complete")
     })
 
@@ -126,7 +126,7 @@ describe("Term", () => {
         ["error", "FAILED", ["<", ">"]],
         "check logs"
       ])
-      
+
       assert.equal(result, "Alert: <FAILED> check logs")
     })
 
@@ -137,7 +137,7 @@ describe("Term", () => {
         "for project:",
         ["success", "MyApp"]
       ])
-      
+
       assert.equal(result, "Build [STARTED] for project: [MyApp]")
     })
 
@@ -198,7 +198,7 @@ describe("Term", () => {
 
     it("resetTerminal exists and returns a promise", async () => {
       assert.equal(typeof Term.resetTerminal, "function")
-      
+
       // resetTerminal may fail if stdin doesn't support setRawMode (like in test environment)
       try {
         const result = Term.resetTerminal()

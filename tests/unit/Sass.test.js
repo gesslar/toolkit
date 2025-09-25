@@ -1,7 +1,7 @@
-import { describe, it } from "node:test"
 import assert from "node:assert/strict"
+import {describe,it} from "node:test"
 
-import { Sass } from "../../src/index.js"
+import {Sass} from "../../src/index.js"
 
 // Helpers for intercepting console output
 /**

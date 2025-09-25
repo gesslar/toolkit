@@ -12,9 +12,11 @@ const fdTypes = Object.freeze(["file", "directory"])
 const upperFdTypes = Object.freeze(fdTypes.map(type => type.toUpperCase()))
 const fdType = Object.freeze(await Data.allocateObject(upperFdTypes, fdTypes))
 
-export {fdType, upperFdTypes, fdTypes}
-
 export default class FS {
+  static fdTypes = fdTypes
+  static upperFdTypes = upperFdTypes
+  static fdType = fdType
+
   /**
    * Fix slashes in a path
    *

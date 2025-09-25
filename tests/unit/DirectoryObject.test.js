@@ -1,10 +1,10 @@
-import { describe, it, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
-import path from "node:path"
 import fs from "node:fs/promises"
+import path from "node:path"
+import {afterEach,beforeEach,describe,it} from "node:test"
 
-import { DirectoryObject, Sass } from "../../src/index.js"
-import { TestUtils } from "../helpers/test-utils.js"
+import {DirectoryObject,Sass} from "../../src/index.js"
+import {TestUtils} from "../helpers/test-utils.js"
 
 describe("DirectoryObject", () => {
   let testDir
@@ -12,7 +12,7 @@ describe("DirectoryObject", () => {
   describe("constructor and basic properties", () => {
     it("creates DirectoryObject with valid directory", () => {
       const dir = new DirectoryObject("/home/user/test")
-      
+
       assert.ok(dir instanceof DirectoryObject)
       assert.equal(typeof dir.supplied, "string")
       assert.equal(typeof dir.path, "string")
@@ -22,14 +22,14 @@ describe("DirectoryObject", () => {
 
     it("handles relative paths", () => {
       const dir = new DirectoryObject("../test")
-      
+
       assert.ok(path.isAbsolute(dir.path))
       assert.equal(dir.supplied, "../test")
     })
 
     it("handles current directory", () => {
       const dir = new DirectoryObject(".")
-      
+
       assert.equal(dir.supplied, ".")
       assert.equal(dir.name, path.basename(process.cwd()))
     })
@@ -37,14 +37,14 @@ describe("DirectoryObject", () => {
     it("handles null/undefined input", () => {
       const dir1 = new DirectoryObject(null)
       const dir2 = new DirectoryObject(undefined)
-      
+
       assert.equal(dir1.supplied, ".")
       assert.equal(dir2.supplied, ".")
     })
 
     it("fixes slashes in paths", () => {
       const dir = new DirectoryObject("path\\\\with\\\\backslashes")
-      
+
       assert.ok(!dir.supplied.includes("\\\\"))
       assert.ok(dir.supplied.includes("/"))
     })
@@ -95,7 +95,7 @@ describe("DirectoryObject", () => {
     it("toString returns formatted string", () => {
       const dir = new DirectoryObject("/test/path")
       const str = dir.toString()
-      
+
       assert.ok(str.includes("DirectoryObject"))
       assert.ok(str.includes(dir.path))
     })
@@ -103,7 +103,7 @@ describe("DirectoryObject", () => {
     it("toJSON returns object representation", () => {
       const dir = new DirectoryObject("/test/path")
       const json = dir.toJSON()
-      
+
       assert.equal(typeof json, "object")
       assert.ok("supplied" in json)
       assert.ok("path" in json)
@@ -113,7 +113,7 @@ describe("DirectoryObject", () => {
       assert.ok("extension" in json)
       assert.ok("isFile" in json)
       assert.ok("isDirectory" in json)
-      
+
       assert.equal(json.isFile, false)
       assert.equal(json.isDirectory, true)
     })
@@ -156,11 +156,11 @@ describe("DirectoryObject", () => {
     beforeEach(async () => {
       testDir = await TestUtils.createTestDir("dir-read-test")
       testDirObj = new DirectoryObject(testDir)
-      
+
       // Create subdirectory and file for testing
       subDir = path.join(testDir, "subdir")
       await fs.mkdir(subDir)
-      
+
       testFile = path.join(testDir, "test.txt")
       await fs.writeFile(testFile, "test content")
     })
@@ -173,7 +173,7 @@ describe("DirectoryObject", () => {
 
     it("returns files and directories", async () => {
       const result = await testDirObj.read(testDirObj)
-      
+
       assert.ok(Array.isArray(result.files))
       assert.ok(Array.isArray(result.directories))
       assert.equal(result.files.length, 1)
@@ -182,14 +182,14 @@ describe("DirectoryObject", () => {
 
     it("returned files are FileObject instances", async () => {
       const { files } = await testDirObj.read(testDirObj)
-      
+
       // Note: This might fail due to circular import
       assert.ok(files[0].constructor.name === "FileObject")
     })
 
     it("returned directories are DirectoryObject instances", async () => {
       const { directories } = await testDirObj.read(testDirObj)
-      
+
       assert.ok(directories[0] instanceof DirectoryObject)
     })
 
@@ -197,7 +197,7 @@ describe("DirectoryObject", () => {
       const emptyDir = path.join(testDir, "empty")
       await fs.mkdir(emptyDir)
       const emptyDirObj = new DirectoryObject(emptyDir)
-      
+
       const result = await emptyDirObj.read(emptyDirObj)
       assert.equal(result.files.length, 0)
       assert.equal(result.directories.length, 0)
@@ -221,25 +221,25 @@ describe("DirectoryObject", () => {
 
     it("creates directory if it doesn't exist", async () => {
       assert.equal(await testDirObj.exists, false)
-      
+
       await testDirObj.assureExists()
-      
+
       assert.equal(await testDirObj.exists, true)
     })
 
     it("doesn't throw if directory already exists", async () => {
       await testDirObj.assureExists()
-      
+
       // Should not throw
       await testDirObj.assureExists()
-      
+
       assert.equal(await testDirObj.exists, true)
     })
 
     it("handles nested directory creation", async () => {
       const nestedPath = path.join(testDir, "level1", "level2", "level3")
       const nestedDir = new DirectoryObject(nestedPath)
-      
+
       // This might fail without recursive option
       try {
         await nestedDir.assureExists({ recursive: true })
@@ -254,7 +254,7 @@ describe("DirectoryObject", () => {
       // Try to create directory in non-existent parent without recursive
       const invalidPath = path.join(testDir, "nonexistent", "subdir")
       const invalidDir = new DirectoryObject(invalidPath)
-      
+
       await assert.rejects(
         () => invalidDir.assureExists(),
         Sass
@@ -265,7 +265,7 @@ describe("DirectoryObject", () => {
   describe("edge cases and error handling", () => {
     it("handles special characters in path", () => {
       const dir = new DirectoryObject("/test/path with spaces/and-dashes")
-      
+
       assert.ok(dir.path.includes("spaces"))
       assert.ok(dir.path.includes("dashes"))
     })
@@ -273,13 +273,13 @@ describe("DirectoryObject", () => {
     it("handles very long paths", () => {
       const longPath = "/test/" + "a".repeat(200) + "/dir"
       const dir = new DirectoryObject(longPath)
-      
+
       assert.ok(dir.path.includes("a".repeat(200)))
     })
 
     it("meta object is frozen", () => {
       const dir = new DirectoryObject("/test")
-      
+
       // Should not be able to modify internal meta
       assert.throws(() => {
         dir.supplied = "modified"  // This should fail

@@ -1,10 +1,10 @@
-import { describe, it, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
-import path from "node:path"
 import fs from "node:fs/promises"
+import path from "node:path"
+import {afterEach,beforeEach,describe,it} from "node:test"
 
-import { FileObject, DirectoryObject, Sass } from "../../src/index.js"
-import { TestUtils } from "../helpers/test-utils.js"
+import {DirectoryObject,FileObject,Sass} from "../../src/index.js"
+import {TestUtils} from "../helpers/test-utils.js"
 
 describe("FileObject", () => {
   let testDir
@@ -12,7 +12,7 @@ describe("FileObject", () => {
   describe("constructor and basic properties", () => {
     it("creates FileObject with absolute path", () => {
       const file = new FileObject("/home/user/test.txt")
-      
+
       assert.ok(file instanceof FileObject)
       assert.equal(typeof file.supplied, "string")
       assert.equal(typeof file.path, "string")
@@ -25,7 +25,7 @@ describe("FileObject", () => {
 
     it("creates FileObject with relative path", () => {
       const file = new FileObject("../test.js")
-      
+
       assert.ok(path.isAbsolute(file.path))
       assert.equal(file.supplied, "../test.js")
       assert.equal(file.name, "test.js")
@@ -35,7 +35,7 @@ describe("FileObject", () => {
 
     it("creates FileObject with directory parameter as string", () => {
       const file = new FileObject("test.txt", "/home/user")
-      
+
       assert.ok(file.path.includes("/home/user"))
       assert.equal(file.name, "test.txt")
       assert.ok(file.directory instanceof DirectoryObject)
@@ -44,7 +44,7 @@ describe("FileObject", () => {
     it("creates FileObject with directory parameter as DirectoryObject", () => {
       const dir = new DirectoryObject("/home/user")
       const file = new FileObject("test.txt", dir)
-      
+
       assert.ok(file.path.includes("/home/user"))
       assert.equal(file.name, "test.txt")
       assert.ok(file.directory instanceof DirectoryObject)
@@ -52,7 +52,7 @@ describe("FileObject", () => {
 
     it("handles file without extension", () => {
       const file = new FileObject("/home/user/README")
-      
+
       assert.equal(file.name, "README")
       assert.equal(file.extension, "")
       assert.equal(file.module, "README")
@@ -60,7 +60,7 @@ describe("FileObject", () => {
 
     it("handles complex file extensions", () => {
       const file = new FileObject("/home/user/archive.tar.gz")
-      
+
       assert.equal(file.name, "archive.tar.gz")
       assert.equal(file.extension, ".gz")  // path.parse only gets last extension
       assert.equal(file.module, "archive.tar")
@@ -68,7 +68,7 @@ describe("FileObject", () => {
 
     it("fixes slashes in paths", () => {
       const file = new FileObject("path\\\\with\\\\backslashes\\\\file.txt")
-      
+
       assert.ok(!file.supplied.includes("\\\\"))
       assert.ok(file.supplied.includes("/"))
     })
@@ -124,7 +124,7 @@ describe("FileObject", () => {
     it("toString returns formatted string", () => {
       const file = new FileObject("/test/path/file.txt")
       const str = file.toString()
-      
+
       assert.ok(str.includes("FileObject"))
       assert.ok(str.includes(file.path))
     })
@@ -132,7 +132,7 @@ describe("FileObject", () => {
     it("toJSON returns object representation", () => {
       const file = new FileObject("/test/path/file.txt")
       const json = file.toJSON()
-      
+
       assert.equal(typeof json, "object")
       assert.ok("supplied" in json)
       assert.ok("path" in json)
@@ -143,7 +143,7 @@ describe("FileObject", () => {
       assert.ok("isFile" in json)
       assert.ok("isDirectory" in json)
       assert.ok("directory" in json)
-      
+
       assert.equal(json.isFile, true)
       assert.equal(json.isDirectory, false)
     })
@@ -156,7 +156,7 @@ describe("FileObject", () => {
       testDir = await TestUtils.createTestDir("file-obj-test")
       testFilePath = path.join(testDir, "test.txt")
       await fs.writeFile(testFilePath, "test content")
-      
+
       existingFile = new FileObject(testFilePath)
       nonExistentFile = new FileObject(path.join(testDir, "nonexistent.txt"))
     })
@@ -241,31 +241,31 @@ describe("FileObject", () => {
 
     it("write creates file with content", async () => {
       await testFile.write("Hello, world!")
-      
+
       const exists = await testFile.exists
       assert.equal(exists, true)
-      
+
       const content = await fs.readFile(testFilePath, "utf8")
       assert.equal(content, "Hello, world!")
     })
 
     it("read returns file content", async () => {
       await fs.writeFile(testFilePath, "test content")
-      
+
       const content = await testFile.read()
       assert.equal(content, "test content")
     })
 
     it("read with custom encoding", async () => {
       await fs.writeFile(testFilePath, "test content", "utf8")
-      
+
       const content = await testFile.read("utf8")
       assert.equal(content, "test content")
     })
 
     it("read throws for non-existent file", async () => {
       const nonExistentFile = new FileObject(path.join(testDir, "missing.txt"))
-      
+
       await assert.rejects(
         () => nonExistentFile.read(),
         Sass
@@ -274,7 +274,7 @@ describe("FileObject", () => {
 
     it("write with custom encoding", async () => {
       await testFile.write("test content", "utf8")
-      
+
       const content = await fs.readFile(testFilePath, "utf8")
       assert.equal(content, "test content")
     })
@@ -285,17 +285,17 @@ describe("FileObject", () => {
 
     beforeEach(async () => {
       testDir = await TestUtils.createTestDir("file-data-test")
-      
+
       // Create JSON file
       const jsonPath = path.join(testDir, "test.json")
       await fs.writeFile(jsonPath, JSON.stringify({ name: "test", value: 42 }))
       jsonFile = new FileObject(jsonPath)
-      
+
       // Create YAML file
       const yamlPath = path.join(testDir, "test.yaml")
       await fs.writeFile(yamlPath, "name: test\nvalue: 42\n")
       yamlFile = new FileObject(yamlPath)
-      
+
       // Create invalid file
       const invalidPath = path.join(testDir, "invalid.txt")
       await fs.writeFile(invalidPath, "this is not json or yaml")
@@ -310,7 +310,7 @@ describe("FileObject", () => {
 
     it("loads JSON data", async () => {
       const data = await jsonFile.loadData("json")
-      
+
       assert.equal(typeof data, "object")
       assert.equal(data.name, "test")
       assert.equal(data.value, 42)
@@ -318,7 +318,7 @@ describe("FileObject", () => {
 
     it("loads YAML data", async () => {
       const data = await yamlFile.loadData("yaml")
-      
+
       assert.equal(typeof data, "object")
       assert.equal(data.name, "test")
       assert.equal(data.value, 42)
@@ -327,7 +327,7 @@ describe("FileObject", () => {
     it("loads data with 'any' type (auto-detect)", async () => {
       const jsonData = await jsonFile.loadData("any")
       const yamlData = await yamlFile.loadData("any")
-      
+
       assert.equal(jsonData.name, "test")
       assert.equal(yamlData.name, "test")
     })
@@ -350,7 +350,7 @@ describe("FileObject", () => {
   describe("edge cases and error handling", () => {
     it("handles special characters in filename", () => {
       const file = new FileObject("/test/file with spaces & symbols!.txt")
-      
+
       assert.ok(file.name.includes("spaces"))
       assert.ok(file.name.includes("symbols"))
     })
@@ -358,13 +358,13 @@ describe("FileObject", () => {
     it("handles very long paths", () => {
       const longPath = "/test/" + "a".repeat(200) + "/file.txt"
       const file = new FileObject(longPath)
-      
+
       assert.ok(file.path.includes("a".repeat(200)))
     })
 
     it("meta object is frozen", () => {
       const file = new FileObject("/test/file.txt")
-      
+
       // Should not be able to modify internal meta
       assert.throws(() => {
         file.supplied = "modified"  // This should fail
@@ -375,7 +375,7 @@ describe("FileObject", () => {
       assert.throws(() => {
         new FileObject("")  // Empty filename
       }, Sass)
-      
+
       assert.throws(() => {
         new FileObject(null)  // Null filename
       }, Sass)
@@ -383,23 +383,23 @@ describe("FileObject", () => {
 
     it("resolves relative paths to absolute paths", () => {
       const file = new FileObject("tests/fixtures/settings.json")
-      
+
       // Path should be absolute
-      assert.ok(path.isAbsolute(file.path), 
+      assert.ok(path.isAbsolute(file.path),
         `Expected absolute path, got: ${file.path}`)
-      
+
       // Should start with root directory
-      assert.ok(file.path.startsWith('/'), 
+      assert.ok(file.path.startsWith('/'),
         `Path should start with /, got: ${file.path}`)
     })
 
     it("resolves relative paths with ./ prefix correctly", () => {
       const file = new FileObject("./tests/fixtures/settings.json")
-      
+
       // Path should be absolute
       assert.ok(path.isAbsolute(file.path),
         `Expected absolute path, got: ${file.path}`)
-      
+
       // Should not have duplicated path segments
       assert.ok(!file.path.includes('tests/fixtures/tests/fixtures'),
         `Path has duplicate segments: ${file.path}`)
@@ -408,15 +408,15 @@ describe("FileObject", () => {
     it("handles directory parameter correctly", () => {
       const file1 = new FileObject('settings.json', 'tests/fixtures')
       const file2 = new FileObject('settings.json', path.join(process.cwd(), 'tests/fixtures'))
-      
+
       // Both should resolve to absolute paths
       assert.ok(path.isAbsolute(file1.path))
       assert.ok(path.isAbsolute(file2.path))
-      
+
       // Should end with the same filename
       assert.ok(file1.path.endsWith('settings.json'))
       assert.ok(file2.path.endsWith('settings.json'))
-      
+
       // Should contain fixtures in the path
       assert.ok(file1.path.includes('fixtures'))
       assert.ok(file2.path.includes('fixtures'))
@@ -425,11 +425,11 @@ describe("FileObject", () => {
     it("preserves supplied path exactly as provided", () => {
       const testCases = [
         'simple.json',
-        './relative.json', 
+        './relative.json',
         'nested/path/file.json',
         '../parent.json'
       ]
-      
+
       testCases.forEach(inputPath => {
         const file = new FileObject(inputPath)
         assert.equal(file.supplied, inputPath,
@@ -440,7 +440,7 @@ describe("FileObject", () => {
     it("resolves absolute paths unchanged", () => {
       const absolutePath = path.join(process.cwd(), 'test.json')
       const file = new FileObject(absolutePath)
-      
+
       assert.equal(file.path, absolutePath)
       assert.ok(path.isAbsolute(file.path))
     })

@@ -8,6 +8,15 @@ import DirectoryObject from './DirectoryObject.js'
  * Base filesystem utilities class. FileObject and DirectoryObject extend this class.
  */
 export default class FS {
+  /** Array of lowercase file descriptor types */
+  static readonly fdTypes: readonly ["file", "directory"]
+
+  /** Array of uppercase file descriptor types */
+  static readonly upperFdTypes: readonly ["FILE", "DIRECTORY"]
+
+  /** Mapping from uppercase to lowercase file descriptor types */
+  static readonly fdType: Readonly<Record<"FILE" | "DIRECTORY", "file" | "directory">>
+
   /** Fix slashes in a path */
   static fixSlashes(pathName: string): string
 
@@ -29,18 +38,3 @@ export default class FS {
   /** Resolve a path relative to another path using various strategies. Handles absolute paths, relative navigation, and overlap-based merging */
   static resolvePath(fromPath: string, toPath: string): string
 }
-
-/**
- * File descriptor types as lowercase strings
- */
-export const fdTypes: readonly ["file", "directory"]
-
-/**
- * File descriptor types as uppercase strings
- */
-export const upperFdTypes: readonly ["FILE", "DIRECTORY"]
-
-/**
- * Mapping from uppercase file descriptor types to lowercase
- */
-export const fdType: Readonly<Record<"FILE" | "DIRECTORY", "file" | "directory">>
