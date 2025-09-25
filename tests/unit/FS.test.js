@@ -2,10 +2,34 @@ import { describe, it, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
 import path from "node:path"
 
-import { FS, FileObject, Sass } from "../../src/index.js"
+import { FS, FileObject, Sass, fdType, upperFdTypes, fdTypes } from "../../src/index.js"
 import { TestUtils } from "../helpers/test-utils.js"
 
 describe("FS", () => {
+
+  describe("file descriptor types", () => {
+    it("fdTypes contains expected lowercase types", () => {
+      assert.deepEqual(fdTypes, ["file", "directory"])
+      assert.ok(Object.isFrozen(fdTypes))
+    })
+
+    it("upperFdTypes contains expected uppercase types", () => {
+      assert.deepEqual(upperFdTypes, ["FILE", "DIRECTORY"])
+      assert.ok(Object.isFrozen(upperFdTypes))
+    })
+
+    it("fdType maps uppercase to lowercase types", () => {
+      assert.equal(fdType.FILE, "file")
+      assert.equal(fdType.DIRECTORY, "directory")
+      assert.ok(Object.isFrozen(fdType))
+    })
+
+    it("fdType has correct structure", () => {
+      assert.equal(Object.keys(fdType).length, 2)
+      assert.ok("FILE" in fdType)
+      assert.ok("DIRECTORY" in fdType)
+    })
+  })
 
   // Setup test directory for each test suite
   describe("path utilities", () => {
