@@ -5,14 +5,13 @@ import Data from "./Data.js"
 
 export default class Valid {
 /**
- * Validates a value against a type
+ * Validates a value against a type. Uses Data.isType.
  *
  * @param {unknown} value - The value to validate
- * @param {string} type - The expected type in the form of "object",
- *                        "object[]", "object|object[]"
+ * @param {string} type - The expected type in the form of "object", "object[]", "object|object[]"
  * @param {object} [options] - Additional options for validation.
  */
-  static validType(value, type, options) {
+  static type(value, type, options) {
     Valid.assert(
       Data.isType(value, type, options),
       `Invalid type. Expected ${type}, got ${JSON.stringify(value)}`,

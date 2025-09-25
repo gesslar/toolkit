@@ -273,9 +273,9 @@ export default class Data {
    * @returns {Promise<object>} The mapped object
    */
   static async mapObject(original, transformer, mutate = false) {
-    Valid.validType(original, "object", {allowEmpty: true})
-    Valid.validType(transformer, "function")
-    Valid.validType(mutate, "boolean")
+    Valid.type(original, "object", {allowEmpty: true})
+    Valid.type(transformer, "function")
+    Valid.type(mutate, "boolean")
 
     const result = mutate ? original : {}
 
