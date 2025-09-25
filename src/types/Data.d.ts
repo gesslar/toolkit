@@ -248,4 +248,43 @@ export default class Data {
 
   /** Checks if a value is within a specified range (inclusive) */
   static clamped(val: number, min: number, max: number): boolean
+
+  /**
+   * Checks if a value is a plain object - created with object literals {}, 
+   * new Object(), or Object.create(null).
+   * 
+   * Distinguishes plain objects from objects created by custom constructors, built-ins, 
+   * or primitives. Plain objects only have Object.prototype or null in their prototype chain.
+   * Useful for validating configuration objects or data structures that should be plain objects.
+   *
+   * @param value - The value to check for plain object status
+   * @returns True if the value is a plain object, false otherwise
+   * 
+   * @example
+   * ```typescript
+   * import { Data } from '@gesslar/toolkit'
+   * 
+   * // Plain objects return true
+   * console.log(Data.isPlainObject({})) // true
+   * console.log(Data.isPlainObject(new Object())) // true 
+   * console.log(Data.isPlainObject(Object.create(null))) // true
+   * 
+   * // Non-plain objects return false
+   * console.log(Data.isPlainObject([])) // false
+   * console.log(Data.isPlainObject(new Date())) // false
+   * console.log(Data.isPlainObject(/regex/)) // false
+   * console.log(Data.isPlainObject(null)) // false
+   * console.log(Data.isPlainObject('string')) // false
+   * 
+   * // Useful for validating config objects
+   * function processConfig(config: unknown) {
+   *   if (!Data.isPlainObject(config)) {
+   *     throw new Error('Config must be a plain object')
+   *   }
+   *   // Safe to treat as object with string keys
+   *   return Object.entries(config)
+   * }
+   * ```
+   */
+  static isPlainObject(value: unknown): boolean
 }
