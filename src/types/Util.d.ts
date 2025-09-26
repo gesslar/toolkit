@@ -174,6 +174,46 @@ declare class Util {
    * @returns Resolves when all listeners have completed
    */
   static asyncEmitAnon(emitter: { listeners(event: string): Function[], on(event: string, listener: Function): any, emit(event: string, ...args: unknown[]): any }, event: string, ...args: unknown[]): Promise<void>
+
+  /**
+   * Determine the Levenshtein distance between two string values.
+   * The Levenshtein distance is the minimum number of single-character edits
+   * (insertions, deletions, or substitutions) required to change one string into another.
+   *
+   * @param a - The first string for comparison
+   * @param b - The second string for comparison
+   * @returns The Levenshtein distance (number of edits needed)
+   *
+   * @example
+   * ```typescript
+   * Util.levenshteinDistance("kitten", "sitting") // 3
+   * Util.levenshteinDistance("book", "back") // 2
+   * Util.levenshteinDistance("hello", "hello") // 0
+   * ```
+   */
+  static levenshteinDistance(a: string, b: string): number
+
+  /**
+   * Find the closest match between an input string and an array of allowed values
+   * using Levenshtein distance. Returns the closest match if it's within a threshold
+   * of 2 edits, otherwise returns null.
+   *
+   * Useful for fuzzy string matching, such as suggesting corrections for typos
+   * in command-line arguments or configuration values.
+   *
+   * @param input - The input string to find a match for
+   * @param allowedValues - Array of allowed string values to match against
+   * @param threshold - Maximum edit distance for a match (default: 2)
+   * @returns The closest matching string, or null if no match within threshold
+   *
+   * @example
+   * ```typescript
+   * const commands = ["help", "build", "test", "deploy"]
+   * Util.findClosestMatch("bulid", commands) // "build"
+   * Util.findClosestMatch("xyz", commands) // null
+   * ```
+   */
+  static findClosestMatch(input: string, allowedValues: string[], threshold?: number): string | null
 }
 
 export default Util

@@ -230,4 +230,66 @@ export default class Util {
       )
     }
   }
+
+  /**
+   * Determine the Levenshtein distance between two string values
+   *
+   * @param {string} a The first value for comparison.
+   * @param {string} b The second value for comparison.
+   * @returns {number} The Levenshtein distance
+   */
+  static levenshteinDistance(a, b) {
+    const matrix = Array.from({length: a.length + 1}, (_, i) =>
+      Array.from({length: b.length + 1}, (_, j) =>
+        (i === 0 ? j : j === 0 ? i : 0)
+      )
+    )
+
+    for(let i = 1; i <= a.length; i++) {
+      for(let j = 1; j <= b.length; j++) {
+        matrix[i][j] =
+          a[i - 1] === b[j - 1]
+            ? matrix[i - 1][j - 1]
+            : 1 + Math.min(
+              matrix[i - 1][j], matrix[i][j - 1],
+              matrix[i - 1][j - 1]
+            )
+      }
+    }
+
+    return matrix[a.length][b.length]
+  }
+
+  /**
+   * Determine the closest match between a string and allowed values
+   * from the Levenshtein distance.
+   *
+   * @param {string} input The input string to resolve
+   * @param {Array<string>} allowedValues The values which are permitted
+   * @param {number} [threshold] Max edit distance for a "close match"
+   * @returns {string} Suggested, probable match.
+   */
+  static findClosestMatch(input, allowedValues, threshold=2) {
+    let closestMatch = null
+    let closestDistance = Infinity
+    let closestLengthDiff = Infinity
+
+    for(const value of allowedValues) {
+      const distance = Util.levenshteinDistance(input, value)
+      const lengthDiff = Math.abs(input.length - value.length)
+
+      if(distance < closestDistance && distance <= threshold) {
+        closestMatch = value
+        closestDistance = distance
+        closestLengthDiff = lengthDiff
+      } else if(distance === closestDistance &&
+                 distance <= threshold &&
+                 lengthDiff < closestLengthDiff) {
+        closestMatch = value
+        closestLengthDiff = lengthDiff
+      }
+    }
+
+    return closestMatch
+  }
 }
