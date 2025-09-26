@@ -8,6 +8,7 @@
 
 import Sass from "./Sass.js"
 import TypeSpec from "./TypeSpec.js"
+import Util from "./Util.js"
 import Valid from "./Valid.js"
 
 export default class Data {
@@ -19,17 +20,17 @@ export default class Data {
  */
   static primitives = Object.freeze([
   // Primitives
-    "undefined",
-    "null",
-    "boolean",
-    "number",
-    "bigint",
-    "string",
-    "symbol",
+    "Undefined",
+    "Null",
+    "Boolean",
+    "Number",
+    "Bigint",
+    "String",
+    "Symbol",
 
     // Object Categories from typeof
-    "object",
-    "function",
+    "Object",
+    "Function",
   ])
 
   /**
@@ -67,7 +68,7 @@ export default class Data {
    */
   static dataTypes = Object.freeze([
     ...Data.primitives,
-    ...Data.constructors.map(c => c.toLowerCase())
+    ...Data.constructors
   ])
 
   /**
@@ -76,7 +77,7 @@ export default class Data {
    *
    * @type {Array<string>}
    */
-  static emptyableTypes = Object.freeze(["string", "array", "object"])
+  static emptyableTypes = Object.freeze(["String", "Array", "Object"])
 
   /**
    * Appends a string to another string if it does not already end with it.
@@ -109,8 +110,11 @@ export default class Data {
    * @returns {boolean} Whether all elements are of the specified type
    */
   static isArrayUniform(arr, type) {
+    const checkType = type ? Util.capitalize(type) : null
+
     return arr.every(
-      (item, _index, arr) => typeof item === (type || typeof arr[0]),
+      (item, _index, arr) =>
+        Data.typeOf(item) === (checkType || Data.typeOf(arr[0])),
     )
   }
 
@@ -197,10 +201,10 @@ export default class Data {
     const result = {}
 
     for(const [key, value] of Object.entries(obj)) {
-      if(Data.isType(value, "array")) {
+      if(Data.isType(value, "Array")) {
         // Clone arrays by mapping over them
         result[key] = value.map(item =>
-          Data.isType(item, "object") || Data.isType(item, "array")
+          Data.isType(item, "object") || Data.isType(item, "Array")
             ? Data.cloneObject(item)
             : item
         )
@@ -227,25 +231,25 @@ export default class Data {
       workSpec = [],
       result = {}
 
-    if(!Data.isType(source, "array", {allowEmpty: false}))
+    if(!Data.isType(source, "Array", {allowEmpty: false}))
       throw Sass.new("Source must be an array.")
 
     workSource.push(...source)
 
     if(
-      !Data.isType(spec, "array", {allowEmpty: false}) &&
+      !Data.isType(spec, "Array", {allowEmpty: false}) &&
       !Data.isType(spec, "function")
     )
       throw Sass.new("Spec must be an array or a function.")
 
-    if(Data.isType(spec, "function")) {
+    if(Data.isType(spec, "Function")) {
       const specResult = await spec(workSource)
 
-      if(!Data.isType(specResult, "array"))
+      if(!Data.isType(specResult, "Array"))
         throw Sass.new("Spec resulting from function must be an array.")
 
       workSpec.push(...specResult)
-    } else if(Data.isType(spec, "array", {allowEmpty: false})) {
+    } else if(Data.isType(spec, "Array", {allowEmpty: false})) {
       workSpec.push(...spec)
     }
 
@@ -256,7 +260,7 @@ export default class Data {
     workSource.map((element, index, arr) => (arr[index] = String(element)))
 
     // Check that all keys are strings
-    if(!Data.isArrayUniform(workSource, "string"))
+    if(!Data.isArrayUniform(workSource, "String"))
       throw Sass.new("Indices of an Object must be of type string.")
 
     workSource.forEach((element, index) => (result[element] = workSpec[index]))
@@ -332,7 +336,13 @@ export default class Data {
    * @returns {boolean} Whether the type is valid
    */
   static isValidType(type) {
-    return Data.dataTypes.includes(type)
+    // Allow built-in types
+    if(Data.dataTypes.includes(type)) {
+      return true
+    }
+
+    // Allow custom classes (PascalCase starting with capital letter)
+    return /^[A-Z][a-zA-Z0-9]*$/.test(type)
   }
 
   /**
@@ -349,16 +359,13 @@ export default class Data {
       return false
 
     const valueType = Data.typeOf(value)
-    const normalizedType = type.toLowerCase()
 
     // Special cases that need extra validation
-    switch(normalizedType) {
-      case "number":
-        return valueType === "number" && !isNaN(value) // Excludes NaN
-      case "object":
-        return valueType === "object" && value !== null && !Array.isArray(value) // Excludes arrays and null
+    switch(valueType) {
+      case "Number":
+        return valueType === "Number" && !isNaN(value) // Excludes NaN
       default:
-        return valueType === normalizedType
+        return valueType === type
     }
   }
 
@@ -370,12 +377,13 @@ export default class Data {
    */
   static typeOf(value) {
     if(value === null)
-      return "null"
+      return "Null"
 
-    if(Array.isArray(value))
-      return "array"
+    const type = typeof value
 
-    return typeof value
+    return type === "object"
+      ? value.constructor.name
+      : type.charAt(0).toUpperCase() + type.slice(1)
   }
 
   /**
@@ -412,12 +420,12 @@ export default class Data {
       return false
 
     switch(type) {
-      case "array":
+      case "Array":
         return value.length === 0
-      case "object":
+      case "Object":
         // null was already handled above, so this should only be real objects
         return Object.keys(value).length === 0
-      case "string":
+      case "String":
         return value.trim().length === 0
       default:
         return false
