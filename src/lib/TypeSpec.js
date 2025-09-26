@@ -6,6 +6,7 @@
 
 import Sass from "./Sass.js"
 import Data from "./Data.js"
+import Util from "./Util.js"
 
 /**
  * Type specification class for parsing and validating complex type definitions.
@@ -149,7 +150,7 @@ export default class TypeSpec {
     // Now, let's do some checking with the types, respecting the array flag
     // with the value
     const valueType = Data.typeOf(value)
-    const isArray = valueType === "array"
+    const isArray = valueType === "Array"
 
     // We need to ensure that we match the type and the consistency of the types
     // in an array, if it is an array and an array is allowed.
@@ -166,8 +167,8 @@ export default class TypeSpec {
 
       // Handle array values
       if(isArray) {
-        // Special case for generic "array" type
-        if(allowedType === "array" && !allowedArray)
+        // Special case for generic "Array" type
+        if(allowedType === "Array" && !allowedArray)
           return allowEmpty || !empty
 
         // Must be an array type specification
@@ -203,16 +204,18 @@ export default class TypeSpec {
     const parts = string.split(delimiter)
 
     this.#specs = parts.map(part => {
-      const typeMatches = /(\w+)(\[\])?/.exec(part)
+      const typeMatches = /^(\w+)(\[\])?$/.exec(part)
 
       if(!typeMatches || typeMatches.length !== 3)
         throw Sass.new(`Invalid type: ${part}`)
 
-      if(!Data.isValidType(typeMatches[1]))
+      const typeName = Util.capitalize(typeMatches[1])
+
+      if(!Data.isValidType(typeName))
         throw Sass.new(`Invalid type: ${typeMatches[1]}`)
 
       return {
-        typeName: typeMatches[1],
+        typeName,
         array: typeMatches[2] === "[]",
       }
     })

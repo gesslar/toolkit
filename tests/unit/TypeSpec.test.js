@@ -9,9 +9,9 @@ describe("Type", () => {
       const spec = new Type("string")
 
       assert.equal(spec.length, 1)
-      assert.equal(spec.stringRepresentation, "string")
+      assert.equal(spec.stringRepresentation, "String")
       assert.ok(spec.specs)
-      assert.equal(spec.specs[0].typeName, "string")
+      assert.equal(spec.specs[0].typeName, "String")
       assert.equal(spec.specs[0].array, false)
     })
 
@@ -19,8 +19,8 @@ describe("Type", () => {
       const spec = new Type("number[]")
 
       assert.equal(spec.length, 1)
-      assert.equal(spec.stringRepresentation, "number[]")
-      assert.equal(spec.specs[0].typeName, "number")
+      assert.equal(spec.stringRepresentation, "Number[]")
+      assert.equal(spec.specs[0].typeName, "Number")
       assert.equal(spec.specs[0].array, true)
     })
 
@@ -28,10 +28,10 @@ describe("Type", () => {
       const spec = new Type("string|number")
 
       assert.equal(spec.length, 2)
-      assert.equal(spec.stringRepresentation, "string|number")
-      assert.equal(spec.specs[0].typeName, "string")
+      assert.equal(spec.stringRepresentation, "String|Number")
+      assert.equal(spec.specs[0].typeName, "String")
       assert.equal(spec.specs[0].array, false)
-      assert.equal(spec.specs[1].typeName, "number")
+      assert.equal(spec.specs[1].typeName, "Number")
       assert.equal(spec.specs[1].array, false)
     })
 
@@ -39,12 +39,12 @@ describe("Type", () => {
       const spec = new Type("string[]|number|boolean[]")
 
       assert.equal(spec.length, 3)
-      assert.equal(spec.stringRepresentation, "string[]|number|boolean[]")
-      assert.equal(spec.specs[0].typeName, "string")
+      assert.equal(spec.stringRepresentation, "String[]|Number|Boolean[]")
+      assert.equal(spec.specs[0].typeName, "String")
       assert.equal(spec.specs[0].array, true)
-      assert.equal(spec.specs[1].typeName, "number")
+      assert.equal(spec.specs[1].typeName, "Number")
       assert.equal(spec.specs[1].array, false)
-      assert.equal(spec.specs[2].typeName, "boolean")
+      assert.equal(spec.specs[2].typeName, "Boolean")
       assert.equal(spec.specs[2].array, true)
     })
 
@@ -64,9 +64,9 @@ describe("Type", () => {
   describe("validation methods", () => {
     it("throws for invalid type names", () => {
       assert.throws(() => {
-        new Type("invalidtype")
+        new Type("123invalid")
       }, (error) => {
-        return error instanceof Sass && error.message.includes("Invalid type: invalidtype")
+        return error instanceof Sass && error.message.includes("Invalid type: 123invalid")
       })
     })
 
@@ -89,7 +89,7 @@ describe("Type", () => {
 
       spec.forEach(s => types.push(s.typeName))
 
-      assert.deepEqual(types, ["string", "number"])
+      assert.deepEqual(types, ["String", "Number"])
     })
 
     it("every tests all specs", () => {
@@ -111,15 +111,15 @@ describe("Type", () => {
       const arrays = spec.filter(s => s.array)
 
       assert.equal(arrays.length, 2)
-      assert.equal(arrays[0].typeName, "string")
-      assert.equal(arrays[1].typeName, "boolean")
+      assert.equal(arrays[0].typeName, "String")
+      assert.equal(arrays[1].typeName, "Boolean")
     })
 
     it("map transforms specs", () => {
       const spec = new Type("string|number")
       const names = spec.map(s => s.typeName)
 
-      assert.deepEqual(names, ["string", "number"])
+      assert.deepEqual(names, ["String", "Number"])
     })
 
     it("reduce accumulates specs", () => {
@@ -130,18 +130,18 @@ describe("Type", () => {
     })
 
     it("find returns first matching spec", () => {
-      const spec = new Type("string[]|number|boolean[]")
-      const found = spec.find(s => s.array && s.typeName === "boolean")
+      const spec = new Type("String[]|Number|Boolean[]")
+      const found = spec.find(s => s.array && s.typeName === "Boolean")
 
       assert.ok(found)
-      assert.equal(found.typeName, "boolean")
+      assert.equal(found.typeName, "Boolean")
       assert.equal(found.array, true)
     })
   })
 
   describe("match method", () => {
     it("matches simple types", () => {
-      const spec = new Type("string")
+      const spec = new Type("String")
 
       assert.equal(spec.match("hello"), true)
       assert.equal(spec.match(123), false)
@@ -149,7 +149,7 @@ describe("Type", () => {
     })
 
     it("matches array types", () => {
-      const spec = new Type("string[]")
+      const spec = new Type("String[]")
 
       assert.equal(spec.match(["a", "b", "c"]), true)
       assert.equal(spec.match([1, 2, 3]), false)
@@ -157,7 +157,7 @@ describe("Type", () => {
     })
 
     it("matches union types", () => {
-      const spec = new Type("string|number")
+      const spec = new Type("String|Number")
 
       assert.equal(spec.match("hello"), true)
       assert.equal(spec.match(123), true)
@@ -165,7 +165,7 @@ describe("Type", () => {
     })
 
     it("matches mixed array and non-array types", () => {
-      const spec = new Type("string|number[]")
+      const spec = new Type("String|Number[]")
 
       assert.equal(spec.match("hello"), true)
       assert.equal(spec.match([1, 2, 3]), true)
@@ -174,21 +174,21 @@ describe("Type", () => {
     })
 
     it("handles empty arrays with allowEmpty option", () => {
-      const spec = new Type("string[]")
+      const spec = new Type("String[]")
 
       assert.equal(spec.match([], { allowEmpty: true }), true)
       assert.equal(spec.match([], { allowEmpty: false }), false)
     })
 
     it("handles empty strings with allowEmpty option", () => {
-      const spec = new Type("string")
+      const spec = new Type("String")
 
       assert.equal(spec.match("", { allowEmpty: true }), true)
       assert.equal(spec.match("", { allowEmpty: false }), false)
     })
 
     it("handles array type matching", () => {
-      const spec = new Type("array")
+      const spec = new Type("Array")
 
       assert.equal(spec.match([]), true)
       assert.equal(spec.match([1, 2, 3]), true)
@@ -196,7 +196,7 @@ describe("Type", () => {
     })
 
     it("rejects non-uniform arrays", () => {
-      const spec = new Type("string[]")
+      const spec = new Type("String[]")
 
       assert.equal(spec.match(["a", "b", "c"]), true)
       assert.equal(spec.match(["a", 1, "c"]), false) // mixed types
@@ -205,21 +205,21 @@ describe("Type", () => {
 
   describe("toString and toJSON", () => {
     it("toString returns string representation", () => {
-      const spec1 = new Type("string")
-      const spec2 = new Type("number[]")
-      const spec3 = new Type("string|number[]|boolean")
+      const spec1 = new Type("String")
+      const spec2 = new Type("Number[]")
+      const spec3 = new Type("String|Number[]|Boolean")
 
-      assert.equal(spec1.toString(), "string")
-      assert.equal(spec2.toString(), "number[]")
-      assert.equal(spec3.toString(), "string|number[]|boolean")
+      assert.equal(spec1.toString(), "String")
+      assert.equal(spec2.toString(), "Number[]")
+      assert.equal(spec3.toString(), "String|Number[]|Boolean")
     })
 
     it("toJSON returns structured data", () => {
-      const spec = new Type("string|number[]")
+      const spec = new Type("String|Number[]")
       const json = spec.toJSON()
 
       assert.equal(json.length, 2)
-      assert.equal(json.stringRepresentation, "string|number[]")
+      assert.equal(json.stringRepresentation, "String|Number[]")
       assert.ok(Array.isArray(json.specs))
       assert.equal(json.specs.length, 2)
     })
@@ -227,20 +227,20 @@ describe("Type", () => {
 
   describe("custom delimiter option", () => {
     it("uses custom delimiter when provided", () => {
-      const spec = new Type("string&number&boolean", { delimiter: "&" })
+      const spec = new Type("String&Number&Boolean", { delimiter: "&" })
 
       assert.equal(spec.length, 3)
-      assert.equal(spec.specs[0].typeName, "string")
-      assert.equal(spec.specs[1].typeName, "number")
-      assert.equal(spec.specs[2].typeName, "boolean")
+      assert.equal(spec.specs[0].typeName, "String")
+      assert.equal(spec.specs[1].typeName, "Number")
+      assert.equal(spec.specs[2].typeName, "Boolean")
     })
   })
 
   describe("edge cases", () => {
     it("handles all valid JavaScript types", () => {
       const validTypes = [
-        "string", "number", "boolean", "object", "function", "undefined",
-        "symbol", "bigint", "array", "date", "regexp", "error", "map", "set"
+        "String", "Number", "Boolean", "Object", "Function", "Undefined",
+        "Symbol", "Bigint", "Array", "Date", "RegExp", "Error", "Map", "Set"
       ]
 
       for (const type of validTypes) {
@@ -250,7 +250,7 @@ describe("Type", () => {
     })
 
     it("handles complex nested scenarios", () => {
-      const spec = new Type("object|string[]|function")
+      const spec = new Type("Object|String[]|Function")
 
       assert.equal(spec.match({}), true)
       assert.equal(spec.match(["a", "b"]), true)
@@ -259,13 +259,13 @@ describe("Type", () => {
     })
 
     it("validates invalid type specifications", () => {
-      assert.throws(() => new Type("badtype"), Sass)
-      assert.throws(() => new Type("string|badtype"), Sass)
+      assert.throws(() => new Type("bad-type"), Sass)
+      assert.throws(() => new Type("String|bad-type"), Sass)
       assert.throws(() => new Type(""), Sass)
     })
 
     it("correctly handles union type matching with arrays", () => {
-      const spec = new Type("string|number[]|boolean")
+      const spec = new Type("String|Number[]|Boolean")
 
       // Should match individual types
       assert.equal(spec.match("hello"), true)
@@ -281,8 +281,8 @@ describe("Type", () => {
     })
 
     it("respects allowEmpty for different value types", () => {
-      const stringSpec = new Type("string")
-      const arraySpec = new Type("string[]")
+      const stringSpec = new Type("String")
+      const arraySpec = new Type("String[]")
 
       // String emptiness
       assert.equal(stringSpec.match("", { allowEmpty: true }), true)

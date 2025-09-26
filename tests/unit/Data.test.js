@@ -6,7 +6,7 @@ import {Data,Sass,Type} from "../../src/index.js"
 describe("Data", () => {
   describe("static properties", () => {
     it("has correct primitive types", () => {
-      const expected = ["undefined", "null", "boolean", "number", "bigint", "string", "symbol", "object", "function"]
+      const expected = ["Undefined", "Null", "Boolean", "Number", "Bigint", "String", "Symbol", "Object", "Function"]
       assert.deepEqual(Data.primitives, expected)
       assert.ok(Object.isFrozen(Data.primitives))
     })
@@ -23,13 +23,13 @@ describe("Data", () => {
     it("combines primitives and constructors in dataTypes", () => {
       const expectedLength = Data.primitives.length + Data.constructors.length
       assert.equal(Data.dataTypes.length, expectedLength)
-      assert.ok(Data.dataTypes.includes("string"))
-      assert.ok(Data.dataTypes.includes("array"))
+      assert.ok(Data.dataTypes.includes("String"))
+      assert.ok(Data.dataTypes.includes("Array"))
       assert.ok(Object.isFrozen(Data.dataTypes))
     })
 
     it("has correct emptyable types", () => {
-      const expected = ["string", "array", "object"]
+      const expected = ["String", "Array", "Object"]
       assert.deepEqual(Data.emptyableTypes, expected)
       assert.ok(Object.isFrozen(Data.emptyableTypes))
     })
@@ -240,7 +240,7 @@ describe("Data", () => {
     it("newTypeSpec creates TypeSpec instances", () => {
       const spec = Data.newTypeSpec("string|number[]")
       assert.ok(spec instanceof Type)
-      assert.equal(spec.stringRepresentation, "string|number[]")
+      assert.equal(spec.stringRepresentation, "String|Number[]")
     })
 
     it("isType delegates to TypeSpec.match", () => {
@@ -251,26 +251,27 @@ describe("Data", () => {
     })
 
     it("isValidType checks against dataTypes list", () => {
-      assert.equal(Data.isValidType("string"), true)
-      assert.equal(Data.isValidType("array"), true)
+      assert.equal(Data.isValidType("String"), true)
+      assert.equal(Data.isValidType("Array"), true)
       assert.equal(Data.isValidType("invalidtype"), false)
       assert.equal(Data.isValidType(""), false)
     })
 
     it("isBaseType checks primitive/constructor types only", () => {
-      assert.equal(Data.isBaseType("hello", "string"), true)
-      assert.equal(Data.isBaseType([1, 2], "array"), true)
-      assert.equal(Data.isBaseType({}, "object"), true)
-      assert.equal(Data.isBaseType(null, "object"), false) // null excluded
-      assert.equal(Data.isBaseType(NaN, "number"), false) // NaN excluded
-      assert.equal(Data.isBaseType(null, "null"), true)
+      assert.equal(Data.isBaseType("hello", "String"), true)
+      assert.equal(Data.isBaseType([1, 2], "Array"), true)
+      assert.equal(Data.isBaseType({}, "Object"), true)
+      assert.equal(Data.isBaseType(null, "Object"), false) // null excluded
+      assert.equal(Data.isBaseType(NaN, "Number"), false) // NaN excluded
+      assert.equal(Data.isBaseType(null, "Null"), true)
     })
 
     it("typeOf returns enhanced typeof", () => {
-      assert.equal(Data.typeOf("hello"), "string")
-      assert.equal(Data.typeOf([]), "array") // enhanced for arrays
-      assert.equal(Data.typeOf({}), "object")
-      assert.equal(Data.typeOf(null), "null") // enhanced to distinguish null from object
+      assert.equal(Data.typeOf("hello"), "String")
+      assert.equal(Data.typeOf([]), "Array") // enhanced for arrays
+      assert.equal(Data.typeOf({}), "Object")
+      assert.equal(Data.typeOf(null), "Null") // enhanced to distinguish null from object
+      assert.equal(Data.typeOf(new RegExp), "RegExp") // enhanced to distinguish null from object
     })
   })
 
@@ -425,8 +426,8 @@ describe("Data", () => {
 
   describe("edge cases and error handling", () => {
     it("handles null/undefined inputs gracefully", () => {
-      assert.equal(Data.typeOf(null), "null")
-      assert.equal(Data.typeOf(undefined), "undefined")
+      assert.equal(Data.typeOf(null), "Null")
+      assert.equal(Data.typeOf(undefined), "Undefined")
       assert.equal(Data.deepFreezeObject(null), null)
       assert.equal(Data.deepFreezeObject("not object"), "not object")
     })
