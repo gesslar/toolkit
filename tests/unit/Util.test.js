@@ -554,4 +554,105 @@ describe("Util", () => {
       })
     })
   })
+
+  describe("levenshteinDistance()", () => {
+    it("returns 0 for identical strings", () => {
+      assert.equal(Util.levenshteinDistance("hello", "hello"), 0)
+      assert.equal(Util.levenshteinDistance("", ""), 0)
+      assert.equal(Util.levenshteinDistance("a", "a"), 0)
+    })
+
+    it("calculates correct distances for single operations", () => {
+      // Insertions
+      assert.equal(Util.levenshteinDistance("abc", "ab"), 1) // delete 'c'
+      assert.equal(Util.levenshteinDistance("ab", "abc"), 1) // insert 'c'
+
+      // Deletions
+      assert.equal(Util.levenshteinDistance("abc", "ac"), 1) // delete 'b'
+
+      // Substitutions
+      assert.equal(Util.levenshteinDistance("abc", "adc"), 1) // 'b' -> 'd'
+    })
+
+    it("calculates distances for complex examples", () => {
+      assert.equal(Util.levenshteinDistance("kitten", "sitting"), 3)
+      assert.equal(Util.levenshteinDistance("book", "back"), 2)
+      assert.equal(Util.levenshteinDistance("saturday", "sunday"), 3)
+    })
+
+    it("handles empty strings", () => {
+      assert.equal(Util.levenshteinDistance("", "abc"), 3)
+      assert.equal(Util.levenshteinDistance("abc", ""), 3)
+      assert.equal(Util.levenshteinDistance("", ""), 0)
+    })
+
+    it("handles strings of different lengths", () => {
+      assert.equal(Util.levenshteinDistance("a", "abc"), 2)
+      assert.equal(Util.levenshteinDistance("abc", "a"), 2)
+    })
+
+    it("handles unicode characters", () => {
+      assert.equal(Util.levenshteinDistance("café", "cafe"), 1) // é -> e
+      assert.equal(Util.levenshteinDistance("naïve", "naive"), 1) // ï -> i
+    })
+  })
+
+  describe("findClosestMatch()", () => {
+    it("returns exact match when present", () => {
+      const allowed = ["help", "build", "test", "deploy"]
+      assert.equal(Util.findClosestMatch("help", allowed), "help")
+      assert.equal(Util.findClosestMatch("test", allowed), "test")
+    })
+
+    it("finds closest matches within threshold", () => {
+      const allowed = ["help", "build", "test", "deploy"]
+
+      // Single character differences
+      assert.equal(Util.findClosestMatch("bulid", allowed), "build") // 'u' -> 'i'
+      assert.equal(Util.findClosestMatch("tst", allowed), "test") // missing 'e'
+      assert.equal(Util.findClosestMatch("deply", allowed), "deploy") // missing 'o'
+
+      // Two character differences
+      assert.equal(Util.findClosestMatch("buid", allowed), "build") // missing 'l'
+      assert.equal(Util.findClosestMatch("hlelp", allowed), "help") // extra 'l'
+    })
+
+    it("returns null when no match within threshold", () => {
+      const allowed = ["help", "build", "test", "deploy"]
+
+      assert.equal(Util.findClosestMatch("xyz", allowed), null)
+      assert.equal(Util.findClosestMatch("completelydifferent", allowed), null)
+      assert.equal(Util.findClosestMatch("", allowed), null)
+    })
+
+    it("handles empty allowed values array", () => {
+      assert.equal(Util.findClosestMatch("anything", []), null)
+    })
+
+    it("prefers closer matches when multiple are within threshold", () => {
+      const allowed = ["cat", "bat", "rat"]
+      assert.equal(Util.findClosestMatch("bat", allowed), "bat") // exact match
+      assert.equal(Util.findClosestMatch("bt", allowed), "bat") // 1 edit vs cat=2, rat=2
+    })
+
+    it("handles unicode and special characters", () => {
+      const allowed = ["café", "naïve", "résumé"]
+      assert.equal(Util.findClosestMatch("cafe", allowed), "café") // é -> e
+      assert.equal(Util.findClosestMatch("naive", allowed), "naïve") // ï -> i
+    })
+
+    it("works with various string lengths", () => {
+      const allowed = ["a", "ab", "abc", "abcd"]
+      assert.equal(Util.findClosestMatch("b", allowed), "a") // 1 edit (a->b)
+      assert.equal(Util.findClosestMatch("ad", allowed), "ab") // 1 edit (b->d)
+      assert.equal(Util.findClosestMatch("xyz", allowed), null) // too far
+    })
+
+    it("respects custom threshold parameter", () => {
+      const allowed = ["help", "build", "test", "deploy"]
+      assert.equal(Util.findClosestMatch("xyz", allowed, 1), null) // too far with threshold 1
+      assert.equal(Util.findClosestMatch("hel", allowed, 1), "help") // 1 edit, within threshold 1
+      assert.equal(Util.findClosestMatch("bulid", allowed, 3), "build") // 1 edit, within threshold 3
+    })
+  })
 })
