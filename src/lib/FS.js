@@ -9,7 +9,7 @@ import Sass from "./Sass.js"
 import Valid from "./Valid.js"
 
 const fdTypes = Object.freeze(["file", "directory"])
-const upperFdTypes = Object.freeze(fdTypes.map(type => type.toLocaleUpperCase()))
+const upperFdTypes = Object.freeze(fdTypes.map(type => type.toUpperCase()))
 const fdType = Object.freeze(await Data.allocateObject(upperFdTypes, fdTypes))
 
 export default class FS {
