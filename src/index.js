@@ -5,6 +5,7 @@ export {default as FS} from "./lib/FS.js"
 
 // Utility classes
 export {default as Cache} from "./lib/Cache.js"
+export {default as Collection} from "./lib/Collection.js"
 export {default as Data} from "./lib/Data.js"
 export {default as Glog} from "./lib/Glog.js"
 export {default as Sass} from "./lib/Sass.js"
