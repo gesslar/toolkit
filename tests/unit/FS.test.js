@@ -84,6 +84,15 @@ describe("FS", () => {
       assert.equal(result, "/home/user/project/lib/utils.js")
     })
 
+    it("relativeOrAbsolutePath uses containing directory for files", () => {
+      const from = new FileObject("/home/user/project/src/index.js")
+      const to = new FileObject("/home/user/project/src/utils/helper.js")
+
+      const result = FS.relativeOrAbsolutePath(from, to)
+
+      assert.equal(result, path.join("utils", "helper.js"))
+    })
+
     it("relativeOrAbsolutePath returns absolute path when outside scope", () => {
       const from = new FileObject("/home/user/project/src/index.js")
       const to = new FileObject("/etc/config.txt")
