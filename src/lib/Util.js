@@ -15,9 +15,15 @@ export default class Util {
    * @returns {string} Text with first letter capitalized
    */
   static capitalize(text) {
-    return typeof text === "string"
-      && `${text.slice(0,1).toUpperCase()}${text.slice(1)}`
-      || text
+    if(typeof text !== "string")
+      throw new TypeError("Util.capitalize expects a string")
+
+    if(text.length === 0)
+      return ""
+
+    const [first, ...rest] = Array.from(text)
+
+    return `${first.toLocaleUpperCase()}${rest.join("")}`
   }
 
   /**
