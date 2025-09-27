@@ -115,7 +115,11 @@ export default class FS {
    * @returns {string} The relative path from `from` to `to`, or the absolute path if not reachable
    */
   static relativeOrAbsolutePath(from, to) {
-    const relative = path.relative(from.path, to.path)
+    const fromBasePath = from.isDirectory
+      ? from.path
+      : from.directory?.path ?? path.dirname(from.path)
+
+    const relative = path.relative(fromBasePath, to.path)
 
     return relative.startsWith("..")
       ? to.path
