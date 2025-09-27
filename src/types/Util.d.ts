@@ -10,6 +10,7 @@ declare class Util {
    *
    * @param text - The text to capitalize
    * @returns Text with first letter capitalized
+   * @throws {TypeError} If `text` is not a string
    *
    * @example
    * ```typescript

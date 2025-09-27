@@ -26,15 +26,12 @@ describe("Util", () => {
       assert.equal(Util.capitalize("SCREAMING"), "SCREAMING")
     })
 
-    // 🚨 Testing the logic bomb - what happens with non-strings?
-    it("handles non-string inputs (potential issue)", () => {
-      // This reveals the silent failure pattern
-      assert.equal(Util.capitalize(null), null) // Returns null unchanged!
-      assert.equal(Util.capitalize(undefined), undefined) // Returns undefined unchanged!
-      assert.equal(Util.capitalize(123), 123) // Returns number unchanged!
-      assert.deepEqual(Util.capitalize([1, 2, 3]), [1, 2, 3]) // Returns array unchanged!
-
-      // This is problematic - should these be errors instead?
+    it("rejects non-string inputs", () => {
+      assert.throws(() => Util.capitalize(null), TypeError)
+      assert.throws(() => Util.capitalize(undefined), TypeError)
+      assert.throws(() => Util.capitalize(123), TypeError)
+      assert.throws(() => Util.capitalize([1, 2, 3]), TypeError)
+      assert.throws(() => Util.capitalize({}), TypeError)
     })
 
     it("handles special characters and unicode", () => {
@@ -47,7 +44,7 @@ describe("Util", () => {
   describe("time()", () => {
     it("measures execution time for async functions", async () => {
       const {result, cost} = await Util.time(async () => {
-        await new Promise(resolve => setTimeout(resolve, 50))
+        await new Promise(resolve => setTimeout(resolve, 80))
         return "completed"
       })
 
