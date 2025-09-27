@@ -381,9 +381,12 @@ export default class Data {
 
     const type = typeof value
 
-    return type === "object"
-      ? value.constructor.name
-      : type.charAt(0).toUpperCase() + type.slice(1)
+    if(type === "object")
+      return value.constructor.name
+
+    const [first, ...rest] = Array.from(type)
+
+    return `${first?.toLocaleUpperCase() ?? ""}${rest.join("")}`
   }
 
   /**

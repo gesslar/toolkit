@@ -385,12 +385,13 @@ export default class FileObject extends FS {
    */
   async loadData(type="any", encoding="utf8") {
     const content = await this.read(encoding)
+    const normalizedType = type.toLocaleLowerCase()
     const toTry = {
       json5: [JSON5],
       json: [JSON5],
       yaml: [YAML],
       any: [JSON5,YAML]
-    }[type.toLowerCase()]
+    }[normalizedType]
 
     if(!toTry) {
       throw Sass.new(`Unsupported data type '${type}'. Supported types: json, json5, yaml, any`)
