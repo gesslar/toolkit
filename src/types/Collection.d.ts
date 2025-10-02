@@ -135,4 +135,84 @@ export default class Collection {
    * ```
    */
   static unzip<T>(array: T[][]): T[][]
+
+  /**
+   * Maps an array through an async function, executing operations sequentially.
+   * 
+   * Unlike Promise.all(array.map(fn)), this executes each async operation
+   * one at a time, maintaining order and preventing overwhelming external resources.
+   *
+   * @param array - The array to map over
+   * @param asyncFn - Async function called for each element: (element) => Promise<result>
+   * @returns Promise resolving to array of mapped results
+   *
+   * @throws {Sass} If array is not an Array or asyncFn is not a Function
+   *
+   * @example
+   * ```typescript
+   * import { Collection } from '@gesslar/toolkit'
+   *
+   * // Sequential API calls (won't overwhelm server)
+   * const urls = ['url1', 'url2', 'url3']
+   * const responses = await Collection.asyncMap(urls, async (url) => {
+   *   return await fetch(url).then(r => r.json())
+   * })
+   * console.log(responses) // [data1, data2, data3]
+   *
+   * // Works with sync functions too
+   * const numbers = [1, 2, 3]
+   * const doubled = await Collection.asyncMap(numbers, async (n) => n * 2)
+   * console.log(doubled) // [2, 4, 6]
+   * ```
+   */
+  static asyncMap<T, R>(array: T[], asyncFn: (element: T) => Promise<R> | R): Promise<R[]>
+
+  /** Check if all elements in an array are of a specified type or all the same type */
+  static isArrayUniform(arr: Array<unknown>, type?: string): boolean
+
+  /** Remove duplicate elements from an array, returning a new array with unique values */
+  static isArrayUnique<T>(arr: Array<T>): Array<T>
+
+  /** Get the intersection of two arrays */
+  static arrayIntersection<T>(arr1: Array<T>, arr2: Array<T>): Array<T>
+
+  /** Check if two arrays have any elements in common */
+  static arrayIntersects<T>(arr1: Array<T>, arr2: Array<T>): boolean
+
+  /** Pad an array to a specified length */
+  static arrayPad<T>(arr: Array<T>, length: number, value: T, position?: number): Array<T>
+
+  /** Check if all elements in an array are strings */
+  static uniformStringArray(arr: Array<unknown>): arr is Array<string>
+
+  /** Filter an array asynchronously */
+  static asyncFilter<T>(arr: Array<T>, predicate: (item: T) => Promise<boolean>): Promise<Array<T>>
+
+  /** Clone an object */
+  static cloneObject<T extends Record<string, any>>(obj: T, freeze?: boolean): T
+
+  /** Check if an object is empty */
+  static isObjectEmpty(obj: Record<string, any>): boolean
+
+  /** Ensure a nested path of objects exists */
+  static assureObjectPath(obj: Record<string, any>, keys: Array<string>): Record<string, any>
+
+  /** Set a value in a nested object structure */
+  static setNestedValue(obj: Record<string, any>, keys: Array<string>, value: unknown): void
+
+  /** Deeply merge objects */
+  static mergeObject<T extends Record<string, any>>(...sources: Array<T>): T
+
+  /** Recursively freeze an object */
+  static deepFreezeObject<T>(obj: T): T
+
+  /** Map an object using a transformer function */
+  static mapObject<T extends Record<string, any>, R>(
+    original: T,
+    transformer: (key: string, value: any) => R | Promise<R>,
+    mutate?: boolean
+  ): Promise<Record<string, R>>
+
+  /** Allocate an object from a source array and spec */
+  static allocateObject(source: Array<unknown>, spec: Array<unknown> | ((source: Array<unknown>) => Promise<Array<unknown>> | Array<unknown>)): Promise<Record<string, unknown>>
 }

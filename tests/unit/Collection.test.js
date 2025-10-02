@@ -3,7 +3,7 @@
 import { describe, it } from "node:test"
 import assert from "node:assert/strict"
 
-import { Collection } from "../../src/index.js"
+import { Collection, Sass } from "../../src/index.js"
 
 describe("Collection", () => {
   describe("evalArray()", () => {
@@ -250,6 +250,156 @@ describe("Collection", () => {
     })
   })
 
+  describe("asyncMap()", () => {
+    it("handles normal async cases", async () => {
+      const array = [1, 2, 3]
+      const result = await Collection.asyncMap(array, async (n) => {
+        await new Promise(resolve => setTimeout(resolve, 1))
+        return n * 2
+      })
+      assert.deepEqual(result, [2, 4, 6])
+    })
+
+    it("executes operations sequentially", async () => {
+      const array = [100, 50, 25]
+      const execution = []
+      
+      await Collection.asyncMap(array, async (ms) => {
+        execution.push(`start-${ms}`)
+        await new Promise(resolve => setTimeout(resolve, ms))
+        execution.push(`end-${ms}`)
+        return ms
+      })
+
+      // If sequential, we should see start-100, end-100, start-50, end-50, start-25, end-25
+      assert.deepEqual(execution, [
+        'start-100', 'end-100', 'start-50', 'end-50', 'start-25', 'end-25'
+      ])
+    })
+
+    it("works with sync functions", async () => {
+      const array = [1, 2, 3]
+      const result = await Collection.asyncMap(array, (n) => n * 2)
+      assert.deepEqual(result, [2, 4, 6])
+    })
+
+    it("handles empty arrays", async () => {
+      const result = await Collection.asyncMap([], async (n) => n * 2)
+      assert.deepEqual(result, [])
+    })
+
+    it("validates input types", async () => {
+      await assert.rejects(
+        () => Collection.asyncMap("not array", async () => {}),
+        /Invalid type.*Expected Array/
+      )
+      await assert.rejects(
+        () => Collection.asyncMap([], "not function"),
+        /Invalid type.*Expected Function/
+      )
+    })
+
+    it("handles null and undefined inputs", async () => {
+      await assert.rejects(
+        () => Collection.asyncMap(null, async () => {}),
+        /Invalid type.*Expected Array/
+      )
+      await assert.rejects(
+        () => Collection.asyncMap(undefined, async () => {}),
+        /Invalid type.*Expected Array/
+      )
+    })
+
+    it("preserves order of results", async () => {
+      const array = [3, 1, 4, 1, 5]
+      const result = await Collection.asyncMap(array, async (n) => {
+        // Longer delays for smaller numbers to test order preservation
+        await new Promise(resolve => setTimeout(resolve, (10 - n) * 10))
+        return n * 10
+      })
+      assert.deepEqual(result, [30, 10, 40, 10, 50])
+    })
+
+    it("handles async errors appropriately", async () => {
+      const array = [1, 2, 3]
+      
+      await assert.rejects(
+        () => Collection.asyncMap(array, async (n) => {
+          if (n === 2) throw new Error("Test error")
+          return n * 2
+        }),
+        /Test error/
+      )
+    })
+
+    it("stops execution on first error", async () => {
+      const array = [1, 2, 3, 4]
+      const processed = []
+      
+      try {
+        await Collection.asyncMap(array, async (n) => {
+          processed.push(n)
+          if (n === 2) throw new Error("Test error")
+          return n * 2
+        })
+        assert.fail("Should have thrown")
+      } catch (error) {
+        assert.equal(error.message, "Test error")
+        // Should have processed items 1 and 2, but not 3 and 4
+        assert.deepEqual(processed, [1, 2])
+      }
+    })
+
+    it("handles complex objects", async () => {
+      const users = [
+        {id: 1, name: "Alice"},
+        {id: 2, name: "Bob"},
+        {id: 3, name: "Charlie"}
+      ]
+      
+      const result = await Collection.asyncMap(users, async (user) => {
+        await new Promise(resolve => setTimeout(resolve, 1))
+        return {
+          ...user,
+          name: user.name.toUpperCase(),
+          processed: true
+        }
+      })
+      
+      assert.deepEqual(result, [
+        {id: 1, name: "ALICE", processed: true},
+        {id: 2, name: "BOB", processed: true},
+        {id: 3, name: "CHARLIE", processed: true}
+      ])
+    })
+
+    it("works with promises that resolve to different types", async () => {
+      const array = ["hello", 42, true, null]
+      const result = await Collection.asyncMap(array, async (item) => {
+        await new Promise(resolve => setTimeout(resolve, 1))
+        return typeof item
+      })
+      assert.deepEqual(result, ["string", "number", "boolean", "object"])
+    })
+
+    it("handles large arrays efficiently", async () => {
+      const array = Array.from({length: 100}, (_, i) => i)
+      const start = Date.now()
+      
+      const result = await Collection.asyncMap(array, async (n) => {
+        // Very small delay to avoid test timeout
+        await new Promise(resolve => setTimeout(resolve, 1))
+        return n * 2
+      })
+      
+      const duration = Date.now() - start
+      assert.equal(result.length, 100)
+      assert.equal(result[99], 198)
+      // Should complete reasonably quickly (allowing for CI variance)
+      assert.ok(duration < 5000, `Too slow: ${duration}ms`)
+    })
+  })
+
   describe("error scenarios", () => {
     it("handles null and undefined inputs", () => {
       assert.throws(() => Collection.evalArray(null, () => {}), /Invalid type/)
@@ -275,6 +425,83 @@ describe("Collection", () => {
       // Test nested map evaluation
       const settingResult = Collection.evalMap(complex.settings, (value, key) => key === 'theme' ? value : null)
       assert.equal(settingResult, "dark")
+    })
+
+    it("asyncMap error handling preserves context", async () => {
+      const array = [1, 2, 3]
+      
+      try {
+        await Collection.asyncMap(array, async (n) => {
+          if (n === 2) {
+            const error = new Error("Original async error")
+            error.context = {item: n, step: "processing"}
+            throw error
+          }
+          return n * 2
+        })
+        assert.fail("Should have thrown")
+      } catch (error) {
+        assert.equal(error.message, "Original async error")
+        assert.deepEqual(error.context, {item: 2, step: "processing"})
+      }
+    })
+  })
+
+  // Migrated array methods from Data.js
+  describe("array utilities", () => {
+    it("isArrayUniform checks type consistency", () => {
+      assert.equal(Collection.isArrayUniform([1, 2, 3]), true)
+      assert.equal(Collection.isArrayUniform(["a", "b", "c"]), true)
+      assert.equal(Collection.isArrayUniform([1, "a", 3]), false)
+      assert.equal(Collection.isArrayUniform([], "string"), true) // empty arrays are uniform
+      assert.equal(Collection.isArrayUniform([1, 2, 3], "number"), true)
+      assert.equal(Collection.isArrayUniform([1, 2, 3], "string"), false)
+    })
+
+    it("isArrayUnique removes duplicates", () => {
+      assert.deepEqual(Collection.isArrayUnique([1, 2, 2, 3, 1]), [1, 2, 3])
+      assert.deepEqual(Collection.isArrayUnique(["a", "b", "a", "c"]), ["a", "b", "c"])
+      assert.deepEqual(Collection.isArrayUnique([]), [])
+      assert.deepEqual(Collection.isArrayUnique([1]), [1])
+    })
+
+    it("arrayIntersection finds common elements", () => {
+      assert.deepEqual(Collection.arrayIntersection([1, 2, 3], [2, 3, 4]), [2, 3])
+      assert.deepEqual(Collection.arrayIntersection([1, 2], [3, 4]), [])
+      assert.deepEqual(Collection.arrayIntersection([], [1, 2]), [])
+      assert.deepEqual(Collection.arrayIntersection(["a", "b"], ["b", "c"]), ["b"])
+    })
+
+    it("arrayIntersects checks for any common elements", () => {
+      assert.equal(Collection.arrayIntersects([1, 2, 3], [2, 4, 5]), true)
+      assert.equal(Collection.arrayIntersects([1, 2], [3, 4]), false)
+      assert.equal(Collection.arrayIntersects([], [1, 2]), false)
+      assert.equal(Collection.arrayIntersects(["a"], ["a", "b"]), true)
+    })
+
+    it("arrayPad extends array to specified length", () => {
+      assert.deepEqual(Collection.arrayPad([1, 2], 4, 0), [0, 0, 1, 2]) // prepend by default
+      assert.deepEqual(Collection.arrayPad([1, 2], 4, 0, -1), [1, 2, 0, 0]) // append
+      assert.deepEqual(Collection.arrayPad([1, 2, 3], 2, 0), [1, 2, 3]) // no change if already long enough
+
+      assert.throws(() => {
+        Collection.arrayPad([1, 2], 4, 0, 1) // invalid position
+      }, Sass)
+    })
+
+    it("uniformStringArray validates string arrays", () => {
+      assert.equal(Collection.uniformStringArray(["a", "b", "c"]), true)
+      assert.equal(Collection.uniformStringArray([]), true)
+      assert.equal(Collection.uniformStringArray(["a", 1, "c"]), false)
+      assert.equal(Collection.uniformStringArray("not array"), false)
+    })
+
+    it("asyncFilter filters arrays with async predicate", async () => {
+      const arr = [1, 2, 3, 4, 5]
+      const isEven = async (x) => x % 2 === 0
+      const result = await Collection.asyncFilter(arr, isEven)
+
+      assert.deepEqual(result, [2, 4])
     })
   })
 })

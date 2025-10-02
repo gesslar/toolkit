@@ -2,6 +2,7 @@ import {globby} from "globby"
 import path from "node:path"
 import url from "node:url"
 
+import Collection from "./Collection.js"
 import Data from "./Data.js"
 import DirectoryObject from "./DirectoryObject.js"
 import FileObject from "./FileObject.js"
@@ -10,7 +11,9 @@ import Valid from "./Valid.js"
 
 const fdTypes = Object.freeze(["file", "directory"])
 const upperFdTypes = Object.freeze(fdTypes.map(type => type.toUpperCase()))
-const fdType = Object.freeze(await Data.allocateObject(upperFdTypes, fdTypes))
+const fdType = Object.freeze(
+  await Collection.allocateObject(upperFdTypes, fdTypes)
+)
 
 export default class FS {
   static fdTypes = fdTypes
