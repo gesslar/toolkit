@@ -42,7 +42,7 @@ export default [
   },
   {
     name: "gesslar/uglier/lints-js",
-    files: ["src/**/*.{mjs,cjs,js}"],
+    files: ["{work,src}/**/*.{mjs,cjs,js}"],
     plugins: {
       "@stylistic": stylistic,
     },
@@ -141,7 +141,7 @@ export default [
   },
   {
     name: "gesslar/uglier/lints-jsdoc",
-    files: ["src/**/*.{mjs,cjs,js}"],
+    files: ["{work,src}/**/*.{mjs,cjs,js}"],
     plugins: {
       jsdoc,
     },

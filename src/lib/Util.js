@@ -298,4 +298,14 @@ export default class Util {
 
     return closestMatch
   }
+
+  static regexify(input, trim=true, flags=[]) {
+    return new RegExp(
+      input
+        .split("\n")
+        .map(i => trim ? i.trim() : i)
+        .filter(i => trim ? Boolean(i) : true)
+        .join("")
+      , flags?.join(""))
+  }
 }
