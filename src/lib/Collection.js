@@ -290,12 +290,6 @@ export default class Collection {
    * @returns {object} The cloned object
    */
   static cloneObject(obj, freeze = false) {
-    const req = "Object"
-    const objType = Data.typeOf(obj)
-
-    Valid.type(obj, req, `Invalid object. Expected '${req}', got '${objType}'`)
-    Valid.type(freeze, "Boolean", `Invalid freeze flag. Expected 'Boolean', got '${Data.typeOf(freeze)}'`)
-
     const result = {}
 
     for(const [key, value] of Object.entries(obj)) {
@@ -354,6 +348,11 @@ export default class Collection {
     for(let i = 0; i < len; i++) {
       const elem = keys[i]
 
+      // Prevent prototype pollution
+      if(elem === "__proto__" || elem === "constructor" || elem === "prototype") {
+        throw Sass.new(`Dangerous key "${elem}" not allowed in object path`)
+      }
+
       if(!current[elem])
         current[elem] = {}
 
@@ -382,8 +381,14 @@ export default class Collection {
     Valid.type(keys, keysReq, `Invalid keys array. Expected '${keysReq}', got '${keysType}'`)
 
     const nested = Collection.assureObjectPath(obj, keys.slice(0, -1))
+    const finalKey = keys[keys.length-1]
 
-    nested[keys[keys.length-1]] = value
+    // Prevent prototype pollution on final key too
+    if(finalKey === "__proto__" || finalKey === "constructor" || finalKey === "prototype") {
+      throw Sass.new(`Dangerous key "${finalKey}" not allowed in object path`)
+    }
+
+    nested[finalKey] = value
   }
 
   /**
