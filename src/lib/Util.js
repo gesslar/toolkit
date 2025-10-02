@@ -313,7 +313,7 @@ export default class Util {
 
     return new RegExp(
       input
-        .split("\n")
+        .split(/\r\n|\r|\n/)
         .map(i => trim ? i.trim() : i)
         .filter(i => trim ? Boolean(i) : true)
         .join("")
