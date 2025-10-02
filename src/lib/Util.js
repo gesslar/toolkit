@@ -2,6 +2,8 @@ import {createHash} from "node:crypto"
 import {performance} from "node:perf_hooks"
 import {EventEmitter} from "node:events"
 import Sass from "./Sass.js"
+import Valid from "./Valid.js"
+import Collection from "./Collection.js"
 
 /**
  * Utility class providing common helper functions for string manipulation,
@@ -300,6 +302,12 @@ export default class Util {
   }
 
   static regexify(input, trim=true, flags=[]) {
+    Valid.type(input, "String")
+    Valid.type(trim, "Boolean")
+    Valid.type(flags, "Array")
+
+    Valid.assert(flags.length === 0 || (flags.length > 0 && Collection.isArrayUniform(flags, "String")), "All flags must be strings")
+
     return new RegExp(
       input
         .split("\n")
