@@ -217,28 +217,71 @@ describe("Util.regexify()", () => {
   })
 
   describe("parameter validation", () => {
-    it("validates input parameter type", () => {
-      assert.throws(() => Util.regexify(123), /Invalid type.*Expected String/)
-      assert.throws(() => Util.regexify(null), /Invalid type.*Expected String/)
-      assert.throws(() => Util.regexify(undefined), /Invalid type.*Expected String/)
+    describe("input parameter validation", () => {
+      it("validates basic non-string types", () => {
+        assert.throws(() => Util.regexify(123), /Invalid type.*Expected String/)
+        assert.throws(() => Util.regexify(null), /Invalid type.*Expected String/)
+        assert.throws(() => Util.regexify(undefined), /Invalid type.*Expected String/)
+      })
+
+      it("validates exotic input types", () => {
+        assert.throws(() => Util.regexify(Symbol("test")), /Invalid type.*Expected String/)
+        assert.throws(() => Util.regexify(["pattern"]), /Invalid type.*Expected String/)
+        assert.throws(() => Util.regexify({ pattern: "\\d+" }), /Invalid type.*Expected String/)
+        assert.throws(() => Util.regexify(() => "\\d+"), /Invalid type.*Expected String/)
+        assert.throws(() => Util.regexify(/\d+/), /Invalid type.*Expected String/)
+      })
     })
 
-    it("validates trim parameter type", () => {
-      assert.throws(() => Util.regexify("\\d+", "true"), /Invalid type.*Expected Boolean/)
-      assert.throws(() => Util.regexify("\\d+", 1), /Invalid type.*Expected Boolean/)
-      assert.throws(() => Util.regexify("\\d+", null), /Invalid type.*Expected Boolean/)
+    describe("trim parameter validation", () => {
+      it("validates basic non-boolean types", () => {
+        assert.throws(() => Util.regexify("\\d+", "true"), /Invalid type.*Expected Boolean/)
+        assert.throws(() => Util.regexify("\\d+", 1), /Invalid type.*Expected Boolean/)
+        assert.throws(() => Util.regexify("\\d+", null), /Invalid type.*Expected Boolean/)
+      })
+
+      it("validates exotic trim types", () => {
+        assert.throws(() => Util.regexify("\\d+", Symbol("trim")), /Invalid type.*Expected Boolean/)
+        assert.throws(() => Util.regexify("\\d+", [true]), /Invalid type.*Expected Boolean/)
+        assert.throws(() => Util.regexify("\\d+", { trim: true }), /Invalid type.*Expected Boolean/)
+        assert.throws(() => Util.regexify("\\d+", () => true), /Invalid type.*Expected Boolean/)
+      })
     })
 
-    it("validates flags parameter type", () => {
-      assert.throws(() => Util.regexify("\\d+", true, "g"), /Invalid type.*Expected Array/)
-      assert.throws(() => Util.regexify("\\d+", true, {}), /Invalid type.*Expected Array/)
-      assert.throws(() => Util.regexify("\\d+", true, null), /Invalid type.*Expected Array/)
+    describe("flags parameter validation", () => {
+      it("validates basic non-array types", () => {
+        assert.throws(() => Util.regexify("\\d+", true, "g"), /Invalid type.*Expected Array/)
+        assert.throws(() => Util.regexify("\\d+", true, {}), /Invalid type.*Expected Array/)
+        assert.throws(() => Util.regexify("\\d+", true, null), /Invalid type.*Expected Array/)
+      })
+
+      it("validates exotic flags types", () => {
+        assert.throws(() => Util.regexify("\\d+", true, Symbol("flags")), /Invalid type.*Expected Array/)
+        assert.throws(() => Util.regexify("\\d+", true, new Set(["g"])), /Invalid type.*Expected Array/)
+        assert.throws(() => Util.regexify("\\d+", true, () => ["g"]), /Invalid type.*Expected Array/)
+        assert.throws(() => Util.regexify("\\d+", true, /g/), /Invalid type.*Expected Array/)
+      })
     })
 
-    it("validates flags array contains only strings", () => {
-      assert.throws(() => Util.regexify("\\d+", true, ["g", 1]), /All flags must be strings/)
-      assert.throws(() => Util.regexify("\\d+", true, ["g", null]), /All flags must be strings/)
-      assert.throws(() => Util.regexify("\\d+", true, ["g", true]), /All flags must be strings/)
+    describe("flags array content validation", () => {
+      it("validates basic non-string flag types", () => {
+        assert.throws(() => Util.regexify("\\d+", true, ["g", 1]), /All flags must be strings/)
+        assert.throws(() => Util.regexify("\\d+", true, ["g", null]), /All flags must be strings/)
+        assert.throws(() => Util.regexify("\\d+", true, ["g", true]), /All flags must be strings/)
+      })
+
+      it("validates exotic flag element types", () => {
+        assert.throws(() => Util.regexify("\\d+", true, ["g", Symbol("i")]), /All flags must be strings/)
+        assert.throws(() => Util.regexify("\\d+", true, ["g", ["i"]]), /All flags must be strings/)
+        assert.throws(() => Util.regexify("\\d+", true, ["g", { flag: "i" }]), /All flags must be strings/)
+        assert.throws(() => Util.regexify("\\d+", true, ["g", () => "i"]), /All flags must be strings/)
+        assert.throws(() => Util.regexify("\\d+", true, ["g", /i/]), /All flags must be strings/)
+      })
+
+      it("validates mixed type arrays", () => {
+        assert.throws(() => Util.regexify("\\d+", true, ["g", 1, "i", null, "m"]), /All flags must be strings/)
+        assert.throws(() => Util.regexify("\\d+", true, [Symbol("g"), "i", true]), /All flags must be strings/)
+      })
     })
 
     it("accepts valid parameters", () => {
