@@ -49,77 +49,8 @@ describe("Data", () => {
     })
   })
 
-  describe("array utilities", () => {
-    it("isArrayUniform checks type consistency", () => {
-      assert.equal(Data.isArrayUniform([1, 2, 3]), true)
-      assert.equal(Data.isArrayUniform(["a", "b", "c"]), true)
-      assert.equal(Data.isArrayUniform([1, "a", 3]), false)
-      assert.equal(Data.isArrayUniform([], "string"), true) // empty arrays are uniform
-      assert.equal(Data.isArrayUniform([1, 2, 3], "number"), true)
-      assert.equal(Data.isArrayUniform([1, 2, 3], "string"), false)
-    })
-
-    it("isArrayUnique removes duplicates", () => {
-      assert.deepEqual(Data.isArrayUnique([1, 2, 2, 3, 1]), [1, 2, 3])
-      assert.deepEqual(Data.isArrayUnique(["a", "b", "a", "c"]), ["a", "b", "c"])
-      assert.deepEqual(Data.isArrayUnique([]), [])
-      assert.deepEqual(Data.isArrayUnique([1]), [1])
-    })
-
-    it("arrayIntersection finds common elements", () => {
-      assert.deepEqual(Data.arrayIntersection([1, 2, 3], [2, 3, 4]), [2, 3])
-      assert.deepEqual(Data.arrayIntersection([1, 2], [3, 4]), [])
-      assert.deepEqual(Data.arrayIntersection([], [1, 2]), [])
-      assert.deepEqual(Data.arrayIntersection(["a", "b"], ["b", "c"]), ["b"])
-    })
-
-    it("arrayIntersects checks for any common elements", () => {
-      assert.equal(Data.arrayIntersects([1, 2, 3], [2, 4, 5]), true)
-      assert.equal(Data.arrayIntersects([1, 2], [3, 4]), false)
-      assert.equal(Data.arrayIntersects([], [1, 2]), false)
-      assert.equal(Data.arrayIntersects(["a"], ["a", "b"]), true)
-    })
-
-    it("arrayPad extends array to specified length", () => {
-      assert.deepEqual(Data.arrayPad([1, 2], 4, 0), [0, 0, 1, 2]) // prepend by default
-      assert.deepEqual(Data.arrayPad([1, 2], 4, 0, -1), [1, 2, 0, 0]) // append
-      assert.deepEqual(Data.arrayPad([1, 2, 3], 2, 0), [1, 2, 3]) // no change if already long enough
-
-      assert.throws(() => {
-        Data.arrayPad([1, 2], 4, 0, 1) // invalid position
-      }, Sass)
-    })
-  })
 
   describe("object utilities", () => {
-    it("cloneObject creates deep copies", () => {
-      const original = { a: 1, b: { c: 2, d: [3, 4] } }
-      const cloned = Data.cloneObject(original)
-
-      assert.deepEqual(cloned, original)
-      assert.notStrictEqual(cloned, original)
-      assert.notStrictEqual(cloned.b, original.b)
-
-      // Modify original to verify independence
-      original.b.c = 99
-      assert.equal(cloned.b.c, 2) // unchanged
-    })
-
-    it("cloneObject with freeze option", () => {
-      const original = { a: 1, b: { c: 2 } }
-      const cloned = Data.cloneObject(original, true)
-
-      assert.ok(Object.isFrozen(cloned))
-      assert.throws(() => {
-        cloned.a = 99
-      }, TypeError)
-    })
-
-    it("isObjectEmpty checks for empty objects", () => {
-      assert.equal(Data.isObjectEmpty({}), true)
-      assert.equal(Data.isObjectEmpty({ a: 1 }), false)
-      assert.equal(Data.isObjectEmpty({ a: undefined }), false) // still has property
-    })
 
     it("assureObjectPath creates nested structure", () => {
       const obj = {}
@@ -165,76 +96,7 @@ describe("Data", () => {
     })
   })
 
-  describe("allocateObject", () => {
-    it("creates object from source and spec arrays", async () => {
-      const source = ["key1", "key2", "key3"]
-      const spec = ["value1", "value2", "value3"]
-      const result = await Data.allocateObject(source, spec)
 
-      const expected = { key1: "value1", key2: "value2", key3: "value3" }
-      assert.deepEqual(result, expected)
-    })
-
-    it("works with function spec", async () => {
-      const source = [1, 2, 3]
-      const specFunc = async (src) => src.map(x => x * 2)
-      const result = await Data.allocateObject(source, specFunc)
-
-      const expected = { "1": 2, "2": 4, "3": 6 }
-      assert.deepEqual(result, expected)
-    })
-
-    it("throws for invalid inputs", async () => {
-      await assert.rejects(
-        () => Data.allocateObject("not array", []),
-        Sass
-      )
-
-      await assert.rejects(
-        () => Data.allocateObject([1, 2], [1]), // mismatched lengths
-        Sass
-      )
-
-      await assert.rejects(
-        () => Data.allocateObject([1], "not array or function"),
-        Sass
-      )
-    })
-  })
-
-  describe("mapObject", () => {
-    it("transforms object values with async function", async () => {
-      const original = { a: 1, b: 2, c: { d: 3 } }
-      const transformer = async (key, value) =>
-        typeof value === "number" ? value * 2 : value
-
-      const result = await Data.mapObject(original, transformer)
-      const expected = { a: 2, b: 4, c: { d: 6 } }
-      assert.deepEqual(result, expected)
-      assert.notStrictEqual(result, original) // new object
-    })
-
-    it("can mutate original object", async () => {
-      const original = { a: 1, b: 2 }
-      const transformer = async (key, value) => value * 2
-
-      const result = await Data.mapObject(original, transformer, true)
-      assert.strictEqual(result, original) // same reference
-      assert.deepEqual(original, { a: 2, b: 4 })
-    })
-
-    it("validates input types", async () => {
-      await assert.rejects(
-        () => Data.mapObject("not object", () => {}),
-        Sass
-      )
-
-      await assert.rejects(
-        () => Data.mapObject({}, "not function"),
-        Sass
-      )
-    })
-  })
 
   describe("type checking", () => {
     it("newTypeSpec creates TypeSpec instances", () => {
@@ -432,25 +294,5 @@ describe("Data", () => {
       assert.equal(Data.deepFreezeObject("not object"), "not object")
     })
 
-    it("handles empty arrays in array operations", () => {
-      assert.deepEqual(Data.arrayIntersection([], []), [])
-      assert.equal(Data.arrayIntersects([], []), false)
-      assert.deepEqual(Data.isArrayUnique([]), [])
-    })
-
-    it("handles complex nested object operations", () => {
-      const complex = {
-        level1: {
-          level2: {
-            array: [1, 2, { nested: true }],
-            func: () => "test"
-          }
-        }
-      }
-
-      const cloned = Data.cloneObject(complex)
-      assert.deepEqual(cloned, complex)
-      assert.notStrictEqual(cloned.level1.level2.array, complex.level1.level2.array)
-    })
   })
 })

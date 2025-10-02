@@ -4,8 +4,9 @@
  * including arrays, unions, and options.
  */
 
-import Sass from "./Sass.js"
+import Collection from "./Collection.js"
 import Data from "./Data.js"
+import Sass from "./Sass.js"
 import Util from "./Util.js"
 
 /**
@@ -180,7 +181,7 @@ export default class TypeSpec {
           return allowEmpty
 
         // Check if array elements match the required type
-        return Data.isArrayUniform(value, allowedType)
+        return Collection.isArrayUniform(value, allowedType)
       }
 
       return false
