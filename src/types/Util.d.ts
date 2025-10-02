@@ -215,6 +215,38 @@ declare class Util {
    * ```
    */
   static findClosestMatch(input: string, allowedValues: string[], threshold?: number): string | null
+
+  /**
+   * Creates a RegExp from a multiline string by removing line breaks and
+   * optionally trimming whitespace from each line.
+   *
+   * This utility makes complex regular expressions more readable by allowing
+   * them to be written across multiple lines with proper formatting and indentation.
+   * The resulting regex is functionally identical to writing it as a single line.
+   *
+   * @param input - Multiline string containing the regex pattern
+   * @param trim - Whether to trim whitespace from each line (default: true)
+   * @param flags - Array of regex flags to apply (default: [])
+   * @returns A new RegExp object with the processed pattern
+   *
+   * @example
+   * ```typescript
+   * const regex = Util.regexify(`
+   *   \\s*\\*\\s*
+   *   @(?<tag>\\w+)
+   *   \\s*
+   *   \\{(?<type>\\w+(?:\\|\\w+)*(?:\\*)?)\\}
+   *   \\s+
+   *   (?<name>\\w+)
+   * `)
+   * // Creates: /\s*\*\s*@(?<tag>\w+)\s*\{(?<type>\w+(?:\|\w+)*(?:\*)?)\}\s+(?<name>\w+)/
+   *
+   * // With flags:
+   * const globalRegex = Util.regexify(pattern, true, ['g', 'i'])
+   * // Creates regex with global and case-insensitive flags
+   * ```
+   */
+  static regexify(input: string, trim?: boolean, flags?: string[]): RegExp
 }
 
 export default Util
