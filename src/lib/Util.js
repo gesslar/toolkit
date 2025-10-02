@@ -306,7 +306,10 @@ export default class Util {
     Valid.type(trim, "Boolean")
     Valid.type(flags, "Array")
 
-    Valid.assert(flags.length === 0 || (flags.length > 0 && Collection.isArrayUniform(flags, "String")), "All flags must be strings")
+    Valid.assert(
+      flags.length === 0 ||
+      (flags.length > 0 && Collection.isArrayUniform(flags, "String")),
+      "All flags must be strings")
 
     return new RegExp(
       input
