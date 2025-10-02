@@ -224,10 +224,15 @@ declare class Util {
    * them to be written across multiple lines with proper formatting and indentation.
    * The resulting regex is functionally identical to writing it as a single line.
    *
-   * @param input - Multiline string containing the regex pattern
+   * @param input - Multiline string containing the regex pattern (required)
    * @param trim - Whether to trim whitespace from each line (default: true)
    * @param flags - Array of regex flags to apply (default: [])
    * @returns A new RegExp object with the processed pattern
+   * 
+   * @throws Will throw if input is not a string
+   * @throws Will throw if trim is not a boolean
+   * @throws Will throw if flags is not an array
+   * @throws Will throw if flags contains non-string elements
    *
    * @example
    * ```typescript

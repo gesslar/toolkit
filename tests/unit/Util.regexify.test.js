@@ -217,16 +217,37 @@ describe("Util.regexify()", () => {
   })
 
   describe("parameter validation", () => {
-    it("handles undefined flags gracefully", () => {
-      const result = Util.regexify("\\d+", true, undefined)
-      
-      assert.equal(result.flags, "")
+    it("validates input parameter type", () => {
+      assert.throws(() => Util.regexify(123), /Invalid type.*Expected String/)
+      assert.throws(() => Util.regexify(null), /Invalid type.*Expected String/)
+      assert.throws(() => Util.regexify(undefined), /Invalid type.*Expected String/)
     })
 
-    it("handles null flags gracefully", () => {
-      const result = Util.regexify("\\d+", true, null)
+    it("validates trim parameter type", () => {
+      assert.throws(() => Util.regexify("\\d+", "true"), /Invalid type.*Expected Boolean/)
+      assert.throws(() => Util.regexify("\\d+", 1), /Invalid type.*Expected Boolean/)
+      assert.throws(() => Util.regexify("\\d+", null), /Invalid type.*Expected Boolean/)
+    })
+
+    it("validates flags parameter type", () => {
+      assert.throws(() => Util.regexify("\\d+", true, "g"), /Invalid type.*Expected Array/)
+      assert.throws(() => Util.regexify("\\d+", true, {}), /Invalid type.*Expected Array/)
+      assert.throws(() => Util.regexify("\\d+", true, null), /Invalid type.*Expected Array/)
+    })
+
+    it("validates flags array contains only strings", () => {
+      assert.throws(() => Util.regexify("\\d+", true, ["g", 1]), /All flags must be strings/)
+      assert.throws(() => Util.regexify("\\d+", true, ["g", null]), /All flags must be strings/)
+      assert.throws(() => Util.regexify("\\d+", true, ["g", true]), /All flags must be strings/)
+    })
+
+    it("accepts valid parameters", () => {
+      // Should not throw
+      const result1 = Util.regexify("\\d+", true, [])
+      const result2 = Util.regexify("\\d+", false, ["g", "i"])
       
-      assert.equal(result.flags, "")
+      assert.ok(result1 instanceof RegExp)
+      assert.ok(result2 instanceof RegExp)
     })
   })
 })
