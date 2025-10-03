@@ -237,4 +237,64 @@ export default class Collection {
    * ```
    */
   static flattenObjectArray(objects: Array<Record<string, unknown>>): Record<string, Array<unknown>>
+
+  /**
+   * Trims falsy values from both ends of an array.
+   *
+   * @param arr - The array to trim
+   * @param except - Array of values to exclude from trimming (default: [])
+   * @returns The trimmed array (modified in place)
+   *
+   * @throws {Sass} If arr or except is not an Array
+   *
+   * @example
+   * ```typescript
+   * import { Collection } from '@gesslar/toolkit'
+   *
+   * const arr = [null, 0, 1, 2, "", undefined]
+   * Collection.trimArray(arr)
+   * console.log(arr) // [1, 2]
+   * ```
+   */
+  static trimArray<T>(arr: Array<T>, except?: Array<T>): Array<T>
+
+  /**
+   * Trims falsy values from the right end of an array.
+   *
+   * @param arr - The array to trim
+   * @param except - Array of values to exclude from trimming (default: [])
+   * @returns The trimmed array (modified in place)
+   *
+   * @throws {Sass} If arr or except is not an Array
+   *
+   * @example
+   * ```typescript
+   * import { Collection } from '@gesslar/toolkit'
+   *
+   * const arr = [1, "", undefined]
+   * Collection.trimArrayRight(arr)
+   * console.log(arr) // [1]
+   * ```
+   */
+  static trimArrayRight<T>(arr: Array<T>, except?: Array<T>): Array<T>
+
+  /**
+   * Trims falsy values from the left end of an array.
+   *
+   * @param arr - The array to trim
+   * @param except - Array of values to exclude from trimming (default: [])
+   * @returns The trimmed array (modified in place)
+   *
+   * @throws {Sass} If arr or except is not an Array
+   *
+   * @example
+   * ```typescript
+   * import { Collection } from '@gesslar/toolkit'
+   *
+   * const arr = [null, undefined, "value"]
+   * Collection.trimArrayLeft(arr)
+   * console.log(arr) // ["value"]
+   * ```
+   */
+  static trimArrayLeft<T>(arr: Array<T>, except?: Array<T>): Array<T>
 }
