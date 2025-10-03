@@ -496,6 +496,50 @@ describe("Collection", () => {
 
       assert.deepEqual(result, [2, 4])
     })
+
+    it("trimArray removes falsy elements from both ends", () => {
+      const arr = [null, 0, 1, 2, "", undefined]
+      const trimmed = Collection.trimArray(arr)
+
+      assert.strictEqual(trimmed, arr)
+      assert.deepEqual(arr, [1, 2])
+    })
+
+    it("trimArrayLeft trims leading falsy values while honoring exceptions", () => {
+      const arr = [0, false, 1]
+
+      Collection.trimArrayLeft(arr, [0])
+
+      assert.deepEqual(arr, [0, false, 1])
+
+      const arr2 = [null, undefined, "value"]
+
+      Collection.trimArrayLeft(arr2)
+
+      assert.deepEqual(arr2, ["value"])
+    })
+
+    it("trimArrayRight trims trailing falsy values and respects exceptions", () => {
+      const arr = [1, "", undefined]
+
+      Collection.trimArrayRight(arr)
+
+      assert.deepEqual(arr, [1])
+
+      const arr2 = [1, "", 0]
+
+      Collection.trimArrayRight(arr2, [0])
+
+      assert.deepEqual(arr2, [1, "", 0])
+    })
+
+    it("trimArrayLeft handles empty arrays safely", () => {
+      const arr = []
+
+      Collection.trimArrayLeft(arr)
+
+      assert.deepEqual(arr, [])
+    })
   })
 
   describe("flattenObjectArray()", () => {

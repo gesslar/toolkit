@@ -522,4 +522,41 @@ export default class Collection {
       return acc
     }, {})
   }
+
+  static trimArray(arr, except=[]) {
+    Valid.type(arr, "Array")
+    Valid.type(except, "Array")
+
+    Collection.trimArrayLeft(arr, except)
+    Collection.trimArrayRight(arr, except)
+
+    return arr
+  }
+
+  static trimArrayRight(arr, except=[]) {
+    Valid.type(arr, "Array")
+    Valid.type(except, "Array")
+
+    arr.reverse()
+    Collection.trimArrayLeft(arr, except)
+    arr.reverse()
+
+    return arr
+  }
+
+  static trimArrayLeft(arr, except=[]) {
+    Valid.type(arr, "Array")
+    Valid.type(except, "Array")
+
+    while(arr.length > 0) {
+      const value = arr[0]
+
+      if(value || except.includes(value))
+        break
+
+      arr.shift()
+    }
+
+    return arr
+  }
 }
