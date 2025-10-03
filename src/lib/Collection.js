@@ -144,7 +144,7 @@ export default class Collection {
       Valid.type(type, "string", `Invalid type parameter. Expected 'string', got '${Data.typeOf(type)}'`)
     }
 
-    const checkType = type ? Util.capitalize(type.toLowerCase()) : null
+    const checkType = type ? Util.capitalize(type) : null
 
     return arr.every(
       (item, _index, arr) =>
@@ -174,7 +174,7 @@ export default class Collection {
    * @param {Array} arr2 - The second array.
    * @returns {Array} The intersection of the two arrays.
    */
-  static arrayIntersection(arr1, arr2) {
+  static intersection(arr1, arr2) {
     const req = "Array"
     const arr1Type = Data.typeOf(arr1)
     const arr2Type = Data.typeOf(arr2)
@@ -202,7 +202,7 @@ export default class Collection {
    * @param {Array} arr2 - The second array to check for intersection.
    * @returns {boolean} True if any element is shared between the arrays, false otherwise.
    */
-  static arrayIntersects(arr1, arr2) {
+  static intersects(arr1, arr2) {
     const req = "Array"
     const arr1Type = Data.typeOf(arr1)
     const arr2Type = Data.typeOf(arr2)
@@ -334,13 +334,10 @@ export default class Collection {
     let current = obj  // a moving reference to internal objects within obj
     const len = keys.length
 
+    Valid.prototypePollutionProtection(keys)
+
     for(let i = 0; i < len; i++) {
       const elem = keys[i]
-
-      // Prevent prototype pollution
-      if(elem === "__proto__" || elem === "constructor" || elem === "prototype") {
-        throw Sass.new(`Dangerous key "${elem}" not allowed in object path`)
-      }
 
       if(!current[elem])
         current[elem] = {}
@@ -372,10 +369,7 @@ export default class Collection {
     const nested = Collection.assureObjectPath(obj, keys.slice(0, -1))
     const finalKey = keys[keys.length-1]
 
-    // Prevent prototype pollution on final key too
-    if(finalKey === "__proto__" || finalKey === "constructor" || finalKey === "prototype") {
-      throw Sass.new(`Dangerous key "${finalKey}" not allowed in object path`)
-    }
+    Valid.prototypePollutionProtection([finalKey])
 
     nested[finalKey] = value
   }
@@ -514,9 +508,10 @@ export default class Collection {
     return objects.reduce((acc, curr) => {
       const elemType = Data.typeOf(curr)
 
-      if(!Data.isPlainObject(curr)) {
+      if(!Data.isPlainObject(curr))
         throw Sass.new(`Invalid array element. Expected plain object, got '${elemType}'`)
-      }
+
+      Valid.prototypePollutionProtection(Object.keys(curr))
 
       Object.entries(curr).forEach(([key, value]) => {
         if(!acc[key])

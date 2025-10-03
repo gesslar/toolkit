@@ -466,17 +466,17 @@ describe("Collection", () => {
     })
 
     it("arrayIntersection finds common elements", () => {
-      assert.deepEqual(Collection.arrayIntersection([1, 2, 3], [2, 3, 4]), [2, 3])
-      assert.deepEqual(Collection.arrayIntersection([1, 2], [3, 4]), [])
-      assert.deepEqual(Collection.arrayIntersection([], [1, 2]), [])
-      assert.deepEqual(Collection.arrayIntersection(["a", "b"], ["b", "c"]), ["b"])
+      assert.deepEqual(Collection.intersection([1, 2, 3], [2, 3, 4]), [2, 3])
+      assert.deepEqual(Collection.intersection([1, 2], [3, 4]), [])
+      assert.deepEqual(Collection.intersection([], [1, 2]), [])
+      assert.deepEqual(Collection.intersection(["a", "b"], ["b", "c"]), ["b"])
     })
 
     it("arrayIntersects checks for any common elements", () => {
-      assert.equal(Collection.arrayIntersects([1, 2, 3], [2, 4, 5]), true)
-      assert.equal(Collection.arrayIntersects([1, 2], [3, 4]), false)
-      assert.equal(Collection.arrayIntersects([], [1, 2]), false)
-      assert.equal(Collection.arrayIntersects(["a"], ["a", "b"]), true)
+      assert.equal(Collection.intersects([1, 2, 3], [2, 4, 5]), true)
+      assert.equal(Collection.intersects([1, 2], [3, 4]), false)
+      assert.equal(Collection.intersects([], [1, 2]), false)
+      assert.equal(Collection.intersects(["a"], ["a", "b"]), true)
     })
 
     it("arrayPad extends array to specified length", () => {
@@ -593,6 +593,16 @@ describe("Collection", () => {
       assert.throws(() => Collection.flattenObjectArray([new Date()]), /Invalid array element/)
       assert.throws(() => Collection.flattenObjectArray([[]]), /Invalid array element/)
       assert.throws(() => Collection.flattenObjectArray([null]), /Invalid array element/)
+    })
+
+    it("prevents prototype pollution", () => {
+      const objects = [
+        { name: 'Alice', __proto__: 'polluted' },
+        { name: 'Bob', constructor: 'polluted' },
+        { name: 'Charlie', prototype: 'polluted' }
+      ]
+
+      assert.throws(() => Collection.flattenObjectArray(objects), /don't pee in your pool/)
     })
   })
 })

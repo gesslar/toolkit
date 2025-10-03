@@ -2,6 +2,7 @@ import _assert from "node:assert/strict"
 
 import Sass from "./Sass.js"
 import Data from "./Data.js"
+import Collection from "./Collection.js"
 
 export default class Valid {
 /**
@@ -46,4 +47,15 @@ export default class Valid {
       throw Sass.new(`${message}${arg ? `: ${arg}` : ""}`)
   }
 
+  static #restrictedProto = ["__proto__", "constructor", "prototype"]
+  static prototypePollutionProtection(keys) {
+    Valid.type(keys, "String[]")
+
+    const oopsIDidItAgain = Collection.intersection(this.#restrictedProto, keys)
+
+    Valid.assert(
+      oopsIDidItAgain.length === 0,
+      `We don't pee in your pool, don't pollute ours with your ${String(oopsIDidItAgain)}`
+    )
+  }
 }
