@@ -3,7 +3,6 @@ import path from "node:path"
 import url from "node:url"
 
 import Collection from "./Collection.js"
-import Data from "./Data.js"
 import DirectoryObject from "./DirectoryObject.js"
 import FileObject from "./FileObject.js"
 import Sass from "./Sass.js"
@@ -73,7 +72,7 @@ export default class FS {
       (
         (typeof glob === "string" && glob.length > 0) ||
         (
-          Array.isArray(glob) && Data.uniformStringArray(glob) &&
+          Collection.isArrayUniform(glob, "string") &&
           glob.length > 0
         )
       ),
@@ -92,7 +91,7 @@ export default class FS {
 
     if(
       Array.isArray(globbyArray) &&
-      Data.uniformStringArray(globbyArray) &&
+      Collection.isArrayUniform(globbyArray, "string") &&
       !globbyArray.length
     )
       throw Sass.new(

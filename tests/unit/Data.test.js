@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import {describe,it} from "node:test"
 
-import {Data,Sass,Type} from "../../src/index.js"
+import {Data,Type} from "../../src/index.js"
 
 describe("Data", () => {
   describe("static properties", () => {
@@ -168,13 +168,6 @@ describe("Data", () => {
   })
 
   describe("utility functions", () => {
-    it("uniformStringArray validates string arrays", () => {
-      assert.equal(Data.uniformStringArray(["a", "b", "c"]), true)
-      assert.equal(Data.uniformStringArray([]), true)
-      assert.equal(Data.uniformStringArray(["a", 1, "c"]), false)
-      assert.equal(Data.uniformStringArray("not array"), false)
-    })
-
     it("asyncFilter filters arrays with async predicate", async () => {
       const arr = [1, 2, 3, 4, 5]
       const isEven = async (x) => x % 2 === 0

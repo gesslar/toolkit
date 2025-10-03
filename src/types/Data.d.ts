@@ -125,9 +125,6 @@ export default class Data {
   /** Deeply merge objects */
   static mergeObject<T extends Record<string, any>>(...sources: Array<T>): T
 
-  /** Check if all elements in an array are strings */
-  static uniformStringArray(arr: Array<unknown>): arr is Array<string>
-
   /** Filter an array asynchronously */
   static asyncFilter<T>(arr: Array<T>, predicate: (item: T) => Promise<boolean>): Promise<Array<T>>
 

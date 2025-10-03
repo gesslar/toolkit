@@ -139,7 +139,12 @@ export default class Collection {
 
     Valid.type(arr, req, `Invalid array. Expected '${req}', got '${arrType}'`)
 
-    const checkType = type ? Util.capitalize(type) : null
+    // Validate type parameter if provided
+    if(type !== undefined) {
+      Valid.type(type, "string", `Invalid type parameter. Expected 'string', got '${Data.typeOf(type)}'`)
+    }
+
+    const checkType = type ? Util.capitalize(type.toLowerCase()) : null
 
     return arr.every(
       (item, _index, arr) =>
@@ -243,22 +248,6 @@ export default class Collection {
       return arr.concat(padding) // somewhere in the middle - THAT IS ILLEGAL
     else
       throw Sass.new("Invalid position")
-  }
-
-  /**
-   * Checks if all elements in an array are strings.
-   *
-   * @param {Array} arr - The array to check.
-   * @returns {boolean} Returns true if all elements are strings, false otherwise.
-   * @example
-   * uniformStringArray(['a', 'b', 'c']) // returns true
-   * uniformStringArray(['a', 1, 'c']) // returns false
-   */
-  static uniformStringArray(arr) {
-    if(!Data.isType(arr, "Array"))
-      return false
-
-    return arr.every(item => typeof item === "string")
   }
 
   /**
@@ -516,4 +505,27 @@ export default class Collection {
     return result
   }
 
+  static flattenObjectArray(objects) {
+    const req = "Array"
+    const type = Data.typeOf(objects)
+
+    Valid.type(objects, req, `Invalid objects array. Expected '${req}', got '${type}'`)
+
+    return objects.reduce((acc, curr) => {
+      const elemType = Data.typeOf(curr)
+
+      if(!Data.isPlainObject(curr)) {
+        throw Sass.new(`Invalid array element. Expected plain object, got '${elemType}'`)
+      }
+
+      Object.entries(curr).forEach(([key, value]) => {
+        if(!acc[key])
+          acc[key] = []
+
+        acc[key].push(value)
+      })
+
+      return acc
+    }, {})
+  }
 }
