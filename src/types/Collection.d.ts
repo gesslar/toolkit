@@ -174,10 +174,10 @@ export default class Collection {
   static isArrayUnique<T>(arr: Array<T>): Array<T>
 
   /** Get the intersection of two arrays */
-  static arrayIntersection<T>(arr1: Array<T>, arr2: Array<T>): Array<T>
+  static intersection<T>(arr1: Array<T>, arr2: Array<T>): Array<T>
 
   /** Check if two arrays have any elements in common */
-  static arrayIntersects<T>(arr1: Array<T>, arr2: Array<T>): boolean
+  static intersects<T>(arr1: Array<T>, arr2: Array<T>): boolean
 
   /** Pad an array to a specified length */
   static arrayPad<T>(arr: Array<T>, length: number, value: T, position?: number): Array<T>
