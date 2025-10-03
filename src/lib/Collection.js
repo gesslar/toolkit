@@ -195,8 +195,8 @@ export default class Collection {
    * array for efficiency.
    *
    * Example:
-   *   arrayIntersects([1, 2, 3], [3, 4, 5]) // returns true
-   *   arrayIntersects(["a", "b"], ["c", "d"]) // returns false
+   *   Collection.intersects([1, 2, 3], [3, 4, 5]) // returns true
+   *   Collection.intersects(["a", "b"], ["c", "d"]) // returns false
    *
    * @param {Array} arr1 - The first array to check for intersection.
    * @param {Array} arr2 - The second array to check for intersection.
@@ -457,7 +457,6 @@ export default class Collection {
    * @returns {Promise<object>} The allocated object
    */
   static async allocateObject(source, spec) {
-  // Data
     const workSource = [],
       workSpec = [],
       result = {}
