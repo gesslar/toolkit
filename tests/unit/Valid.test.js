@@ -147,6 +147,55 @@ describe("Valid", () => {
     })
   })
 
+  describe("prototypePollutionProtection", () => {
+    it("allows safe keys", () => {
+      // Should not throw for safe keys
+      Valid.prototypePollutionProtection(["name", "age", "address", "user_id"])
+      Valid.prototypePollutionProtection([])
+      Valid.prototypePollutionProtection(["nested", "object", "path"])
+    })
+
+    it("prevents prototype pollution with __proto__", () => {
+      assert.throws(() => {
+        Valid.prototypePollutionProtection(["__proto__"])
+      }, /don't pee in your pool/)
+
+      assert.throws(() => {
+        Valid.prototypePollutionProtection(["safe", "__proto__", "unsafe"])
+      }, /don't pee in your pool/)
+    })
+
+    it("prevents prototype pollution with constructor", () => {
+      assert.throws(() => {
+        Valid.prototypePollutionProtection(["constructor"])
+      }, /don't pee in your pool/)
+
+      assert.throws(() => {
+        Valid.prototypePollutionProtection(["safe", "constructor", "unsafe"])
+      }, /don't pee in your pool/)
+    })
+
+    it("prevents prototype pollution with prototype", () => {
+      assert.throws(() => {
+        Valid.prototypePollutionProtection(["prototype"])
+      }, /don't pee in your pool/)
+
+      assert.throws(() => {
+        Valid.prototypePollutionProtection(["safe", "prototype", "unsafe"])
+      }, /don't pee in your pool/)
+    })
+
+    it("validates input type", () => {
+      assert.throws(() => {
+        Valid.prototypePollutionProtection("not an array")
+      }, /Invalid type/)
+
+      assert.throws(() => {
+        Valid.prototypePollutionProtection(null)
+      }, /Invalid type/)
+    })
+  })
+
   describe("edge cases", () => {
     it("handles null and undefined in assert", () => {
       Valid.assert(true, "message", null)

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import {describe,it} from "node:test"
 
-import {Data,Type} from "../../src/index.js"
+import {Data,Type,Collection} from "../../src/index.js"
 
 describe("Data", () => {
   describe("static properties", () => {
@@ -54,7 +54,7 @@ describe("Data", () => {
 
     it("assureObjectPath creates nested structure", () => {
       const obj = {}
-      const result = Data.assureObjectPath(obj, ["a", "b", "c"])
+      const result = Collection.assureObjectPath(obj, ["a", "b", "c"])
 
       assert.deepEqual(obj, { a: { b: { c: {} } } })
       assert.strictEqual(result, obj.a.b.c)
@@ -62,13 +62,27 @@ describe("Data", () => {
 
     it("setNestedValue sets deep property values", () => {
       const obj = {}
-      Data.setNestedValue(obj, ["a", "b", "c"], "value")
+      Collection.setNestedValue(obj, ["a", "b", "c"], "value")
 
       assert.deepEqual(obj, { a: { b: { c: "value" } } })
 
       // Update existing path
-      Data.setNestedValue(obj, ["a", "b", "d"], "other")
+      Collection.setNestedValue(obj, ["a", "b", "d"], "other")
       assert.equal(obj.a.b.d, "other")
+    })
+
+    it("assureObjectPath prevents prototype pollution", () => {
+      const obj = {}
+      assert.throws(() => Collection.assureObjectPath(obj, ["__proto__", "polluted"]), /don't pee in your pool/)
+      assert.throws(() => Collection.assureObjectPath(obj, ["constructor", "polluted"]), /don't pee in your pool/)
+      assert.throws(() => Collection.assureObjectPath(obj, ["prototype", "polluted"]), /don't pee in your pool/)
+    })
+
+    it("setNestedValue prevents prototype pollution", () => {
+      const obj = {}
+      assert.throws(() => Collection.setNestedValue(obj, ["__proto__", "polluted"], "value"), /don't pee in your pool/)
+      assert.throws(() => Collection.setNestedValue(obj, ["constructor", "polluted"], "value"), /don't pee in your pool/)
+      assert.throws(() => Collection.setNestedValue(obj, ["prototype", "polluted"], "value"), /don't pee in your pool/)
     })
 
     it("mergeObject deeply merges objects", () => {

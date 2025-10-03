@@ -7,4 +7,7 @@ export default class Valid {
 
   /** Assert a condition */
   static assert(condition: boolean, message: string, arg?: number | null): void
+
+  /** Protect against prototype pollution by checking for dangerous keys */
+  static prototypePollutionProtection(keys: string[]): void
 }
