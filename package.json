@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Get in, bitches, we're going toolkitting.",
   "main": "./src/index.js",
   "type": "module",
@@ -49,16 +49,16 @@
   "license": "Unlicense",
   "homepage": "https://github.com/gesslar/toolkit#readme",
   "dependencies": {
-    "globby": "^14.1.0",
+    "globby": "^15.0.0",
     "json5": "^2.2.3",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^5.4.0",
-    "@types/node": "^24.5.2",
-    "@typescript-eslint/eslint-plugin": "^8.44.1",
-    "@typescript-eslint/parser": "^8.44.1",
+    "@types/node": "^24.6.2",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
     "eslint": "^9.36.0",
-    "eslint-plugin-jsdoc": "^60.4.1"
+    "eslint-plugin-jsdoc": "^60.7.1"
   }
 }

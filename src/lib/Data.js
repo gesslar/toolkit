@@ -324,19 +324,6 @@ export default class Data {
   }
 
   /**
-   * Checks if all elements in an array are strings.
-   *
-   * @param {Array} arr - The array to check.
-   * @returns {boolean} Returns true if all elements are strings, false otherwise.
-   * @example
-   * uniformStringArray(['a', 'b', 'c']) // returns true
-   * uniformStringArray(['a', 1, 'c']) // returns false
-   */
-  static uniformStringArray(arr) {
-    return Array.isArray(arr) && arr.every(item => typeof item === "string")
-  }
-
-  /**
    * Filters an array asynchronously using a predicate function.
    * Applies the predicate to all items in parallel and returns filtered results.
    *

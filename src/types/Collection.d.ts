@@ -138,7 +138,7 @@ export default class Collection {
 
   /**
    * Maps an array through an async function, executing operations sequentially.
-   * 
+   *
    * Unlike Promise.all(array.map(fn)), this executes each async operation
    * one at a time, maintaining order and preventing overwhelming external resources.
    *
@@ -182,9 +182,6 @@ export default class Collection {
   /** Pad an array to a specified length */
   static arrayPad<T>(arr: Array<T>, length: number, value: T, position?: number): Array<T>
 
-  /** Check if all elements in an array are strings */
-  static uniformStringArray(arr: Array<unknown>): arr is Array<string>
-
   /** Filter an array asynchronously */
   static asyncFilter<T>(arr: Array<T>, predicate: (item: T) => Promise<boolean>): Promise<Array<T>>
 
@@ -215,4 +212,29 @@ export default class Collection {
 
   /** Allocate an object from a source array and spec */
   static allocateObject(source: Array<unknown>, spec: Array<unknown> | ((source: Array<unknown>) => Promise<Array<unknown>> | Array<unknown>)): Promise<Record<string, unknown>>
+
+  /**
+   * Flattens an array of plain objects into a single object where each key contains
+   * an array of all values for that key across all input objects.
+   *
+   * @param objects - Array of plain objects to flatten
+   * @returns Object with keys mapped to arrays of values from all input objects
+   *
+   * @throws {Sass} If objects is not an Array or if any element is not a plain object
+   *
+   * @example
+   * ```typescript
+   * import { Collection } from '@gesslar/toolkit'
+   *
+   * const objects = [
+   *   { name: 'Alice', age: 25 },
+   *   { name: 'Bob', age: 30 },
+   *   { name: 'Charlie', age: 35 }
+   * ]
+   *
+   * const result = Collection.flattenObjectArray(objects)
+   * // result: { name: ['Alice', 'Bob', 'Charlie'], age: [25, 30, 35] }
+   * ```
+   */
+  static flattenObjectArray(objects: Array<Record<string, unknown>>): Record<string, Array<unknown>>
 }

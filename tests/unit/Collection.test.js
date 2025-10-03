@@ -263,7 +263,7 @@ describe("Collection", () => {
     it("executes operations sequentially", async () => {
       const array = [100, 50, 25]
       const execution = []
-      
+
       await Collection.asyncMap(array, async (ms) => {
         execution.push(`start-${ms}`)
         await new Promise(resolve => setTimeout(resolve, ms))
@@ -322,7 +322,7 @@ describe("Collection", () => {
 
     it("handles async errors appropriately", async () => {
       const array = [1, 2, 3]
-      
+
       await assert.rejects(
         () => Collection.asyncMap(array, async (n) => {
           if (n === 2) throw new Error("Test error")
@@ -335,7 +335,7 @@ describe("Collection", () => {
     it("stops execution on first error", async () => {
       const array = [1, 2, 3, 4]
       const processed = []
-      
+
       try {
         await Collection.asyncMap(array, async (n) => {
           processed.push(n)
@@ -356,7 +356,7 @@ describe("Collection", () => {
         {id: 2, name: "Bob"},
         {id: 3, name: "Charlie"}
       ]
-      
+
       const result = await Collection.asyncMap(users, async (user) => {
         await new Promise(resolve => setTimeout(resolve, 1))
         return {
@@ -365,7 +365,7 @@ describe("Collection", () => {
           processed: true
         }
       })
-      
+
       assert.deepEqual(result, [
         {id: 1, name: "ALICE", processed: true},
         {id: 2, name: "BOB", processed: true},
@@ -385,13 +385,13 @@ describe("Collection", () => {
     it("handles large arrays efficiently", async () => {
       const array = Array.from({length: 100}, (_, i) => i)
       const start = Date.now()
-      
+
       const result = await Collection.asyncMap(array, async (n) => {
         // Very small delay to avoid test timeout
         await new Promise(resolve => setTimeout(resolve, 1))
         return n * 2
       })
-      
+
       const duration = Date.now() - start
       assert.equal(result.length, 100)
       assert.equal(result[99], 198)
@@ -429,7 +429,7 @@ describe("Collection", () => {
 
     it("asyncMap error handling preserves context", async () => {
       const array = [1, 2, 3]
-      
+
       try {
         await Collection.asyncMap(array, async (n) => {
           if (n === 2) {
@@ -489,19 +489,110 @@ describe("Collection", () => {
       }, Sass)
     })
 
-    it("uniformStringArray validates string arrays", () => {
-      assert.equal(Collection.uniformStringArray(["a", "b", "c"]), true)
-      assert.equal(Collection.uniformStringArray([]), true)
-      assert.equal(Collection.uniformStringArray(["a", 1, "c"]), false)
-      assert.equal(Collection.uniformStringArray("not array"), false)
-    })
-
     it("asyncFilter filters arrays with async predicate", async () => {
       const arr = [1, 2, 3, 4, 5]
       const isEven = async (x) => x % 2 === 0
       const result = await Collection.asyncFilter(arr, isEven)
 
       assert.deepEqual(result, [2, 4])
+    })
+  })
+
+  describe("flattenObjectArray()", () => {
+    it("flattens array of objects into key-value arrays", () => {
+      const objects = [
+        { name: 'Alice', age: 25 },
+        { name: 'Bob', age: 30 },
+        { name: 'Charlie', age: 35 }
+      ]
+
+      const result = Collection.flattenObjectArray(objects)
+
+      assert.deepEqual(result, {
+        name: ['Alice', 'Bob', 'Charlie'],
+        age: [25, 30, 35]
+      })
+    })
+
+    it("handles objects with different keys", () => {
+      const objects = [
+        { a: 1, b: 2 },
+        { a: 3, c: 4 },
+        { b: 5, c: 6, d: 7 }
+      ]
+
+      const result = Collection.flattenObjectArray(objects)
+
+      assert.deepEqual(result, {
+        a: [1, 3],
+        b: [2, 5],
+        c: [4, 6],
+        d: [7]
+      })
+    })
+
+    it("handles empty objects", () => {
+      const objects = [{}, { a: 1 }, {}]
+
+      const result = Collection.flattenObjectArray(objects)
+
+      assert.deepEqual(result, { a: [1] })
+    })
+
+    it("handles empty array", () => {
+      const result = Collection.flattenObjectArray([])
+
+      assert.deepEqual(result, {})
+    })
+
+    it("handles single object", () => {
+      const objects = [{ name: 'Test', value: 42 }]
+
+      const result = Collection.flattenObjectArray(objects)
+
+      assert.deepEqual(result, {
+        name: ['Test'],
+        value: [42]
+      })
+    })
+
+    it("preserves different value types", () => {
+      const objects = [
+        { mixed: 'string', num: 1 },
+        { mixed: 42, bool: true },
+        { mixed: null, obj: { nested: 'value' } }
+      ]
+
+      const result = Collection.flattenObjectArray(objects)
+
+      assert.deepEqual(result, {
+        mixed: ['string', 42, null],
+        num: [1],
+        bool: [true],
+        obj: [{ nested: 'value' }]
+      })
+    })
+
+    it("handles duplicate values", () => {
+      const objects = [
+        { key: 'value1' },
+        { key: 'value1' },
+        { key: 'value2' }
+      ]
+
+      const result = Collection.flattenObjectArray(objects)
+
+      assert.deepEqual(result, {
+        key: ['value1', 'value1', 'value2']
+      })
+    })
+
+    it("validates input types", () => {
+      assert.throws(() => Collection.flattenObjectArray(null), /Invalid type/)
+      assert.throws(() => Collection.flattenObjectArray("not array"), /Invalid type/)
+      assert.throws(() => Collection.flattenObjectArray([new Date()]), /Invalid array element/)
+      assert.throws(() => Collection.flattenObjectArray([[]]), /Invalid array element/)
+      assert.throws(() => Collection.flattenObjectArray([null]), /Invalid array element/)
     })
   })
 })
