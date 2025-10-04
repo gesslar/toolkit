@@ -214,29 +214,45 @@ export default class Collection {
   static allocateObject(source: Array<unknown>, spec: Array<unknown> | ((source: Array<unknown>) => Promise<Array<unknown>> | Array<unknown>)): Promise<Record<string, unknown>>
 
   /**
-   * Flattens an array of plain objects into a single object where each key contains
-   * an array of all values for that key across all input objects.
+   * Flattens one level of an array of plain objects, transposing values so each
+   * key maps to the collected values from every object.
    *
-   * @param objects - Array of plain objects to flatten
+   * Accepts either a simple array of objects or an array that mixes objects and
+   * nested object arrays (one level deep). Nested arrays are flattened before
+   * transposition.
+   *
+   * @param input - Array of plain objects (optionally containing nested arrays)
    * @returns Object with keys mapped to arrays of values from all input objects
    *
-   * @throws {Sass} If objects is not an Array or if any element is not a plain object
+   * @throws {Sass} If input is not an Array or if any element is not a plain object after flattening
    *
    * @example
    * ```typescript
    * import { Collection } from '@gesslar/toolkit'
    *
    * const objects = [
-   *   { name: 'Alice', age: 25 },
-   *   { name: 'Bob', age: 30 },
-   *   { name: 'Charlie', age: 35 }
+   *   [{ name: 'Alice', age: 25 }],
+   *   { name: 'Bob', age: 30 }
    * ]
    *
    * const result = Collection.flattenObjectArray(objects)
-   * // result: { name: ['Alice', 'Bob', 'Charlie'], age: [25, 30, 35] }
+   * // result: { name: ['Alice', 'Bob'], age: [25, 30] }
    * ```
    */
-  static flattenObjectArray(objects: Array<Record<string, unknown>>): Record<string, Array<unknown>>
+  static flattenObjectArray(
+    input: Array<Record<string, unknown> | Array<Record<string, unknown>>>
+  ): Record<string, Array<unknown>>
+
+  /**
+   * Transposes an array of plain objects into an object of arrays, keyed by the
+   * original object keys.
+   *
+   * @param objects - Array of plain objects to transpose
+   * @returns Object with keys mapped to arrays of values from the input objects
+   *
+   * @throws {Sass} If objects is not an Array or if any element is not a plain object
+   */
+  static transposeObjects(objects: Array<Record<string, unknown>>): Record<string, Array<unknown>>
 
   /**
    * Trims falsy values from both ends of an array.
