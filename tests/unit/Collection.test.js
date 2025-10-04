@@ -631,12 +631,35 @@ describe("Collection", () => {
       })
     })
 
+    it("flattens nested arrays of objects", () => {
+      const objects = [
+        [
+          { name: 'Alice', age: 25 },
+          { name: 'Avery', age: 28 }
+        ],
+        { name: 'Bob', age: 30 }
+      ]
+
+      const result = Collection.flattenObjectArray(objects)
+
+      assert.deepEqual(result, {
+        name: ['Alice', 'Avery', 'Bob'],
+        age: [25, 28, 30]
+      })
+    })
+
+    it("treats nested empty arrays as empty input", () => {
+      const result = Collection.flattenObjectArray([[]])
+
+      assert.deepEqual(result, {})
+    })
+
     it("validates input types", () => {
       assert.throws(() => Collection.flattenObjectArray(null), /Invalid type/)
       assert.throws(() => Collection.flattenObjectArray("not array"), /Invalid type/)
       assert.throws(() => Collection.flattenObjectArray([new Date()]), /Invalid array element/)
-      assert.throws(() => Collection.flattenObjectArray([[]]), /Invalid array element/)
       assert.throws(() => Collection.flattenObjectArray([null]), /Invalid array element/)
+      assert.throws(() => Collection.flattenObjectArray([[new Date()]]), /Invalid array element/)
     })
 
     it("prevents prototype pollution", () => {
@@ -647,6 +670,26 @@ describe("Collection", () => {
       ]
 
       assert.throws(() => Collection.flattenObjectArray(objects), /don't pee in your pool/)
+    })
+  })
+
+  describe("transposeObjects()", () => {
+    it("transposes object arrays into keyed arrays", () => {
+      const objects = [
+        { name: 'Alice', age: 25 },
+        { name: 'Bob', age: 30 }
+      ]
+
+      const result = Collection.transposeObjects(objects)
+
+      assert.deepEqual(result, {
+        name: ['Alice', 'Bob'],
+        age: [25, 30]
+      })
+    })
+
+    it("throws when encountering non-plain objects", () => {
+      assert.throws(() => Collection.transposeObjects([new Date()]), /Invalid array element/)
     })
   })
 })

@@ -498,31 +498,6 @@ export default class Collection {
     return result
   }
 
-  static flattenObjectArray(objects) {
-    const req = "Array"
-    const type = Data.typeOf(objects)
-
-    Valid.type(objects, req, `Invalid objects array. Expected '${req}', got '${type}'`)
-
-    return objects.reduce((acc, curr) => {
-      const elemType = Data.typeOf(curr)
-
-      if(!Data.isPlainObject(curr))
-        throw Sass.new(`Invalid array element. Expected plain object, got '${elemType}'`)
-
-      Valid.prototypePollutionProtection(Object.keys(curr))
-
-      Object.entries(curr).forEach(([key, value]) => {
-        if(!acc[key])
-          acc[key] = []
-
-        acc[key].push(value)
-      })
-
-      return acc
-    }, {})
-  }
-
   static trimArray(arr, except=[]) {
     Valid.type(arr, "Array")
     Valid.type(except, "Array")
@@ -558,5 +533,36 @@ export default class Collection {
     }
 
     return arr
+  }
+
+  static transposeObjects(objects) {
+    const req = "Array"
+    const type = Data.typeOf(objects)
+
+    Valid.type(objects, req, `Invalid objects array. Expected '${req}', got '${type}'`)
+
+    return objects.reduce((acc, curr) => {
+      const elemType = Data.typeOf(curr)
+
+      if(!Data.isPlainObject(curr))
+        throw Sass.new(`Invalid array element. Expected plain object, got '${elemType}'`)
+
+      Valid.prototypePollutionProtection(Object.keys(curr))
+
+      Object.entries(curr).forEach(([key, value]) => {
+        if(!acc[key])
+          acc[key] = []
+
+        acc[key].push(value)
+      })
+
+      return acc
+    }, {})
+  }
+
+  static flattenObjectArray(input) {
+    const flattened = Array.isArray(input) ? input.flat() : input
+
+    return Collection.transposeObjects(flattened)
   }
 }
