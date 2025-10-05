@@ -326,4 +326,27 @@ export default class FileObject extends FS {
 
   /** Load an object from JSON5 or YAML file with type specification */
   loadData(type?: 'json' | 'json5' | 'yaml' | 'any', encoding?: string): Promise<unknown>
+
+  /**
+   * Dynamically import the file using the resolved file URI.
+   *
+   * Uses Node.js' native dynamic `import()` under the hood, allowing consumers to load
+   * ESM modules from disk with full path resolution handled by FileObject. The method
+   * verifies the file exists before attempting the import to provide clearer error
+   * messaging and prevent low-level loader failures.
+   *
+   * @typeParam TModule - Expected module shape. Defaults to a loose record to help with
+   * module namespace typing.
+   *
+   * @returns The imported module namespace object.
+   *
+   * @throws {Error} When the file does not exist or the path cannot be converted to a URI.
+   *
+   * @example
+   * ```typescript
+   * const configModule = await file.import<{ default: Config }>()
+   * const config = configModule.default
+   * ```
+   */
+  import<TModule = Record<string, unknown>>(): Promise<TModule>
 }

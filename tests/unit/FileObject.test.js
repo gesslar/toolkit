@@ -280,6 +280,48 @@ describe("FileObject", () => {
     })
   })
 
+  describe("import()", () => {
+    let moduleDir
+
+    beforeEach(async () => {
+      moduleDir = await TestUtils.createTestDir("file-import-test")
+    })
+
+    afterEach(async () => {
+      if(moduleDir) {
+        await TestUtils.cleanupTestDir(moduleDir)
+      }
+    })
+
+    it("imports ESM module using file URI", async () => {
+      const modulePath = path.join(moduleDir, "sample-module.js")
+      const moduleSource = [
+        "export const answer = 42",
+        "export default function greet(name) {",
+        "  return `hello ${name}`",
+        "}"
+      ].join("\n")
+
+      await fs.writeFile(modulePath, moduleSource, "utf8")
+
+      const file = new FileObject(modulePath)
+      const moduleNamespace = await file.import()
+
+      assert.equal(moduleNamespace.answer, 42)
+      assert.equal(moduleNamespace.default("world"), "hello world")
+    })
+
+    it("throws Sass error when module is missing", async () => {
+      const missingPath = path.join(moduleDir, "missing-module.js")
+      const file = new FileObject(missingPath)
+
+      await assert.rejects(
+        () => file.import(),
+        Sass
+      )
+    })
+  })
+
   describe("loadData method", () => {
     let jsonFile, yamlFile, invalidFile
 

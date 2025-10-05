@@ -353,11 +353,11 @@ export default class FileObject extends FS {
   async read(encoding="utf8") {
     const filePath = this.path
 
-    if(!(await this.exists))
-      throw Sass.new(`No such file '${filePath}'`)
-
     if(!filePath)
       throw Sass.new("No absolute path in file map")
+
+    if(!(await this.exists))
+      throw Sass.new(`No such file '${filePath}'`)
 
     return await fs.readFile(filePath, encoding)
   }
@@ -408,5 +408,22 @@ export default class FileObject extends FS {
     }
 
     throw Sass.new(`Content is neither valid JSON5 nor valid YAML:\n'${this.path}'`)
+  }
+
+  /**
+   * Loads a file as a module and returns it.
+   *
+   * @returns {Promise<object>} The file contents as a module.
+   */
+  async import() {
+    const fileUri = this.uri
+
+    if(!fileUri)
+      throw Sass.new("No URI in file map")
+
+    if(!(await this.exists))
+      throw Sass.new(`No such file '${fileUri}'`)
+
+    return await import(fileUri)
   }
 }
