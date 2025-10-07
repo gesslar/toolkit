@@ -163,25 +163,22 @@ describe("Tantrum", () => {
   })
 
   describe("error handling edge cases", () => {
-    it("handles null errors gracefully", () => {
-      // This should not happen in practice but let's be defensive
+    it("throws TypeError for null errors", () => {
       assert.throws(() => {
         new Tantrum("Test", [null])
-      })
+      }, TypeError, /All items in errors array must be Error instances/)
     })
 
-    it("handles undefined errors gracefully", () => {
-      // This should not happen in practice but let's be defensive  
+    it("throws TypeError for undefined errors", () => {
       assert.throws(() => {
         new Tantrum("Test", [undefined])
-      })
+      }, TypeError, /All items in errors array must be Error instances/)
     })
 
-    it("handles non-Error objects gracefully", () => {
-      // This should not happen in practice but let's be defensive
+    it("throws TypeError for non-Error objects", () => {
       assert.throws(() => {
         new Tantrum("Test", ["not an error"])
-      })
+      }, TypeError, /All items in errors array must be Error instances/)
     })
   })
 
