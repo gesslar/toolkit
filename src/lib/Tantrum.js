@@ -26,12 +26,14 @@ export default class Tantrum extends AggregateError {
   constructor(message, errors = []) {
     // Auto-wrap plain errors in Sass, keep existing Sass instances
     const wrappedErrors = errors.map(error => {
-      if (error instanceof Sass) {
+      if(error instanceof Sass) {
         return error
       }
-      if (!(error instanceof Error)) {
+
+      if(!(error instanceof Error)) {
         throw new TypeError(`All items in errors array must be Error instances, got: ${typeof error}`)
       }
+
       return Sass.new(error.message, error)
     })
 
