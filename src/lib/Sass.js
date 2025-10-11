@@ -112,7 +112,7 @@ export default class Sass extends Error {
         ...rest
           .split("\n")
           .map(line => {
-            const at = line.match(/^\s{4}at\s(?<at>.*)$/)?.groups?.at ?? null
+            const at = line.match(/^\s{4}at\s(?<at>.*)$/)?.groups?.at ?? ""
 
             return at
               ? `* ${at}`
