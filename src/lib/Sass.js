@@ -102,10 +102,8 @@ export default class Sass extends Error {
    * @returns {string|undefined} Formatted stack trace or undefined
    */
   #fullBodyMassage(stack) {
-    // Remove the first line, it's already been reported
-
     stack = stack ?? ""
-
+    // Remove the first line, it's already been reported
     const {rest} = stack.match(/^.*?\n(?<rest>[\s\S]+)$/m)?.groups ?? {}
     const lines = []
 
@@ -114,7 +112,7 @@ export default class Sass extends Error {
         ...rest
           .split("\n")
           .map(line => {
-            const at = line.match(/^\s{4}at\s(?<at>.*)$/)?.groups?.at ?? {}
+            const at = line.match(/^\s{4}at\s(?<at>.*)$/)?.groups?.at ?? null
 
             return at
               ? `* ${at}`
