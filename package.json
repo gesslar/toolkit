@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Get in, bitches, we're going toolkitting.",
   "main": "./src/index.js",
   "type": "module",
@@ -26,7 +26,7 @@
     "update": "npx npm-check-updates -u && npm install",
     "test": "node --test tests/unit/*.test.js",
     "test:unit": "node --test tests/unit/*.test.js",
-    "pr": "gt submit --cli --publish --restack --ai --merge-when-ready"
+    "pr": "gt submit --publish --restack --ai"
   },
   "repository": {
     "type": "git",
@@ -51,6 +51,7 @@
   "homepage": "https://github.com/gesslar/toolkit#readme",
   "dependencies": {
     "@gesslar/colours": "^0.0.1",
+    "ajv": "^8.17.1",
     "globby": "^15.0.0",
     "json5": "^2.2.3",
     "yaml": "^2.8.1"

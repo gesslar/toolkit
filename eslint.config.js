@@ -7,9 +7,7 @@ export default [
   js.configs.recommended,
   jsdoc.configs['flat/recommended'], {
     name: "gesslar/uglier/ignores",
-    ignores: [
-      "docs/**",
-    ],
+    ignores: [],
   }, {
     name: "gesslar/uglier/languageOptions",
     languageOptions: {
@@ -59,8 +57,8 @@ export default [
         {blankLine: "always",   prev: "for", next: "*"},
         {blankLine: "always",   prev: "switch", next: "*"},
         {blankLine: "always",   prev: "do", next: "*"},
-        {blankLine: "always",   prev: ["const", "let", "var"], next: "*"},
-        {blankLine: "any",      prev: ["const", "let", "var"], next: ["const", "let", "var"]},
+        // {blankLine: "always",   prev: ["const", "let", "var"], next: "*"},
+        // {blankLine: "any",      prev: ["const", "let", "var"], next: ["const", "let", "var"]},
         {blankLine: "always",   prev: "directive", next: "*" },
         {blankLine: "any",      prev: "directive", next: "directive" },
       ],
