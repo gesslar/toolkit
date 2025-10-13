@@ -321,10 +321,46 @@ export default class FileObject extends FS {
   /** Read the content of a file */
   read(encoding?: string): Promise<string>
 
-  /** Write content to a file */
+  /**
+   * Write content to a file asynchronously.
+   * Validates that the parent directory exists before writing.
+   *
+   * @param content - The content to write
+   * @param encoding - The encoding in which to write (default: "utf8")
+   * @throws {Sass} If the file path is invalid or the parent directory doesn't exist
+   *
+   * @example
+   * ```typescript
+   * const file = new FileObject('./output/data.json')
+   * await file.write(JSON.stringify({key: 'value'}))
+   *
+   * // With custom encoding
+   * await file.write('content', 'utf16le')
+   * ```
+   */
   write(content: string, encoding?: string): Promise<void>
 
-  /** Load an object from JSON5 or YAML file with type specification */
+  /**
+   * Load and parse data from JSON5 or YAML file.
+   * Attempts to parse content as JSON5 first, then falls back to YAML if type is "any".
+   *
+   * @param type - The expected data format: "json", "json5", "yaml", or "any" (default: "any")
+   * @param encoding - The file encoding (default: "utf8")
+   * @returns The parsed data object
+   * @throws {Sass} If the content cannot be parsed or type is unsupported
+   *
+   * @example
+   * ```typescript
+   * // Load JSON5 config
+   * const config = await configFile.loadData('json5')
+   *
+   * // Auto-detect format (tries JSON5, then YAML)
+   * const data = await dataFile.loadData('any')
+   *
+   * // Load YAML explicitly
+   * const yaml = await yamlFile.loadData('yaml')
+   * ```
+   */
   loadData(type?: 'json' | 'json5' | 'yaml' | 'any', encoding?: string): Promise<unknown>
 
   /**

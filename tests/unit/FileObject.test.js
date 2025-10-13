@@ -487,4 +487,266 @@ describe("FileObject", () => {
       assert.ok(path.isAbsolute(file.path))
     })
   })
+
+  describe("write method", () => {
+    let testDir
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("fileobject-write-test")
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("writes content to a file successfully", async () => {
+      const filePath = path.join(testDir, "test.txt")
+      const file = new FileObject(filePath)
+      const content = "Hello, World!"
+
+      await file.write(content)
+
+      assert.equal(await file.exists, true)
+      const readContent = await file.read()
+      assert.equal(readContent, content)
+    })
+
+    it("writes content with different encoding", async () => {
+      const filePath = path.join(testDir, "test-utf16.txt")
+      const file = new FileObject(filePath)
+      const content = "Hello with encoding!"
+
+      await file.write(content, "utf16le")
+
+      assert.equal(await file.exists, true)
+      const readContent = await file.read("utf16le")
+      assert.equal(readContent, content)
+    })
+
+    it("overwrites existing file content", async () => {
+      const filePath = path.join(testDir, "overwrite.txt")
+      const file = new FileObject(filePath)
+
+      await file.write("First content")
+      assert.equal(await file.read(), "First content")
+
+      await file.write("Second content")
+      assert.equal(await file.read(), "Second content")
+    })
+
+    it("throws error when parent directory doesn't exist", async () => {
+      const filePath = path.join(testDir, "nonexistent", "subdir", "test.txt")
+      const file = new FileObject(filePath)
+
+      await assert.rejects(
+        () => file.write("content"),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /Invalid directory/)
+          return true
+        }
+      )
+    })
+
+    it("writes empty string successfully", async () => {
+      const filePath = path.join(testDir, "empty.txt")
+      const file = new FileObject(filePath)
+
+      await file.write("")
+
+      assert.equal(await file.exists, true)
+      assert.equal(await file.read(), "")
+    })
+
+    it("writes large content successfully", async () => {
+      const filePath = path.join(testDir, "large.txt")
+      const file = new FileObject(filePath)
+      const largeContent = "x".repeat(10000)
+
+      await file.write(largeContent)
+
+      const readContent = await file.read()
+      assert.equal(readContent.length, 10000)
+      assert.equal(readContent, largeContent)
+    })
+
+    it("validates directory exists before writing", async () => {
+      const filePath = path.join(testDir, "test.txt")
+      const file = new FileObject(filePath)
+
+      // Directory exists, should succeed
+      assert.equal(await file.directory.exists, true)
+      await file.write("content")
+
+      assert.equal(await file.exists, true)
+    })
+
+    it("handles special characters in content", async () => {
+      const filePath = path.join(testDir, "special.txt")
+      const file = new FileObject(filePath)
+      const specialContent = "Special: 你好 🎉 \n\t\r\"'`"
+
+      await file.write(specialContent)
+
+      const readContent = await file.read()
+      assert.equal(readContent, specialContent)
+    })
+
+    it("throws Sass error with trace context", async () => {
+      const filePath = path.join(testDir, "bad", "path", "file.txt")
+      const file = new FileObject(filePath)
+
+      try {
+        await file.write("content")
+        assert.fail("Should have thrown")
+      } catch(error) {
+        assert.ok(error instanceof Sass)
+        assert.match(error.message, /Invalid directory/)
+      }
+    })
+  })
+
+  describe("loadData method", () => {
+    it("loads JSON5 data successfully", async () => {
+      const file = new FileObject("tests/fixtures/config-lpc-to-markdown.json5")
+      const data = await file.loadData("json5")
+
+      assert.ok(data)
+      assert.equal(typeof data, "object")
+    })
+
+    it("loads JSON data successfully", async () => {
+      const file = new FileObject("tests/fixtures/settings.json")
+      const data = await file.loadData("json")
+
+      assert.ok(data)
+      assert.equal(typeof data, "object")
+    })
+
+    it("loads YAML data successfully", async () => {
+      const file = new FileObject("tests/fixtures/colors.yaml")
+      const data = await file.loadData("yaml")
+
+      assert.ok(data)
+      assert.equal(typeof data, "object")
+    })
+
+    it("auto-detects JSON5 format with 'any' type", async () => {
+      const file = new FileObject("tests/fixtures/config-lpc-to-markdown.json5")
+      const data = await file.loadData("any")
+
+      assert.ok(data)
+      assert.equal(typeof data, "object")
+    })
+
+    it("auto-detects YAML format with 'any' type", async () => {
+      const file = new FileObject("tests/fixtures/colors.yaml")
+      const data = await file.loadData("any")
+
+      assert.ok(data)
+      assert.equal(typeof data, "object")
+    })
+
+    it("uses toLowerCase for type normalization (not toLocaleLowerCase)", async () => {
+      const file = new FileObject("tests/fixtures/settings.json")
+
+      // These should work regardless of locale
+      const data1 = await file.loadData("JSON")
+      const data2 = await file.loadData("Json")
+      const data3 = await file.loadData("json")
+
+      assert.ok(data1)
+      assert.ok(data2)
+      assert.ok(data3)
+    })
+
+    it("handles different encoding", async () => {
+      const file = new FileObject("tests/fixtures/settings.json")
+      const data = await file.loadData("json", "utf8")
+
+      assert.ok(data)
+      assert.equal(typeof data, "object")
+    })
+
+    it("throws Sass error for unsupported type", async () => {
+      const file = new FileObject("tests/fixtures/settings.json")
+
+      await assert.rejects(
+        () => file.loadData("xml"),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /Unsupported data type 'xml'/)
+          return true
+        }
+      )
+    })
+
+    it("throws Sass error for invalid JSON5", async () => {
+      const file = new FileObject("tests/fixtures/broken.json5")
+
+      await assert.rejects(
+        () => file.loadData("json5"),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /Content is neither valid JSON5 nor valid YAML/)
+          return true
+        }
+      )
+    })
+
+    it("throws Sass error for invalid YAML", async () => {
+      const file = new FileObject("tests/fixtures/broken.yaml")
+
+      await assert.rejects(
+        () => file.loadData("yaml"),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /Content is neither valid JSON5 nor valid YAML/)
+          return true
+        }
+      )
+    })
+
+    it("falls back from JSON5 to YAML with 'any' type", async () => {
+      const file = new FileObject("tests/fixtures/colors.yaml")
+
+      // Should try JSON5 first, fail, then succeed with YAML
+      const data = await file.loadData("any")
+
+      assert.ok(data)
+      assert.equal(typeof data, "object")
+    })
+
+    it("handles empty type parameter (defaults to 'any')", async () => {
+      const file = new FileObject("tests/fixtures/settings.json")
+      const data = await file.loadData()
+
+      assert.ok(data)
+      assert.equal(typeof data, "object")
+    })
+
+    it("type parameter is case-insensitive", async () => {
+      const file = new FileObject("tests/fixtures/settings.json")
+
+      const testCases = ["JSON5", "Json5", "json5", "JSON", "Json", "json"]
+
+      for(const type of testCases) {
+        const data = await file.loadData(type)
+        assert.ok(data, `Failed for type: ${type}`)
+      }
+    })
+
+    it("YAML type parameter variations work correctly", async () => {
+      const file = new FileObject("tests/fixtures/colors.yaml")
+
+      const testCases = ["YAML", "Yaml", "yaml", "YaML"]
+
+      for(const type of testCases) {
+        const data = await file.loadData(type)
+        assert.ok(data, `Failed for type: ${type}`)
+      }
+    })
+  })
 })
