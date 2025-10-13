@@ -48,6 +48,8 @@ export default class DirectoryObject extends FS {
     extension: null,
     isFile: false,
     isDirectory: true,
+    trail: null,
+    sep: null,
   })
 
   /**
@@ -63,6 +65,8 @@ export default class DirectoryObject extends FS {
     const fileUri = FS.pathToUri(absolutePath)
     const filePath = FS.uriToPath(fileUri)
     const baseName = path.basename(absolutePath) || "."
+    const trail = filePath.split(path.sep)
+    const sep = path.sep
 
     this.#meta.supplied = fixedDir
     this.#meta.path = filePath
@@ -70,6 +74,8 @@ export default class DirectoryObject extends FS {
     this.#meta.name = baseName
     this.#meta.extension = ""
     this.#meta.module = baseName
+    this.#meta.trail = trail
+    this.#meta.sep = sep
 
     Object.freeze(this.#meta)
   }
@@ -174,6 +180,27 @@ export default class DirectoryObject extends FS {
   }
 
   /**
+   * Returns the platform-specific path separator.
+   *
+   * @returns {string} The path separator ('/' on Unix, '\\' on Windows)
+   */
+  get sep() {
+    return this.#meta.sep
+  }
+
+  /**
+   * Returns the directory path split into segments.
+   *
+   * @returns {string[]} Array of path segments
+   * @example
+   * const dir = new DirectoryObject('/path/to/directory')
+   * console.log(dir.trail) // ['', 'path', 'to', 'directory']
+   */
+  get trail() {
+    return this.#meta.trail
+  }
+
+  /**
    * Returns false. Because this is a directory.
    *
    * @returns {boolean} Always false
@@ -217,33 +244,29 @@ export default class DirectoryObject extends FS {
       {withFileTypes: true}
     )
 
-    const results = await Promise.all(
-      found.map(async dirent => {
-        const fullPath = path.join(this.path, dirent.name)
-        const stat = await fs.stat(fullPath)
+    const files = found
+      .filter(dirent => dirent.isFile())
+      .map(dirent => new FileObject(path.join(this.path, dirent.name)))
 
-        return {dirent, stat, fullPath}
-      }),
-    )
-
-    const files = results
-      .filter(({stat}) => stat.isFile())
-      .map(({fullPath}) => new FileObject(fullPath))
-
-    const directories = results
-      .filter(({stat}) => stat.isDirectory())
-      .map(({fullPath}) => new DirectoryObject(fullPath))
+    const directories = found
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => new DirectoryObject(path.join(this.path, dirent.name)))
 
     return {files, directories}
   }
 
   /**
-   * Ensures a directory exists, creating it if necessary
+   * Ensures a directory exists, creating it if necessary.
+   * Gracefully handles the case where the directory already exists.
    *
    * @async
-   * @param {object} [options] - Any options to pass to mkdir
+   * @param {object} [options] - Options to pass to fs.mkdir (e.g., {recursive: true, mode: 0o755})
    * @returns {Promise<void>}
-   * @throws {Sass} If directory creation fails
+   * @throws {Sass} If directory creation fails for reasons other than already existing
+   * @example
+   * // Create directory recursively
+   * const dir = new DirectoryObject('./build/output')
+   * await dir.assureExists({recursive: true})
    */
   async assureExists(options = {}) {
     if(await this.exists)
@@ -252,7 +275,60 @@ export default class DirectoryObject extends FS {
     try {
       await fs.mkdir(this.path, options)
     } catch(e) {
+      if(e.code === "EEXIST") {
+        // Directory already exists, ignore
+        return
+      }
+
       throw Sass.new(`Unable to create directory '${this.path}': ${e.message}`)
     }
+  }
+
+  /**
+   * Private generator that walks up the directory tree.
+   *
+   * @private
+   * @generator
+   * @yields {DirectoryObject} Parent directory objects from current to root
+   */
+  *#walkUp() {
+    if(!Array.isArray(this.trail))
+      return
+
+    const curr = structuredClone(this.trail)
+
+    while(curr.length > 0) {
+      const joined = curr.join(this.sep)
+
+      // Stop if we've reached an empty path (which would resolve to CWD)
+      if(joined === "" || joined === this.sep) {
+        // Yield the root and stop
+        yield new DirectoryObject(this.sep)
+        break
+      }
+
+      yield new DirectoryObject(joined)
+      curr.pop()
+    }
+  }
+
+  /**
+   * Generator that walks up the directory tree, yielding each parent directory.
+   * Starts from the current directory and yields each parent until reaching the root.
+   *
+   * @returns {object} Generator yielding parent DirectoryObject instances
+   * @example
+   * const dir = new DirectoryObject('/path/to/deep/directory')
+   * for(const parent of dir.walkUp) {
+   *   console.log(parent.path)
+   *   // /path/to/deep/directory
+   *   // /path/to/deep
+   *   // /path/to
+   *   // /path
+   *   // /
+   * }
+   */
+  get walkUp() {
+    return this.#walkUp()
   }
 }

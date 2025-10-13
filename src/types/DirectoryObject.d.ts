@@ -40,6 +40,12 @@ export default class DirectoryObject extends FS {
   /** The directory extension (usually empty) */
   readonly extension: string
 
+  /** The platform-specific path separator (e.g., '/' on Unix, '\\' on Windows) */
+  readonly sep: string
+
+  /** Array of directory path segments split by separator */
+  readonly trail: string[]
+
   /** Always false for directories */
   readonly isFile: false
 
@@ -48,6 +54,25 @@ export default class DirectoryObject extends FS {
 
   /** Whether the directory exists (async) */
   readonly exists: Promise<boolean>
+
+  /**
+   * Generator that walks up the directory tree, yielding parent directories.
+   * Starts from the current directory and yields each parent until reaching the root.
+   *
+   * @example
+   * ```typescript
+   * const dir = new DirectoryObject('/path/to/deep/directory')
+   * for (const parent of dir.walkUp) {
+   *   console.log(parent.path)
+   *   // /path/to/deep/directory
+   *   // /path/to/deep
+   *   // /path/to
+   *   // /path
+   *   // /
+   * }
+   * ```
+   */
+  readonly walkUp: Generator<DirectoryObject, void, unknown>
 
   /** Returns a string representation of the DirectoryObject */
   toString(): string
@@ -64,9 +89,47 @@ export default class DirectoryObject extends FS {
     isDirectory: boolean
   }
 
-  /** List the contents of this directory */
+  /**
+   * Lists the contents of this directory.
+   * Returns FileObject instances for files and DirectoryObject instances for subdirectories.
+   *
+   * @returns Promise resolving to object with files and directories arrays
+   * @throws {Error} If directory cannot be read
+   *
+   * @example
+   * ```typescript
+   * const dir = new DirectoryObject('./src')
+   * const {files, directories} = await dir.read()
+   *
+   * console.log(`Found ${files.length} files`)
+   * files.forEach(file => console.log(file.name))
+   *
+   * console.log(`Found ${directories.length} subdirectories`)
+   * directories.forEach(subdir => console.log(subdir.name))
+   * ```
+   */
   read(): Promise<DirectoryListing>
 
-  /** Ensure this directory exists, creating it if necessary */
+  /**
+   * Ensures this directory exists, creating it if necessary.
+   * Gracefully handles the case where the directory already exists (EEXIST error).
+   * Pass options to control directory creation behavior (e.g., recursive, mode).
+   *
+   * @param options - Options to pass to fs.mkdir (e.g., {recursive: true, mode: 0o755})
+   * @returns Promise that resolves when directory exists or has been created
+   * @throws {Sass} If directory creation fails for reasons other than already existing
+   *
+   * @example
+   * ```typescript
+   * const dir = new DirectoryObject('./build/output')
+   *
+   * // Create directory recursively
+   * await dir.assureExists({recursive: true})
+   *
+   * // Now safe to write files
+   * const file = new FileObject('result.json', dir)
+   * await file.write(JSON.stringify(data))
+   * ```
+   */
   assureExists(options?: any): Promise<void>
 }

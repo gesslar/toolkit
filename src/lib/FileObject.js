@@ -10,6 +10,7 @@ import path from "node:path"
 import util from "node:util"
 import YAML from "yaml"
 
+import Data from "./Data.js"
 import DirectoryObject from "./DirectoryObject.js"
 import FS from "./FS.js"
 import Sass from "./Sass.js"
@@ -87,13 +88,18 @@ export default class FileObject extends FS {
 
     const {dir,base,ext} = this.#deconstructFilenameToParts(fixedFile)
 
-    if(!directory) {
-      directory = new DirectoryObject(dir)
-    } else if(typeof directory === "string") {
-      directory = new DirectoryObject(directory)
-    }
+    const directoryObject = (() => {
+      switch(Data.typeOf(directory)) {
+        case "String":
+          return new DirectoryObject(directory)
+        case "DirectoryObject":
+          return directory
+        default:
+          return new DirectoryObject(dir)
+      }
+    })()
 
-    const final = FS.resolvePath(directory?.path ?? ".", fixedFile)
+    const final = FS.resolvePath(directoryObject.path ?? ".", fixedFile)
 
     const resolved = final
     const fileUri = FS.pathToUri(resolved)
@@ -104,10 +110,7 @@ export default class FileObject extends FS {
     this.#meta.name = base
     this.#meta.extension = ext
     this.#meta.module = path.basename(this.supplied, this.extension)
-
-    const {dir: newDir} = this.#deconstructFilenameToParts(this.path)
-
-    this.#meta.directory = new DirectoryObject(newDir)
+    this.#meta.directory = directoryObject
 
     Object.freeze(this.#meta)
   }
@@ -363,29 +366,46 @@ export default class FileObject extends FS {
   }
 
   /**
-   * Writes content to a file synchronously.
+   * Writes content to a file asynchronously.
+   * Validates that the parent directory exists before writing.
    *
    * @param {string} content - The content to write
-   * @param {string} encoding - The encoding in which to write.
+   * @param {string} [encoding] - The encoding in which to write (default: "utf8")
    * @returns {Promise<void>}
+   * @throws {Sass} If the file path is invalid or the parent directory doesn't exist
+   * @example
+   * const file = new FileObject('./output/data.json')
+   * await file.write(JSON.stringify({key: 'value'}))
    */
   async write(content, encoding="utf8") {
     if(!this.path)
       throw Sass.new("No absolute path in file")
 
-    await fs.writeFile(this.path, content, encoding)
+    if(await this.directory.exists)
+      await fs.writeFile(this.path, content, encoding)
+
+    else
+      throw Sass.new(`Invalid directory, ${this.directory.uri}`)
   }
 
   /**
-   * Loads an object from JSON or YAML provided a fileMap
+   * Loads an object from JSON or YAML file.
+   * Attempts to parse content as JSON5 first, then falls back to YAML if specified.
    *
-   * @param {string} [type] - The expected type of data to parse.
-   * @param {string} [encoding] - The encoding to read the file as.
-   * @returns {Promise<unknown>} The parsed data object.
+   * @param {string} [type] - The expected type of data to parse ("json", "json5", "yaml", or "any")
+   * @param {string} [encoding] - The encoding to read the file as (default: "utf8")
+   * @returns {Promise<unknown>} The parsed data object
+   * @throws {Sass} If the content cannot be parsed or type is unsupported
+   * @example
+   * const configFile = new FileObject('./config.json5')
+   * const config = await configFile.loadData('json5')
+   *
+   * // Auto-detect format
+   * const data = await configFile.loadData('any')
    */
   async loadData(type="any", encoding="utf8") {
     const content = await this.read(encoding)
-    const normalizedType = type.toLocaleLowerCase()
+    const normalizedType = type.toLowerCase()
     const toTry = {
       json5: [JSON5],
       json: [JSON5],
@@ -394,7 +414,7 @@ export default class FileObject extends FS {
     }[normalizedType]
 
     if(!toTry) {
-      throw Sass.new(`Unsupported data type '${type}'. Supported types: json, json5, yaml, any`)
+      throw Sass.new(`Unsupported data type '${type}'. Supported types: json, json5, yaml.`)
     }
 
     for(const format of toTry) {
