@@ -160,7 +160,7 @@ export default class Data {
     // Special cases that need extra validation
     switch(valueType) {
       case "Number":
-        return valueType === "Number" && !isNaN(value) // Excludes NaN
+        return type === "Number" && !isNaN(value) // Excludes NaN
       default:
         return valueType === type
     }
