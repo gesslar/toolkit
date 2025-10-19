@@ -6,15 +6,15 @@ import {Data,Type,Collection} from "../../src/index.js"
 describe("Data", () => {
   describe("static properties", () => {
     it("has correct primitive types", () => {
-      const expected = ["Undefined", "Null", "Boolean", "Number", "Bigint", "String", "Symbol", "Object", "Function"]
+      const expected = ["Bigint", "Boolean", "Class", "Null", "Number", "String", "Symbol", "Undefined", "Function", "Object"]
       assert.deepEqual(Data.primitives, expected)
       assert.ok(Object.isFrozen(Data.primitives))
     })
 
     it("has correct constructor types", () => {
       const expected = [
-        "Object", "Array", "Function", "Date", "RegExp", "Error", "Map", "Set",
-        "WeakMap", "WeakSet", "Promise", "Int8Array", "Uint8Array", "Float32Array", "Float64Array"
+        "Array", "Date", "Error", "Float32Array", "Float64Array", "Function", "Int8Array", "Map",
+        "Object", "Promise", "RegExp", "Set", "Uint8Array", "WeakMap", "WeakSet"
       ]
       assert.deepEqual(Data.constructors, expected)
       assert.ok(Object.isFrozen(Data.constructors))

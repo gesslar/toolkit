@@ -62,7 +62,7 @@ If your class doesn't fit existing bundles, create a new semantic bundle:
 // src/bundles/YourNewDomainSystem.js
 /**
  * Your New Domain System Bundle
- * 
+ *
  * Provides [domain description] including:
  * - YourClass: Brief description of what it does
  */
@@ -85,6 +85,43 @@ export * as YourNewDomainSystem from "./bundles/YourNewDomainSystem.js"
 - Keep it consistent with existing patterns
 
 ### **Step 3: Create/Update TypeScript Definitions**
+
+#### **JSDoc Style Guidelines for JavaScript Files:**
+
+**🚨 CRITICAL STYLE RULES:**
+
+- ❌ **Never use `any`** - Use `unknown` instead for truly unknown types
+- ❌ **Never use `*`** - Use `unknown` instead
+- ❌ **Never use `[]` notation** - Use `Array<Type>` instead
+- ❌ **Never use `Function`** - Use specific function signatures instead (e.g., `(arg: string) => void`)
+
+```javascript
+// ❌ BAD
+/**
+ * @param {any} data - Some data
+ * @param {*} options - Some options
+ * @param {string[]} items - Array of strings
+ * @param {Function} callback - A callback function
+ * @returns {object[]} Array of objects
+ */
+
+// ✅ GOOD
+/**
+ * @param {unknown} data - Some data
+ * @param {unknown} options - Some options
+ * @param {Array<string>} items - Array of strings
+ * @param {(result: string) => void} callback - A callback function
+ * @returns {Array<object>} Array of objects
+ */
+```
+
+**Why?**
+
+- `unknown` is safer than `any` - forces type checking
+- `Array<Type>` is more explicit and consistent with TypeScript
+- Specific function signatures provide better IDE support and type safety
+- Maintains consistency between `.js` and `.d.ts` files
+- ESLint will complain about vague types like `Function`, `Object`, etc.
 
 #### **If `.d.ts` doesn't exist for your class:**
 

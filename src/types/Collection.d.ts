@@ -211,7 +211,12 @@ export default class Collection {
   ): Promise<Record<string, R>>
 
   /** Allocate an object from a source array and spec */
-  static allocateObject(source: Array<unknown>, spec: Array<unknown> | ((source: Array<unknown>) => Promise<Array<unknown>> | Array<unknown>)): Promise<Record<string, unknown>>
+  static allocateObject(
+    source: Array<unknown>,
+    spec:
+      | Array<unknown>
+      | ((source: Array<unknown>) => Promise<Array<unknown>> | Array<unknown>)
+  ): Promise<Record<string, unknown>>
 
   /**
    * Flattens one level of an array of plain objects, transposing values so each

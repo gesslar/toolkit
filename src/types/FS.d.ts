@@ -9,13 +9,13 @@ import DirectoryObject from './DirectoryObject.js'
  */
 export default class FS {
   /** Array of lowercase file descriptor types */
-  static readonly fdTypes: readonly ["file", "directory"]
+  static readonly fdTypes: readonly ['file', 'directory']
 
   /** Array of uppercase file descriptor types */
-  static readonly upperFdTypes: readonly ["FILE", "DIRECTORY"]
+  static readonly upperFdTypes: readonly ['FILE', 'DIRECTORY']
 
   /** Mapping from uppercase to lowercase file descriptor types */
-  static readonly fdType: Readonly<Record<"FILE" | "DIRECTORY", "file" | "directory">>
+  static readonly fdType: Readonly<Record<'FILE' | 'DIRECTORY', 'file' | 'directory'>>
 
   /** Fix slashes in a path */
   static fixSlashes(pathName: string): string
