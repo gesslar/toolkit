@@ -62,6 +62,19 @@ export default class Util {
     return `${" ".repeat(diff)}${work}`
   }
 
+  static centreAlignText(text, width=80) {
+    const work = String(text)
+
+    if(work.length > width)
+      return work
+
+    const centre = Math.floor(width / 2)
+    const textLength = Math.floor(text.length / 2)
+    const leftStart = centre - textLength
+
+    return `${" ".repeat(leftStart)}${work}`
+  }
+
   /**
    * Compute sha256 hash (hex) of the provided string.
    *
