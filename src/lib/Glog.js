@@ -239,7 +239,7 @@ class Glog {
 
   // Traditional logger methods
   debug(message, level = 0, ...arg) {
-    const currentLevel = this.#logLevel || Glog.logLevel
+    const currentLevel = this.#logLevel ?? Glog.logLevel
 
     if(level <= currentLevel) {
       Term.debug(this.#compose("debug", message, level), ...arg)
