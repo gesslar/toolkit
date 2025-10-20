@@ -55,6 +55,16 @@ declare class Util {
   static rightAlignText(text: string | number, width?: number): string
 
   /**
+   * Centre-align a string inside a fixed width (pad with spaces on left).
+   * If the string exceeds width it is returned unchanged.
+   *
+   * @param text - Text to align.
+   * @param width - Target field width (default 80).
+   * @returns Padded string with text centred.
+   */
+  static centreAlignText(text: string | number, width?: number): string
+
+  /**
    * Compute sha256 hash (hex) of the provided string.
    *
    * @param s - Input string.

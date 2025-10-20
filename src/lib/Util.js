@@ -62,17 +62,25 @@ export default class Util {
     return `${" ".repeat(diff)}${work}`
   }
 
+  /**
+   * Centre-align a string inside a fixed width (pad with spaces on left).
+   * If the string exceeds width it is returned unchanged.
+   *
+   * @param {string|number} text - Text to align.
+   * @param {number} width - Target field width (default 80).
+   * @returns {string} Padded string with text centred.
+   */
   static centreAlignText(text, width=80) {
     const work = String(text)
 
-    if(work.length > width)
+    if(work.length >= width)
       return work
 
-    const centre = Math.floor(width / 2)
-    const textLength = Math.floor(text.length / 2)
-    const leftStart = centre - textLength
+    const totalPadding = width - work.length
+    const leftPadding = Math.floor(totalPadding / 2)
+    const rightPadding = totalPadding - leftPadding
 
-    return `${" ".repeat(leftStart)}${work}`
+    return `${" ".repeat(leftPadding)}${work}${" ".repeat(rightPadding)}`
   }
 
   /**

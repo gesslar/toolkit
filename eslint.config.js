@@ -118,7 +118,7 @@ export default [
       }],
       "@stylistic/quotes": ["error", "double", {
         avoidEscape: true,
-        allowTemplateLiterals: "always"
+        allowTemplateLiterals: true
       }],
       "@stylistic/semi": ["error", "never"],
       "@stylistic/space-before-function-paren": ["error", "never"],
@@ -183,7 +183,7 @@ export default [
       "jsdoc/require-returns-type": "off",
       "jsdoc/require-throws-type": "off",
       "jsdoc/no-undefined-types": "off", // Sass and other types are fine in .d.ts files
-      
+
       // Basic style rules for TypeScript definitions
       "@stylistic/eol-last": ["error", "always"],
       "@stylistic/indent": ["error", 2],

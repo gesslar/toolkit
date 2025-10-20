@@ -238,10 +238,24 @@ class Glog {
   }
 
   // Traditional logger methods
-  debug(message, level = 0, ...arg) {
-    const currentLevel = this.#logLevel ?? Glog.logLevel
+  /**
+   * Log a debug message with specified verbosity level.
+   * Level 0 means debug OFF - use levels 1-4 for actual debug output.
+   * Debug messages only show when logLevel > 0.
+   *
+   * @param {string} message - Debug message to log
+   * @param {number} level - Debug verbosity level (1-4, default: 1)
+   * @param {...unknown} arg - Additional arguments to log
+   * @throws {Error} If level < 1 (level 0 = debug OFF)
+   */
+  debug(message, level = 1, ...arg) {
+    if(level < 1) {
+      throw new Error("Debug level must be >= 1 (level 0 = debug OFF)")
+    }
 
-    if(level <= currentLevel) {
+    const currentLevel = this.#logLevel || Glog.logLevel
+
+    if(currentLevel > 0 && level <= currentLevel) {
       Term.debug(this.#compose("debug", message, level), ...arg)
     }
   }
@@ -370,10 +384,11 @@ export default new Proxy(Glog, {
     return new target(...argumentsList)
   },
   get(target, prop) {
+    // Hide execute method from public API
     if(prop === "execute") {
       return undefined
     }
 
-    return target[prop]
+    return Reflect.get(target, prop)
   }
 })

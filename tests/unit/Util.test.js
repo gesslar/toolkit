@@ -144,6 +144,71 @@ describe("Util", () => {
     })
   })
 
+  describe("centreAlignText()", () => {
+    it("centre-aligns text within default width (80)", () => {
+      const result = Util.centreAlignText("hello")
+
+      assert.equal(result.length, 80)
+      // "hello" is 5 chars, total padding is 75, left gets 37, right gets 38
+      assert.equal(result.trim(), "hello")
+      assert.ok(result.indexOf("hello") > 30 && result.indexOf("hello") < 45)
+    })
+
+    it("centre-aligns with custom width", () => {
+      const result = Util.centreAlignText("test", 10)
+
+      assert.equal(result.length, 10)
+      // "test" is 4 chars, total padding is 6, left gets 3, right gets 3
+      assert.equal(result, "   test   ")
+    })
+
+    it("handles numbers by converting to strings", () => {
+      const result = Util.centreAlignText(123, 10)
+
+      assert.equal(result.length, 10)
+      // "123" is 3 chars, total padding is 7, left gets 3, right gets 4
+      assert.equal(result, "   123    ")
+    })
+
+    it("returns unchanged if text exceeds width", () => {
+      const longText = "This text is definitely longer than 10 characters"
+      const result = Util.centreAlignText(longText, 10)
+
+      assert.equal(result, longText) // Should return unchanged
+      assert.ok(result.length > 10)
+    })
+
+    it("handles edge cases", () => {
+      // Zero width
+      assert.equal(Util.centreAlignText("test", 0), "test")
+
+      // Negative width
+      assert.equal(Util.centreAlignText("test", -5), "test")
+
+      // Exact width match
+      assert.equal(Util.centreAlignText("1234567890", 10), "1234567890")
+    })
+
+    it("handles non-string inputs via String() conversion", () => {
+      // "null" is 4 chars, total padding is 6, left gets 3, right gets 3
+      assert.equal(Util.centreAlignText(null, 10), "   null   ")
+      // "undefined" is 9 chars, total padding is 1, left gets 0, right gets 1
+      assert.equal(Util.centreAlignText(undefined, 10), "undefined ")
+      // "true" is 4 chars, total padding is 6, left gets 3, right gets 3
+      assert.equal(Util.centreAlignText(true, 10), "   true   ")
+    })
+
+    it("centres odd-length strings correctly", () => {
+      // "Hi!" is 3 chars, total padding is 7, left gets 3, right gets 4
+      assert.equal(Util.centreAlignText("Hi!", 10), "   Hi!    ")
+    })
+
+    it("centres even-length strings correctly", () => {
+      // "Test" is 4 chars, total padding is 6, left gets 3, right gets 3
+      assert.equal(Util.centreAlignText("Test", 10), "   Test   ")
+    })
+  })
+
   describe("hashOf()", () => {
     it("generates consistent SHA256 hashes", () => {
       const hash1 = Util.hashOf("hello world")
