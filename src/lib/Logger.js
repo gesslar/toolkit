@@ -180,3 +180,6 @@ export default class Logger {
     this.vscodeError?.(JSON.stringify(message))
   }
 }
+
+// NOTE: This is an artifact file kept for reference during Glog development.
+// Not exported from toolkit. Has broken imports to ./Core.js (actions package).

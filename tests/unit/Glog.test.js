@@ -233,4 +233,80 @@ describe('Glog', () => {
       assert.deepEqual(consoleOutput[0], ['User data:', user, 'Error:', error.message])
     })
   })
+
+  describe('debug() method', () => {
+    let originalConsoleDebug
+    let debugOutput
+
+    beforeEach(() => {
+      // Mock console.debug separately
+      debugOutput = []
+      originalConsoleDebug = console.debug
+      console.debug = (...args) => {
+        debugOutput.push(args)
+      }
+    })
+
+    afterEach(() => {
+      console.debug = originalConsoleDebug
+    })
+
+    it('does not show debug messages when logLevel is 0', () => {
+      Glog.setLogLevel(0)
+      const logger = new Glog({ name: 'Test' })
+
+      logger.debug('should not show', 1)
+      logger.debug('also not', 2)
+
+      assert.equal(debugOutput.length, 0)
+    })
+
+    it('shows debug messages at level 1 when logLevel >= 1', () => {
+      Glog.setLogLevel(1)
+      const logger = new Glog({ name: 'Test' })
+
+      logger.debug('should show')  // defaults to level 1
+
+      assert.equal(debugOutput.length, 1)
+      assert.ok(debugOutput[0][0].includes('should show'))
+    })
+
+    it('filters debug messages by level', () => {
+      Glog.setLogLevel(2)
+      const logger = new Glog({ name: 'Test' })
+
+      logger.debug('level 1', 1)  // shows
+      logger.debug('level 2', 2)  // shows
+      logger.debug('level 3', 3)  // filtered
+      logger.debug('level 4', 4)  // filtered
+
+      assert.equal(debugOutput.length, 2)
+    })
+
+    it('throws error when debug level is 0', () => {
+      const logger = new Glog({ name: 'Test' })
+
+      assert.throws(
+        () => logger.debug('invalid', 0),
+        /Debug level must be >= 1/
+      )
+    })
+
+    it('throws error when debug level is negative', () => {
+      const logger = new Glog({ name: 'Test' })
+
+      assert.throws(
+        () => logger.debug('invalid', -1),
+        /Debug level must be >= 1/
+      )
+    })
+  })
 })
+
+// TODO: Add tests for new Glog features (enhanced color functionality)
+// - Instance usage: new Glog(options)
+// - Fluent instance methods: withName(), withLogLevel(), withColors(), withStackTrace()
+// - Logger-style methods: debug(), info(), warn(), error()
+// - Color features: colorize(), success(), setAlias()
+// - @gesslar/colours integration and loggerColours configuration
+// - VSCode integration (vscodeError, vscodeWarn, vscodeInfo)
