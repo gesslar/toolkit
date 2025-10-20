@@ -208,6 +208,87 @@ describe('Glog', () => {
     })
   })
 
+  describe('static method accessibility', () => {
+    it('static methods are accessible and functional', () => {
+      // Verify setLogLevel actually works
+      Glog.setLogLevel(3)
+      assert.equal(Glog.logLevel, 3)
+
+      // Verify setLogPrefix actually works
+      Glog.setLogPrefix('[TEST]')
+      assert.equal(Glog.logPrefix, '[TEST]')
+
+      // Reset for other tests
+      Glog.setLogLevel(0).setLogPrefix('')
+    })
+
+    it('withName static method works', () => {
+      Glog.withName('MyApp')
+      assert.equal(Glog.name, 'MyApp')
+
+      // Reset
+      Glog.name = ''
+    })
+
+    it('withColors static method works', () => {
+      const customColors = { debug: ['{F001}'], info: '{F002}' }
+      Glog.withColors(customColors)
+      assert.equal(Glog.colors, customColors)
+
+      // Reset
+      Glog.colors = null
+    })
+
+    it('withStackTrace static method works', () => {
+      Glog.withStackTrace(true)
+      assert.equal(Glog.stackTrace, true)
+
+      Glog.withStackTrace(false)
+      assert.equal(Glog.stackTrace, false)
+    })
+
+    it('create static method returns new instance', () => {
+      const logger = Glog.create({ name: 'Test', logLevel: 2 })
+      // Check that it's a Glog instance by verifying it has the expected methods
+      assert.equal(typeof logger.debug, 'function')
+      assert.equal(typeof logger.info, 'function')
+      assert.equal(typeof logger.warn, 'function')
+      assert.equal(typeof logger.error, 'function')
+      assert.equal(logger.name, 'Test')
+      assert.equal(logger.debugLevel, 2)
+    })
+
+    it('static success method is accessible', () => {
+      assert.equal(typeof Glog.success, 'function')
+
+      // Should not throw when called
+      Glog.success('test success message')
+      assert.equal(consoleOutput.length, 1)
+    })
+
+    it('static colorize method is accessible', () => {
+      assert.equal(typeof Glog.colorize, 'function')
+    })
+
+    it('static setAlias method is accessible and functional', () => {
+      assert.equal(typeof Glog.setAlias, 'function')
+
+      const result = Glog.setAlias('testcolor', '{F123}')
+      assert.equal(result, Glog) // Should return Glog for chaining
+    })
+
+    it('all expected static properties are accessible', () => {
+      // Verify we can read static properties
+      assert.equal(typeof Glog.logLevel, 'number')
+      assert.equal(typeof Glog.logPrefix, 'string')
+
+      // colors, stackTrace, and name can be various types
+      assert.ok('colors' in Glog)
+      assert.ok('stackTrace' in Glog)
+      assert.ok('name' in Glog)
+    })
+  })
+
   describe('real-world usage patterns', () => {
     it('supports typical application logging', () => {
       // Setup like a real app might do

@@ -384,10 +384,11 @@ export default new Proxy(Glog, {
     return new target(...argumentsList)
   },
   get(target, prop) {
+    // Hide execute method from public API
     if(prop === "execute") {
       return undefined
     }
 
-    return target[prop]
+    return Reflect.get(target, prop)
   }
 })
