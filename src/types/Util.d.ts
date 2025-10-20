@@ -55,6 +55,16 @@ declare class Util {
   static rightAlignText(text: string | number, width?: number): string
 
   /**
+   * Centre-align a string inside a fixed width (pad with spaces on left).
+   * If the string exceeds width it is returned unchanged.
+   *
+   * @param text - Text to align.
+   * @param width - Target field width (default 80).
+   * @returns Padded string with text centred.
+   */
+  static centreAlignText(text: string | number, width?: number): string
+
+  /**
    * Compute sha256 hash (hex) of the provided string.
    *
    * @param s - Input string.
@@ -174,7 +184,15 @@ declare class Util {
    * @param args - Arguments to pass to event listeners
    * @returns Resolves when all listeners have completed
    */
-  static asyncEmitAnon(emitter: { listeners(event: string): Function[], on(event: string, listener: Function): any, emit(event: string, ...args: unknown[]): any }, event: string, ...args: unknown[]): Promise<void>
+  static asyncEmitAnon(
+    emitter: {
+      listeners(event: string): Function[],
+      on(event: string, listener: Function): any,
+      emit(event: string, ...args: unknown[]): any
+    },
+    event: string,
+    ...args: unknown[]
+  ): Promise<void>
 
   /**
    * Determine the Levenshtein distance between two string values.
@@ -228,7 +246,7 @@ declare class Util {
    * @param trim - Whether to trim whitespace from each line (default: true)
    * @param flags - Array of regex flags to apply (default: [])
    * @returns A new RegExp object with the processed pattern
-   * 
+   *
    * @throws Will throw if input is not a string
    * @throws Will throw if trim is not a boolean
    * @throws Will throw if flags is not an array

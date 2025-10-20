@@ -17,17 +17,18 @@ export default class Data {
  */
   static primitives = Object.freeze([
   // Primitives
-    "Undefined",
-    "Null",
-    "Boolean",
-    "Number",
     "Bigint",
+    "Boolean",
+    "Class",
+    "Null",
+    "Number",
     "String",
     "Symbol",
+    "Undefined",
 
     // Object Categories from typeof
-    "Object",
     "Function",
+    "Object",
   ])
 
   /**
@@ -38,21 +39,21 @@ export default class Data {
    */
   static constructors = Object.freeze([
   // Object Constructors
-    "Object",
     "Array",
-    "Function",
     "Date",
-    "RegExp",
     "Error",
-    "Map",
-    "Set",
-    "WeakMap",
-    "WeakSet",
-    "Promise",
-    "Int8Array",
-    "Uint8Array",
     "Float32Array",
     "Float64Array",
+    "Function",
+    "Int8Array",
+    "Map",
+    "Object",
+    "Promise",
+    "RegExp",
+    "Set",
+    "Uint8Array",
+    "WeakMap",
+    "WeakSet",
   ])
 
   /**
@@ -134,9 +135,8 @@ export default class Data {
    */
   static isValidType(type) {
     // Allow built-in types
-    if(Data.dataTypes.includes(type)) {
+    if(Data.dataTypes.includes(type))
       return true
-    }
 
     // Allow custom classes (PascalCase starting with capital letter)
     return /^[A-Z][a-zA-Z0-9]*$/.test(type)
@@ -154,6 +154,15 @@ export default class Data {
   static isBaseType(value, type) {
     if(!Data.isValidType(type))
       return false
+
+    // We gotta do classes up front. Ugh.
+    if(/^[Cc]lass$/.test(type)) {
+      if(typeof value === "function" &&
+      value.prototype &&
+      value.prototype.constructor === value)
+
+        return true
+    }
 
     const valueType = Data.typeOf(value)
 

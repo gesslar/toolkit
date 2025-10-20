@@ -6,6 +6,11 @@ import { describe, it } from "node:test"
 import { Sass, Tantrum } from "../../src/index.js"
 
 // Helper for intercepting console output
+/**
+ *
+ * @param method
+ * @param fn
+ */
 function captureConsole(method, fn) {
   const original = console[method]
   const calls = []

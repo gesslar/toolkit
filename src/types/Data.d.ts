@@ -21,33 +21,33 @@ export default class Data {
 
   /**
    * Append a suffix string to the end of a string if it doesn't already end with it.
-   * 
-   * Useful for ensuring strings have consistent endings like file extensions, 
+   *
+   * Useful for ensuring strings have consistent endings like file extensions,
    * URL paths, or punctuation. Performs case-sensitive comparison and only appends
    * if the string doesn't already end with the specified suffix.
    *
    * @param string - The base string to potentially append to. Can be empty string.
    * @param append - The suffix to append if not already present. Cannot be empty.
    * @returns The string with the suffix appended, or the original string if suffix already present
-   * 
+   *
    * @throws {Error} When append parameter is empty or undefined
    *
    * @example
    * ```typescript
    * import { Data } from '@gesslar/toolkit'
-   * 
+   *
    * // Basic usage with file extensions
    * const filename = Data.appendString('config', '.json')
    * console.log(filename) // 'config.json'
-   * 
+   *
    * // No double-appending
-   * const alreadyHasExt = Data.appendString('package.json', '.json')  
+   * const alreadyHasExt = Data.appendString('package.json', '.json')
    * console.log(alreadyHasExt) // 'package.json' (unchanged)
-   * 
+   *
    * // URL path handling
    * const apiPath = Data.appendString('/api/users', '/')
    * console.log(apiPath) // '/api/users/'
-   * 
+   *
    * // Works with empty strings
    * const fromEmpty = Data.appendString('', '.txt')
    * console.log(fromEmpty) // '.txt'
@@ -57,33 +57,33 @@ export default class Data {
 
   /**
    * Prepend a prefix string to the beginning of a string if it doesn't already start with it.
-   * 
+   *
    * Useful for ensuring strings have consistent beginnings like protocol prefixes,
-   * path separators, or formatting markers. Performs case-sensitive comparison and 
+   * path separators, or formatting markers. Performs case-sensitive comparison and
    * only prepends if the string doesn't already start with the specified prefix.
    *
    * @param string - The base string to potentially prepend to. Can be empty string.
    * @param prepend - The prefix to prepend if not already present. Cannot be empty.
    * @returns The string with the prefix prepended, or the original string if prefix already present
-   * 
+   *
    * @throws {Error} When prepend parameter is empty or undefined
    *
    * @example
    * ```typescript
    * import { Data } from '@gesslar/toolkit'
-   * 
+   *
    * // Basic usage with protocols
    * const url = Data.prependString('example.com', 'https://')
    * console.log(url) // 'https://example.com'
-   * 
+   *
    * // No double-prepending
    * const alreadyHasProtocol = Data.prependString('https://api.example.com', 'https://')
    * console.log(alreadyHasProtocol) // 'https://api.example.com' (unchanged)
-   * 
+   *
    * // File path handling
    * const absolutePath = Data.prependString('home/user/docs', '/')
    * console.log(absolutePath) // '/home/user/docs'
-   * 
+   *
    * // CSS class prefixing
    * const className = Data.prependString('button-primary', 'css-')
    * console.log(className) // 'css-button-primary'
@@ -135,32 +135,32 @@ export default class Data {
   static clamped(val: number, min: number, max: number): boolean
 
   /**
-   * Checks if a value is a plain object - created with object literals {}, 
+   * Checks if a value is a plain object - created with object literals {},
    * new Object(), or Object.create(null).
-   * 
-   * Distinguishes plain objects from objects created by custom constructors, built-ins, 
+   *
+   * Distinguishes plain objects from objects created by custom constructors, built-ins,
    * or primitives. Plain objects only have Object.prototype or null in their prototype chain.
    * Useful for validating configuration objects or data structures that should be plain objects.
    *
    * @param value - The value to check for plain object status
    * @returns True if the value is a plain object, false otherwise
-   * 
+   *
    * @example
    * ```typescript
    * import { Data } from '@gesslar/toolkit'
-   * 
+   *
    * // Plain objects return true
    * console.log(Data.isPlainObject({})) // true
-   * console.log(Data.isPlainObject(new Object())) // true 
+   * console.log(Data.isPlainObject(new Object())) // true
    * console.log(Data.isPlainObject(Object.create(null))) // true
-   * 
+   *
    * // Non-plain objects return false
    * console.log(Data.isPlainObject([])) // false
    * console.log(Data.isPlainObject(new Date())) // false
    * console.log(Data.isPlainObject(/regex/)) // false
    * console.log(Data.isPlainObject(null)) // false
    * console.log(Data.isPlainObject('string')) // false
-   * 
+   *
    * // Useful for validating config objects
    * function processConfig(config: unknown) {
    *   if (!Data.isPlainObject(config)) {

@@ -2,6 +2,7 @@ import js from "@eslint/js"
 import jsdoc from "eslint-plugin-jsdoc"
 import stylistic from "@stylistic/eslint-plugin"
 import globals from "globals"
+import tsParser from "@typescript-eslint/parser"
 
 export default [
   js.configs.recommended,
@@ -117,7 +118,7 @@ export default [
       }],
       "@stylistic/quotes": ["error", "double", {
         avoidEscape: true,
-        allowTemplateLiterals: "always"
+        allowTemplateLiterals: true
       }],
       "@stylistic/semi": ["error", "never"],
       "@stylistic/space-before-function-paren": ["error", "never"],
@@ -151,6 +152,56 @@ export default [
       "jsdoc/check-types": "error",
       "jsdoc/require-param-type": "error",
       "jsdoc/require-returns-type": "error"
+    }
+  },
+  {
+    name: "gesslar/uglier/lints-typescript-definitions",
+    files: ["src/types/**/*.d.ts"],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      parserOptions: {
+        project: false, // Don't require tsconfig.json
+        ecmaFeatures: {
+          modules: true
+        }
+      }
+    },
+    plugins: {
+      "@stylistic": stylistic,
+    },
+    rules: {
+      // Disable rules that don't make sense for TypeScript definitions
+      "no-unused-vars": "off", // Parameters in type definitions are not "used"
+      "jsdoc/require-description": "off", // Don't require JSDoc in .d.ts files
+      "jsdoc/tag-lines": "off",
+      "jsdoc/require-jsdoc": "off",
+      "jsdoc/check-tag-names": "off",
+      "jsdoc/check-types": "off",
+      "jsdoc/require-param-type": "off",
+      "jsdoc/require-returns-type": "off",
+      "jsdoc/require-throws-type": "off",
+      "jsdoc/no-undefined-types": "off", // Sass and other types are fine in .d.ts files
+
+      // Basic style rules for TypeScript definitions
+      "@stylistic/eol-last": ["error", "always"],
+      "@stylistic/indent": ["error", 2],
+      "@stylistic/max-len": ["warn", {
+        code: 120, // Slightly longer for type definitions
+        ignoreComments: true,
+        ignoreUrls: true,
+        ignoreStrings: true,
+        tabWidth: 2
+      }],
+      "@stylistic/no-tabs": "error",
+      "@stylistic/no-trailing-spaces": ["error"],
+      "@stylistic/no-multiple-empty-lines": ["error", { max: 2 }], // Allow a bit more spacing in type files
+      "@stylistic/quotes": ["error", "single", { // Use single quotes in .d.ts files
+        avoidEscape: true,
+        allowTemplateLiterals: "always" // Fix deprecated value
+      }],
+      "@stylistic/semi": ["error", "never"]
     }
   }
 ]
