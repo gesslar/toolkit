@@ -2,7 +2,7 @@
 
 ## The Real Deal: How to Actually Test This Toolkit
 
-*Unlike TESTING.txt (which is fucking gold and stays), this is your practical guide for adding new stuff without breaking everything.*
+*Unlike TESTING.txt (which is fucking gold and stays!), this is your practical guide for adding new stuff without breaking everything.*
 
 ---
 
