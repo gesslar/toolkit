@@ -153,6 +153,67 @@ export default class Util {
   }
 
   /**
+   * Checks if any result in the settled promise array is rejected.
+   *
+   * @param {Array<object>} result - Array of settled promise results.
+   * @returns {boolean} True if any result is rejected, false otherwise.
+   */
+  static anyRejected(result) {
+    return result.some(r => r.status === "rejected")
+  }
+
+  /**
+   * Filters and returns all rejected results from a settled promise array.
+   *
+   * @param {Array<object>} result - Array of settled promise results.
+   * @returns {Array<object>} Array of rejected results.
+   */
+  static settledAndRejected(result) {
+    return result.filter(r => r.status === "rejected")
+  }
+
+  /**
+   * Extracts the rejection reasons from an array of rejected promise results.
+   *
+   * @param {Array<object>} rejected - Array of rejected results.
+   * @returns {Array<unknown>} Array of rejection reasons.
+   */
+  static rejectedReasons(rejected) {
+    return rejected.map(r => r.reason)
+  }
+
+  /**
+   * Throws a Sass error containing all rejection reasons from settled promises.
+   *
+   * @param {string} [_message] - Optional error message. Defaults to "GIGO"
+   * @param {Array<object>} rejected - Array of rejected results.
+   * @throws {Error} Throws a Sass error with rejection reasons.
+   */
+  static throwRejected(_message="GIGO", rejected) {
+    throw Sass.new(Util.rejectedReasons(rejected))
+  }
+
+  /**
+   * Filters and returns all fulfilled results from a settled promise array.
+   *
+   * @param {Array<object>} result - Array of settled promise results.
+   * @returns {Array<object>} Array of fulfilled results.
+   */
+  static settledAndFulfilled(result) {
+    return result.filter(r => r.status === "fulfilled")
+  }
+
+  /**
+   * Extracts the values from all fulfilled results in a settled promise array.
+   *
+   * @param {Array<object>} result - Array of settled promise results.
+   * @returns {Array<unknown>} Array of fulfilled values.
+   */
+  static fulfilledValues(result) {
+    return this.settledAndFulfilled(result).map(r => r.value)
+  }
+
+  /**
    * Returns the first promise to resolve or reject from an array of promises.
    * Wrapper around Promise.race for consistency with other utility methods.
    *

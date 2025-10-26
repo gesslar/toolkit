@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Get in, bitches, we're going toolkitting.",
   "main": "./src/index.js",
   "type": "module",
@@ -20,12 +20,12 @@
     "node": ">=20"
   },
   "scripts": {
+    "types:build": "tsc -p tsconfig.types.json",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "submit": "npm publish --access public",
     "update": "npx npm-check-updates -u && npm install",
     "test": "node --test tests/unit/*.test.js",
-    "test:unit": "node --test tests/unit/*.test.js",
     "pr": "gt submit --publish --restack --ai"
   },
   "repository": {
@@ -57,11 +57,11 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^5.4.0",
-    "@types/node": "^24.6.2",
-    "@typescript-eslint/eslint-plugin": "^8.45.0",
-    "@typescript-eslint/parser": "^8.45.0",
-    "eslint": "^9.36.0",
-    "eslint-plugin-jsdoc": "^60.7.1"
+    "@stylistic/eslint-plugin": "^5.5.0",
+    "@types/node": "^24.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "eslint": "^9.38.0",
+    "eslint-plugin-jsdoc": "^61.1.8"
   }
 }

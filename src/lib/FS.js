@@ -1,3 +1,10 @@
+/**
+ * @file FS.js
+ *
+ * File system utilities for path manipulation, file discovery, and path resolution.
+ * Provides glob-based file search, URI conversion, and intelligent path merging.
+ */
+
 import {globby} from "globby"
 import path from "node:path"
 import url from "node:url"
@@ -14,6 +21,9 @@ const fdType = Object.freeze(
   await Collection.allocateObject(upperFdTypes, fdTypes)
 )
 
+/**
+ * File system utility class for path operations and file discovery.
+ */
 export default class FS {
   static fdTypes = fdTypes
   static upperFdTypes = upperFdTypes

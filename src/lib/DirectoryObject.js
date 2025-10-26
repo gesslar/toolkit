@@ -191,7 +191,7 @@ export default class DirectoryObject extends FS {
   /**
    * Returns the directory path split into segments.
    *
-   * @returns {string[]} Array of path segments
+   * @returns {Array<string>} Array of path segments
    * @example
    * const dir = new DirectoryObject('/path/to/directory')
    * console.log(dir.trail) // ['', 'path', 'to', 'directory']

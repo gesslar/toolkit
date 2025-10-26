@@ -12,6 +12,7 @@
  */
 
 import Term from "./Term.js"
+import Tantrum from "./Tantrum.js"
 
 /**
  * Custom error class for toolkit errors.
@@ -149,15 +150,19 @@ export default class Sass extends Error {
    * other errors. Otherwise creates a new Sass instance.
    *
    * @param {string} message - The error message
-   * @param {Error|Sass} [error] - Optional existing error to wrap or enhance
+   * @param {Error|Sass|Tantrum} [error] - Optional existing error to wrap or enhance
    * @returns {Sass} New or enhanced Sass instance
    */
   static new(message, error) {
     if(error) {
+      if(error instanceof Tantrum)
+        return Tantrum.new(message, error)
+
       return error instanceof Sass
         ? error.addTrace(message)
         : Sass.from(error, message)
     } else {
+
       return new Sass(message)
     }
   }

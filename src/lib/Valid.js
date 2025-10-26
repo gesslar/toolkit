@@ -1,17 +1,27 @@
+/**
+ * @file Valid.js
+ *
+ * Provides validation utilities for type checking and assertion.
+ * Includes prototype pollution protection for secure object manipulation.
+ */
+
 import _assert from "node:assert/strict"
 
 import Sass from "./Sass.js"
 import Data from "./Data.js"
 import Collection from "./Collection.js"
 
-export default class Valid {
 /**
- * Validates a value against a type. Uses Data.isType.
- *
- * @param {unknown} value - The value to validate
- * @param {string} type - The expected type in the form of "object", "object[]", "object|object[]"
- * @param {object} [options] - Additional options for validation.
+ * Validation utility class providing type checking and assertion methods.
  */
+export default class Valid {
+  /**
+   * Validates a value against a type. Uses Data.isType.
+   *
+   * @param {unknown} value - The value to validate
+   * @param {string} type - The expected type in the form of "object", "object[]", "object|object[]"
+   * @param {object} [options] - Additional options for validation.
+   */
   static type(value, type, options) {
     Valid.assert(
       Data.isType(value, type, options),
@@ -48,6 +58,14 @@ export default class Valid {
   }
 
   static #restrictedProto = ["__proto__", "constructor", "prototype"]
+
+  /**
+   * Protects against prototype pollution by checking keys for dangerous property names.
+   * Throws if any restricted prototype properties are found in the keys array.
+   *
+   * @param {Array<string>} keys - Array of property keys to validate
+   * @throws {Sass} If any key matches restricted prototype properties (__proto__, constructor, prototype)
+   */
   static prototypePollutionProtection(keys) {
     Valid.type(keys, "String[]")
 

@@ -1,23 +1,17 @@
-// Implementation: ../index.js
-// Core file system abstractions
-export { default as FileObject } from './FileObject.js'
-export { default as DirectoryObject } from './DirectoryObject.js'
-export { default as FS } from './FS.js'
-
-// Utility classes
-export { default as Cache } from './Cache.js'
-export { default as Collection } from './Collection.js'
-export { default as Contract } from './Contract.js'
-export { default as Data } from './Data.js'
-export { default as Glog } from './Glog.js'
-export { default as Sass } from './Sass.js'
-export { default as Schemer } from './Schemer.js'
-export { default as Tantrum } from './Tantrum.js'
-export { default as Term } from './Term.js'
-export { default as Terms } from './Terms.js'
-export { default as Type } from './Type.js'
-export { default as Util } from './Util.js'
-export { default as Valid } from './Valid.js'
-
-// Type exports
-export type { FileParts } from './FS.js'
+export { default as FileObject } from "./lib/FileObject.js";
+export { default as DirectoryObject } from "./lib/DirectoryObject.js";
+export { default as FS } from "./lib/FS.js";
+export { default as Cache } from "./lib/Cache.js";
+export { default as Collection } from "./lib/Collection.js";
+export { default as Contract } from "./lib/Contract.js";
+export { default as Data } from "./lib/Data.js";
+export { default as Glog } from "./lib/Glog.js";
+export { default as Sass } from "./lib/Sass.js";
+export { default as Schemer } from "./lib/Schemer.js";
+export { default as Tantrum } from "./lib/Tantrum.js";
+export { default as Term } from "./lib/Term.js";
+export { default as Terms } from "./lib/Terms.js";
+export { default as Type } from "./lib/TypeSpec.js";
+export { default as Util } from "./lib/Util.js";
+export { default as Valid } from "./lib/Valid.js";
+//# sourceMappingURL=index.d.ts.map

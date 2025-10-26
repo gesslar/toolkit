@@ -17,6 +17,8 @@ import Term from "./Term.js"
  * Automatically wraps plain errors in Sass instances for consistent reporting.
  */
 export default class Tantrum extends AggregateError {
+  #trace = []
+
   /**
    * Creates a new Tantrum instance.
    *
@@ -38,6 +40,41 @@ export default class Tantrum extends AggregateError {
     super(wrappedErrors, message)
     this.name = "Tantrum"
   }
+
+  /**
+   * Adds a trace message and returns this instance for chaining.
+   *
+   * @param {string} message - The trace message to add
+   * @param {Error|Sass} [_error] - Optional error (currently unused, reserved for future use)
+   * @returns {this} This Tantrum instance for method chaining
+   */
+  addTrace(message, _error) {
+    if(typeof message !== "string")
+      throw Sass.new(`Tantrum.addTrace expected string, got ${JSON.stringify(message)}`)
+
+    this.trace = message
+
+    return this
+  }
+
+  /**
+   * Gets the error trace array.
+   *
+   * @returns {Array<string>} Array of trace messages
+   */
+  get trace() {
+    return this.#trace
+  }
+
+  /**
+   * Adds a message to the beginning of the trace array.
+   *
+   * @param {string} message - The trace message to add
+   */
+  set trace(message) {
+    this.#trace.unshift(message)
+  }
+
   /**
    * Reports all aggregated errors to the terminal with formatted output.
    *
@@ -48,6 +85,9 @@ export default class Tantrum extends AggregateError {
       `${Term.terminalBracket(["error", "Tantrum Incoming"])} (${this.errors.length} errors)\n` +
       this.message
     )
+
+    if(this.trace)
+      Term.error(this.trace.join("\n"))
 
     Term.error()
 
@@ -64,6 +104,9 @@ export default class Tantrum extends AggregateError {
    * @returns {Tantrum} New Tantrum instance
    */
   static new(message, errors = []) {
+    if(errors instanceof Tantrum)
+      return errors.addTrace(message)
+
     return new Tantrum(message, errors)
   }
 }

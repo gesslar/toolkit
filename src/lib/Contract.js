@@ -156,7 +156,7 @@ export default class Contract {
    *
    * @param {object} providerTerms - Terms offered by provider
    * @param {object} consumerTerms - Terms expected by consumer
-   * @param {Array} stack - Stack trace for nested validation
+   * @param {Array<string>} stack - Stack trace for nested validation
    * @returns {object} Result with status and errors
    * @private
    */

@@ -1,9 +1,31 @@
+/**
+ * @file Collection.js
+ *
+ * Provides utility functions for working with collections (arrays, objects, sets, maps).
+ * Includes methods for iteration, transformation, validation, and manipulation of
+ * various collection types.
+ */
+
 import Data from "./Data.js"
 import Valid from "./Valid.js"
 import Sass from "./Sass.js"
 import Util from "./Util.js"
 
+/**
+ * Utility class for collection operations.
+ * Provides static methods for working with arrays, objects, sets, and maps.
+ */
 export default class Collection {
+  /**
+   * Evaluates an array with a predicate function, optionally in reverse order.
+   * Returns the first truthy result from the predicate.
+   *
+   * @param {Array<unknown>} collection - The array to evaluate
+   * @param {(value: unknown, index: number, array: Array<unknown>) => unknown} predicate - Function to evaluate each element
+   * @param {boolean} [forward] - Whether to iterate forward (true) or backward (false). Defaults to true
+   * @returns {unknown|undefined} The first truthy result from the predicate, or undefined
+   * @throws {Sass} If collection is not an array or predicate is not a function
+   */
   static evalArray(collection, predicate, forward=true) {
     const req = "Array"
     const type = Data.typeOf(collection)
@@ -24,6 +46,15 @@ export default class Collection {
     }
   }
 
+  /**
+   * Evaluates an object with a predicate function.
+   * Returns the first truthy result from the predicate.
+   *
+   * @param {object} collection - The object to evaluate
+   * @param {(value: unknown, key: string, object: object) => unknown} predicate - Function to evaluate each property
+   * @returns {unknown|undefined} The first truthy result from the predicate, or undefined
+   * @throws {Sass} If collection is not an object or predicate is not a function
+   */
   static evalObject(collection, predicate) {
     const req = "Object"
     const type = Data.typeOf(collection)
@@ -42,6 +73,15 @@ export default class Collection {
     }
   }
 
+  /**
+   * Evaluates a Set with a predicate function.
+   * Returns the first truthy result from the predicate.
+   *
+   * @param {Set<unknown>} collection - The Set to evaluate
+   * @param {(value: unknown, set: Set<unknown>) => unknown} predicate - Function to evaluate each element
+   * @returns {unknown|undefined} The first truthy result from the predicate, or undefined
+   * @throws {Sass} If collection is not a Set or predicate is not a function
+   */
   static evalSet(collection, predicate) {
     const req = "Set"
     const type = Data.typeOf(collection)
@@ -60,6 +100,16 @@ export default class Collection {
     }
   }
 
+  /**
+   * Evaluates a Map with a predicate function, optionally in reverse order.
+   * Returns the first truthy result from the predicate.
+   *
+   * @param {Map<unknown, unknown>} collection - The Map to evaluate
+   * @param {(value: unknown, key: unknown, map: Map<unknown, unknown>) => unknown} predicate - Function to evaluate each entry
+   * @param {boolean} [forward] - Whether to iterate forward (true) or backward (false). Defaults to true
+   * @returns {unknown|undefined} The first truthy result from the predicate, or undefined
+   * @throws {Sass} If collection is not a Map or predicate is not a function
+   */
   static evalMap(collection, predicate, forward=true) {
     const req = "Map"
     const type = Data.typeOf(collection)
@@ -80,12 +130,27 @@ export default class Collection {
     }
   }
 
+  /**
+   * Zips two arrays together into an array of pairs.
+   * The resulting array length equals the shorter input array.
+   *
+   * @param {Array<unknown>} array1 - The first array
+   * @param {Array<unknown>} array2 - The second array
+   * @returns {Array<[unknown, unknown]>} Array of paired elements
+   */
   static zip(array1, array2) {
     const minLength = Math.min(array1.length, array2.length)
 
     return Array.from({length: minLength}, (_, i) => [array1[i], array2[i]])
   }
 
+  /**
+   * Unzips an array of pairs into separate arrays.
+   * Transposes a 2D array structure.
+   *
+   * @param {Array<Array<unknown>>} array - Array of arrays to unzip
+   * @returns {Array<Array<unknown>>} Array of unzipped arrays, or empty array for invalid input
+   */
   static unzip(array) {
     if(!Array.isArray(array) || array.length === 0) {
       return [] // Handle empty or invalid input
@@ -108,6 +173,15 @@ export default class Collection {
     return unzipped
   }
 
+  /**
+   * Maps an array using an async function, processing items sequentially.
+   * Unlike Promise.all(array.map()), this processes one item at a time.
+   *
+   * @param {Array<unknown>} array - The array to map
+   * @param {(item: unknown) => Promise<unknown>} asyncFn - Async function to apply to each element
+   * @returns {Promise<Array<unknown>>} Promise resolving to the mapped array
+   * @throws {Sass} If array is not an Array or asyncFn is not a function
+   */
   static async asyncMap(array, asyncFn) {
     const req = "Array"
     const type = Data.typeOf(array)
@@ -128,9 +202,8 @@ export default class Collection {
   /**
    * Checks if all elements in an array are of a specified type
    *
-   * @param {Array} arr - The array to check
-   * @param {string} type - The type to check for (optional, defaults to the
-   *                        type of the first element)
+   * @param {Array<unknown>} arr - The array to check
+   * @param {string} [type] - The type to check for (optional, defaults to the type of the first element)
    * @returns {boolean} Whether all elements are of the specified type
    */
   static isArrayUniform(arr, type) {
@@ -155,8 +228,8 @@ export default class Collection {
   /**
    * Checks if an array is unique
    *
-   * @param {Array} arr - The array of which to remove duplicates
-   * @returns {Array} The unique elements of the array
+   * @param {Array<unknown>} arr - The array of which to remove duplicates
+   * @returns {Array<unknown>} The unique elements of the array
    */
   static isArrayUnique(arr) {
     const req = "Array"
@@ -170,9 +243,9 @@ export default class Collection {
   /**
    * Returns the intersection of two arrays.
    *
-   * @param {Array} arr1 - The first array.
-   * @param {Array} arr2 - The second array.
-   * @returns {Array} The intersection of the two arrays.
+   * @param {Array<unknown>} arr1 - The first array.
+   * @param {Array<unknown>} arr2 - The second array.
+   * @returns {Array<unknown>} The intersection of the two arrays.
    */
   static intersection(arr1, arr2) {
     const req = "Array"
@@ -198,8 +271,8 @@ export default class Collection {
    *   Collection.intersects([1, 2, 3], [3, 4, 5]) // returns true
    *   Collection.intersects(["a", "b"], ["c", "d"]) // returns false
    *
-   * @param {Array} arr1 - The first array to check for intersection.
-   * @param {Array} arr2 - The second array to check for intersection.
+   * @param {Array<unknown>} arr1 - The first array to check for intersection.
+   * @param {Array<unknown>} arr2 - The second array to check for intersection.
    * @returns {boolean} True if any element is shared between the arrays, false otherwise.
    */
   static intersects(arr1, arr2) {
@@ -219,11 +292,11 @@ export default class Collection {
    * Pads an array to a specified length with a value. This operation
    * occurs in-place.
    *
-   * @param {Array} arr - The array to pad.
+   * @param {Array<unknown>} arr - The array to pad.
    * @param {number} length - The length to pad the array to.
    * @param {unknown} value - The value to pad the array with.
-   * @param {number} position - The position to pad the array at.
-   * @returns {Array} The padded array.
+   * @param {number} [position] - The position to pad the array at. Defaults to 0
+   * @returns {Array<unknown>} The padded array.
    */
   static arrayPad(arr, length, value, position = 0) {
     const req = "Array"
@@ -254,9 +327,9 @@ export default class Collection {
    * Filters an array asynchronously using a predicate function.
    * Applies the predicate to all items in parallel and returns filtered results.
    *
-   * @param {Array} arr - The array to filter
-   * @param {function(unknown): Promise<boolean>} predicate - Async predicate function that returns a promise resolving to boolean
-   * @returns {Promise<Array>} Promise resolving to the filtered array
+   * @param {Array<unknown>} arr - The array to filter
+   * @param {(value: unknown, index: number, array: Array<unknown>) => Promise<boolean>} predicate - Async predicate function that returns a promise resolving to boolean
+   * @returns {Promise<Array<unknown>>} Promise resolving to the filtered array
    */
   static async asyncFilter(arr, predicate) {
     const req = "Array"
@@ -468,7 +541,7 @@ export default class Collection {
 
     if(
       !Data.isType(spec, "Array", {allowEmpty: false}) &&
-      !Data.isType(spec, "function")
+      !Data.isType(spec, "Function")
     )
       throw Sass.new("Spec must be an array or a function.")
 
@@ -498,6 +571,15 @@ export default class Collection {
     return result
   }
 
+  /**
+   * Trims falsy values from both ends of an array (in-place).
+   * Optionally preserves specific falsy values.
+   *
+   * @param {Array<unknown>} arr - The array to trim
+   * @param {Array<unknown>} [except] - Values to preserve even if falsy. Defaults to empty array
+   * @returns {Array<unknown>} The trimmed array (same reference, modified in-place)
+   * @throws {Sass} If arr is not an Array or except is not an Array
+   */
   static trimArray(arr, except=[]) {
     Valid.type(arr, "Array")
     Valid.type(except, "Array")
@@ -508,6 +590,15 @@ export default class Collection {
     return arr
   }
 
+  /**
+   * Trims falsy values from the right end of an array (in-place).
+   * Optionally preserves specific falsy values.
+   *
+   * @param {Array<unknown>} arr - The array to trim
+   * @param {Array<unknown>} [except] - Values to preserve even if falsy. Defaults to empty array
+   * @returns {Array<unknown>} The trimmed array (same reference, modified in-place)
+   * @throws {Sass} If arr is not an Array or except is not an Array
+   */
   static trimArrayRight(arr, except=[]) {
     Valid.type(arr, "Array")
     Valid.type(except, "Array")
@@ -519,6 +610,15 @@ export default class Collection {
     return arr
   }
 
+  /**
+   * Trims falsy values from the left end of an array (in-place).
+   * Optionally preserves specific falsy values.
+   *
+   * @param {Array<unknown>} arr - The array to trim
+   * @param {Array<unknown>} [except] - Values to preserve even if falsy. Defaults to empty array
+   * @returns {Array<unknown>} The trimmed array (same reference, modified in-place)
+   * @throws {Sass} If arr is not an Array or except is not an Array
+   */
   static trimArrayLeft(arr, except=[]) {
     Valid.type(arr, "Array")
     Valid.type(except, "Array")
@@ -535,6 +635,14 @@ export default class Collection {
     return arr
   }
 
+  /**
+   * Transposes an array of objects into an object of arrays.
+   * Collects values for each key across all objects into arrays.
+   *
+   * @param {Array<object>} objects - Array of plain objects to transpose
+   * @returns {object} Object with keys from input objects, values as arrays
+   * @throws {Sass} If objects is not an Array or contains non-plain objects
+   */
   static transposeObjects(objects) {
     const req = "Array"
     const type = Data.typeOf(objects)
@@ -560,6 +668,13 @@ export default class Collection {
     }, {})
   }
 
+  /**
+   * Flattens an array (or nested array) of objects and transposes them.
+   * Combines flat() and transposeObjects() operations.
+   *
+   * @param {Array<object>|Array<Array<object>>} input - Array or nested array of objects
+   * @returns {object} Transposed object with arrays of values
+   */
   static flattenObjectArray(input) {
     const flattened = Array.isArray(input) ? input.flat() : input
 

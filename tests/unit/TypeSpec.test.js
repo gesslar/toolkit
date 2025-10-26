@@ -139,67 +139,115 @@ describe("Type", () => {
     })
   })
 
-  describe("match method", () => {
+  describe("matches method", () => {
     it("matches simple types", () => {
       const spec = new Type("String")
 
-      assert.equal(spec.match("hello"), true)
-      assert.equal(spec.match(123), false)
-      assert.equal(spec.match(true), false)
+      assert.equal(spec.matches("hello"), true)
+      assert.equal(spec.matches(123), false)
+      assert.equal(spec.matches(true), false)
     })
 
     it("matches array types", () => {
       const spec = new Type("String[]")
 
-      assert.equal(spec.match(["a", "b", "c"]), true)
-      assert.equal(spec.match([1, 2, 3]), false)
-      assert.equal(spec.match("not array"), false)
+      assert.equal(spec.matches(["a", "b", "c"]), true)
+      assert.equal(spec.matches([1, 2, 3]), false)
+      assert.equal(spec.matches("not array"), false)
     })
 
     it("matches union types", () => {
       const spec = new Type("String|Number")
 
-      assert.equal(spec.match("hello"), true)
-      assert.equal(spec.match(123), true)
-      assert.equal(spec.match(true), false)
+      assert.equal(spec.matches("hello"), true)
+      assert.equal(spec.matches(123), true)
+      assert.equal(spec.matches(true), false)
     })
 
     it("matches mixed array and non-array types", () => {
       const spec = new Type("String|Number[]")
 
-      assert.equal(spec.match("hello"), true)
-      assert.equal(spec.match([1, 2, 3]), true)
-      assert.equal(spec.match(["a", "b"]), false) // string[] not in union
-      assert.equal(spec.match(true), false)
+      assert.equal(spec.matches("hello"), true)
+      assert.equal(spec.matches([1, 2, 3]), true)
+      assert.equal(spec.matches(["a", "b"]), false) // string[] not in union
+      assert.equal(spec.matches(true), false)
     })
 
     it("handles empty arrays with allowEmpty option", () => {
       const spec = new Type("String[]")
 
-      assert.equal(spec.match([], { allowEmpty: true }), true)
-      assert.equal(spec.match([], { allowEmpty: false }), false)
+      assert.equal(spec.matches([], { allowEmpty: true }), true)
+      assert.equal(spec.matches([], { allowEmpty: false }), false)
     })
 
     it("handles empty strings with allowEmpty option", () => {
       const spec = new Type("String")
 
-      assert.equal(spec.match("", { allowEmpty: true }), true)
-      assert.equal(spec.match("", { allowEmpty: false }), false)
+      assert.equal(spec.matches("", { allowEmpty: true }), true)
+      assert.equal(spec.matches("", { allowEmpty: false }), false)
     })
 
     it("handles array type matching", () => {
       const spec = new Type("Array")
 
-      assert.equal(spec.match([]), true)
-      assert.equal(spec.match([1, 2, 3]), true)
-      assert.equal(spec.match("not array"), false)
+      assert.equal(spec.matches([]), true)
+      assert.equal(spec.matches([1, 2, 3]), true)
+      assert.equal(spec.matches("not array"), false)
     })
 
     it("rejects non-uniform arrays", () => {
       const spec = new Type("String[]")
 
-      assert.equal(spec.match(["a", "b", "c"]), true)
-      assert.equal(spec.match(["a", 1, "c"]), false) // mixed types
+      assert.equal(spec.matches(["a", "b", "c"]), true)
+      assert.equal(spec.matches(["a", 1, "c"]), false) // mixed types
+    })
+  })
+
+  describe("match method", () => {
+    it("returns array of matching type specs", () => {
+      const spec = new Type("String")
+      const result = spec.match("hello")
+
+      assert.ok(Array.isArray(result))
+      assert.equal(result.length, 1)
+      assert.equal(result[0].typeName, "String")
+    })
+
+    it("returns empty array for non-matching types", () => {
+      const spec = new Type("String")
+      const result = spec.match(123)
+
+      assert.ok(Array.isArray(result))
+      assert.equal(result.length, 0)
+    })
+
+    it("returns matching specs from union types", () => {
+      const spec = new Type("String|Number")
+      const result = spec.match("hello")
+
+      assert.ok(Array.isArray(result))
+      assert.equal(result.length, 1)
+      assert.equal(result[0].typeName, "String")
+    })
+
+    it("returns all matching specs for values matching multiple types", () => {
+      const spec = new Type("String|Number")
+
+      const stringResult = spec.match("hello")
+      assert.equal(stringResult.length, 1)
+      assert.equal(stringResult[0].typeName, "String")
+
+      const numberResult = spec.match(123)
+      assert.equal(numberResult.length, 1)
+      assert.equal(numberResult[0].typeName, "Number")
+    })
+
+    it("returns empty array for invalid type specs", () => {
+      const spec = new Type("InvalidType")
+      const result = spec.match("anything")
+
+      assert.ok(Array.isArray(result))
+      assert.equal(result.length, 0)
     })
   })
 
@@ -252,10 +300,10 @@ describe("Type", () => {
     it("handles complex nested scenarios", () => {
       const spec = new Type("Object|String[]|Function")
 
-      assert.equal(spec.match({}), true)
-      assert.equal(spec.match(["a", "b"]), true)
-      assert.equal(spec.match(() => {}), true)
-      assert.equal(spec.match(123), false)
+      assert.equal(spec.matches({}), true)
+      assert.equal(spec.matches(["a", "b"]), true)
+      assert.equal(spec.matches(() => {}), true)
+      assert.equal(spec.matches(123), false)
     })
 
     it("validates invalid type specifications", () => {
@@ -268,16 +316,16 @@ describe("Type", () => {
       const spec = new Type("String|Number[]|Boolean")
 
       // Should match individual types
-      assert.equal(spec.match("hello"), true)
-      assert.equal(spec.match(true), true)
-      assert.equal(spec.match([1, 2, 3]), true)
+      assert.equal(spec.matches("hello"), true)
+      assert.equal(spec.matches(true), true)
+      assert.equal(spec.matches([1, 2, 3]), true)
 
       // Should NOT match array types not in union
-      assert.equal(spec.match(["a", "b"]), false)
-      assert.equal(spec.match([true, false]), false)
+      assert.equal(spec.matches(["a", "b"]), false)
+      assert.equal(spec.matches([true, false]), false)
 
       // Should handle mixed arrays correctly
-      assert.equal(spec.match([1, "mixed"]), false)
+      assert.equal(spec.matches([1, "mixed"]), false)
     })
 
     it("respects allowEmpty for different value types", () => {
@@ -285,13 +333,13 @@ describe("Type", () => {
       const arraySpec = new Type("String[]")
 
       // String emptiness
-      assert.equal(stringSpec.match("", { allowEmpty: true }), true)
-      assert.equal(stringSpec.match("", { allowEmpty: false }), false)
-      assert.equal(stringSpec.match("  ", { allowEmpty: false }), false) // whitespace-only is empty
+      assert.equal(stringSpec.matches("", { allowEmpty: true }), true)
+      assert.equal(stringSpec.matches("", { allowEmpty: false }), false)
+      assert.equal(stringSpec.matches("  ", { allowEmpty: false }), false) // whitespace-only is empty
 
       // Array emptiness
-      assert.equal(arraySpec.match([], { allowEmpty: true }), true)
-      assert.equal(arraySpec.match([], { allowEmpty: false }), false)
+      assert.equal(arraySpec.matches([], { allowEmpty: true }), true)
+      assert.equal(arraySpec.matches([], { allowEmpty: false }), false)
     })
   })
 })
