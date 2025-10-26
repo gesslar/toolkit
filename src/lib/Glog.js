@@ -1,11 +1,6 @@
-import c from "@gesslar/colours"
-
-import Data from "./Data.js"
-import Term from "./Term.js"
-import Util from "./Util.js"
-// ErrorStackParser will be dynamically imported when needed
-
 /**
+ * @file Glog.js
+ *
  * Enhanced Global logging utility that combines simple logging with advanced Logger features.
  *
  * Can be used in multiple ways:
@@ -15,6 +10,13 @@ import Util from "./Util.js"
  * 4. Fluent setup: Glog.create().withName("App").withColors()
  * 5. Traditional logger: logger.debug("message", level)
  */
+
+import c from "@gesslar/colours"
+
+import Data from "./Data.js"
+import Term from "./Term.js"
+import Util from "./Util.js"
+// ErrorStackParser will be dynamically imported when needed
 
 // Enhanced color system using @gesslar/colours
 export const loggerColours = {

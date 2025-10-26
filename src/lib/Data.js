@@ -124,7 +124,7 @@ export default class Data {
       ? type
       : Data.newTypeSpec(type, options)
 
-    return typeSpec.match(value, options)
+    return typeSpec.matches(value, options)
   }
 
   /**
@@ -336,9 +336,9 @@ export default class Data {
    * Filters an array asynchronously using a predicate function.
    * Applies the predicate to all items in parallel and returns filtered results.
    *
-   * @param {Array} arr - The array to filter
-   * @param {function(unknown): Promise<boolean>} predicate - Async predicate function that returns a promise resolving to boolean
-   * @returns {Promise<Array>} Promise resolving to the filtered array
+   * @param {Array<unknown>} arr - The array to filter
+   * @param {(value: unknown) => Promise<boolean>} predicate - Async predicate function that returns a promise resolving to boolean
+   * @returns {Promise<Array<unknown>>} Promise resolving to the filtered array
    */
   static async asyncFilter(arr, predicate) {
     const results = await Promise.all(arr.map(predicate))

@@ -138,23 +138,27 @@ export default class TypeSpec {
    * @param {boolean} options.allowEmpty - Whether empty values are allowed
    * @returns {boolean} True if the value matches any type specification
    */
+  matches(value, options) {
+    return this.match(value,options).length > 0
+  }
+
   match(value, options) {
     const allowEmpty = options?.allowEmpty ?? true
     const empty = Data.isEmpty(value)
 
-    // If we have a list of types, because the string was validly parsed,
-    // we need to ensure that all of the types that were parsed are valid types
-    // in JavaScript.
+    // If we have a list of types, because the string was validly parsed, we
+    // need to ensure that all of the types that were parsed are valid types in
+    // JavaScript.
     if(this.length && !this.every(t => Data.isValidType(t.typeName)))
-      return false
+      return []
 
     // Now, let's do some checking with the types, respecting the array flag
     // with the value
     const valueType = Data.typeOf(value)
     const isArray = valueType === "Array"
 
-    // We need to ensure that we match the type and the consistency of the types
-    // in an array, if it is an array and an array is allowed.
+    // We need to ensure that we match the type and the consistency of the
+    // types in an array, if it is an array and an array is allowed.
     const matchingTypeSpec = this.filter(spec => {
       const {typeName: allowedType, array: allowedArray} = spec
 
@@ -187,7 +191,7 @@ export default class TypeSpec {
       return false
     })
 
-    return matchingTypeSpec.length > 0
+    return matchingTypeSpec
   }
 
   /**
