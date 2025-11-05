@@ -2,7 +2,8 @@
 
 import assert from "node:assert/strict"
 import {EventEmitter} from "node:events"
-import {describe, it} from "node:test"
+import {afterEach, beforeEach, describe, it} from "node:test"
+import {performance} from "node:perf_hooks"
 
 import {Sass,Util} from "../../src/index.js"
 
@@ -42,27 +43,46 @@ describe("Util", () => {
   })
 
   describe("time()", () => {
-    it("measures execution time for async functions", async () => {
+    let originalNow
+
+    const mockNowSequence = sequence => {
+      let index = 0
+      performance.now = () => {
+        const value = sequence[Math.min(index, sequence.length - 1)]
+        index += 1
+        return value
+      }
+    }
+
+    beforeEach(() => {
+      originalNow = performance.now
+    })
+
+    afterEach(() => {
+      performance.now = originalNow
+    })
+
+    it("captures elapsed time using performance.now", async () => {
+      mockNowSequence([100, 150.75])
+
       const {result, cost} = await Util.time(async () => {
-        await new Promise(resolve => setTimeout(resolve, 80))
-        return "completed"
+        return await Promise.resolve("completed")
       })
 
       assert.equal(result, "completed")
-      assert.ok(cost >= 50) // Should be at least 50ms
-      assert.ok(cost < 100) // But not too much more (allowing for system variance)
+      assert.equal(cost, 50.8) // (150.75 - 100) rounded to 1 decimal place
       assert.equal(typeof cost, "number")
       assert.ok(Number.isFinite(cost))
     })
 
-    it("measures time for fast operations", async () => {
-      const {result, cost} = await Util.time(async () => {
-        return Math.random()
+    it("returns zero when no time elapses", async () => {
+      mockNowSequence([42, 42])
+
+      const {cost} = await Util.time(async () => {
+        return await Promise.resolve()
       })
 
-      assert.equal(typeof result, "number")
-      assert.ok(cost >= 0) // Time should be non-negative
-      assert.ok(cost < 10) // Should be very fast
+      assert.equal(cost, 0)
     })
 
     it("handles functions that throw errors", async () => {
@@ -84,12 +104,13 @@ describe("Util", () => {
     })
 
     it("rounds cost to one decimal place", async () => {
+      mockNowSequence([10, 22.34])
+
       const {cost} = await Util.time(async () => {
-        await new Promise(resolve => setTimeout(resolve, 1))
-        return "test"
+        return await Promise.resolve("test")
       })
 
-      // Should be rounded to 1 decimal place
+      assert.equal(cost, 12.3)
       const decimalPlaces = cost.toString().split(".")[1]?.length || 0
       assert.ok(decimalPlaces <= 1)
     })
