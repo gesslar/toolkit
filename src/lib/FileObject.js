@@ -162,18 +162,18 @@ export default class FileObject extends FS {
   }
 
   /**
-   * Return the user-supplied path
+   * Return the normalized path that was provided to the constructor.
    *
-   * @returns {string} The file path
+   * @returns {string} The sanitized user-supplied file path
    */
   get supplied() {
     return this.#meta.supplied
   }
 
   /**
-   * Return the resolved path as passed to the constructor.
+   * Return the fully resolved absolute path to the file on disk.
    *
-   * @returns {string} The file path
+   * @returns {string} The fully resolved absolute file path
    */
   get path() {
     return this.#meta.path
