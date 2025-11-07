@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import fs from "node:fs/promises"
 import path from "node:path"
+import {URL} from "node:url"
 import {afterEach,beforeEach,describe,it} from "node:test"
 
 import {DirectoryObject,FileObject,Sass} from "../../src/index.js"
@@ -16,7 +17,7 @@ describe("FileObject", () => {
       assert.ok(file instanceof FileObject)
       assert.equal(typeof file.supplied, "string")
       assert.equal(typeof file.path, "string")
-      assert.equal(typeof file.uri, "string")
+      assert.ok(file.url instanceof URL)
       assert.equal(typeof file.name, "string")
       assert.equal(file.name, "test.txt")
       assert.equal(file.extension, ".txt")
@@ -90,8 +91,9 @@ describe("FileObject", () => {
       assert.ok(path.isAbsolute(testFile.path))
     })
 
-    it("uri returns file URI", () => {
-      assert.ok(testFile.uri.startsWith("file://"))
+    it("url returns file URL", () => {
+      assert.ok(testFile.url instanceof URL)
+      assert.ok(testFile.url.href.startsWith("file://"))
     })
 
     it("name returns file name with extension", () => {
@@ -136,7 +138,9 @@ describe("FileObject", () => {
       assert.equal(typeof json, "object")
       assert.ok("supplied" in json)
       assert.ok("path" in json)
-      assert.ok("uri" in json)
+      assert.ok("url" in json)
+      assert.equal(typeof json.url, "string")
+      assert.ok(json.url.startsWith("file://"))
       assert.ok("name" in json)
       assert.ok("module" in json)
       assert.ok("extension" in json)
@@ -605,6 +609,99 @@ describe("FileObject", () => {
         assert.ok(error instanceof Sass)
         assert.match(error.message, /Invalid directory/)
       }
+    })
+  })
+
+  describe("delete method", () => {
+    let testDir, testFile, testFilePath
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("file-delete-test")
+      testFilePath = path.join(testDir, "to-delete.txt")
+      await fs.writeFile(testFilePath, "test content")
+      testFile = new FileObject(testFilePath)
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("deletes existing file successfully", async () => {
+      assert.equal(await testFile.exists, true)
+
+      await testFile.delete()
+
+      assert.equal(await testFile.exists, false)
+    })
+
+    it("throws Sass error when file doesn't exist", async () => {
+      const nonExistent = new FileObject(path.join(testDir, "missing.txt"))
+
+      await assert.rejects(
+        () => nonExistent.delete(),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /No such resource/)
+          return true
+        }
+      )
+    })
+
+    it("throws Sass error for invalid path", async () => {
+      const file = new FileObject("/test.txt")
+      // Manually break the path by mocking
+      Object.defineProperty(file, "path", {get: () => null})
+
+      await assert.rejects(
+        () => file.delete(),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /does not represent a valid resource/)
+          return true
+        }
+      )
+    })
+
+    it("deletes file even with special characters in name", async () => {
+      const specialPath = path.join(testDir, "file with spaces & symbols!.txt")
+      await fs.writeFile(specialPath, "content")
+      const specialFile = new FileObject(specialPath)
+
+      assert.equal(await specialFile.exists, true)
+      await specialFile.delete()
+      assert.equal(await specialFile.exists, false)
+    })
+
+    it("returns Promise that resolves to undefined", async () => {
+      const result = await testFile.delete()
+
+      assert.equal(result, undefined)
+    })
+
+    it("cannot delete file twice", async () => {
+      await testFile.delete()
+      assert.equal(await testFile.exists, false)
+
+      await assert.rejects(
+        () => testFile.delete(),
+        Sass
+      )
+    })
+
+    it("validates existence before attempting deletion", async () => {
+      const nonExistent = new FileObject(path.join(testDir, "never-existed.txt"))
+
+      // Should throw before calling fs.unlink
+      await assert.rejects(
+        () => nonExistent.delete(),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /No such resource/)
+          return true
+        }
+      )
     })
   })
 

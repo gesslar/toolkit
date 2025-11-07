@@ -166,13 +166,14 @@ export default class Util {
      * Emits an event asynchronously and waits for all listeners to complete.
      * Like asyncEmit, but uses duck typing for more flexible emitter validation.
      * Accepts any object that has the required EventEmitter-like methods.
+     * If it walks like an EventEmitter and quacks like an EventEmitter...
      *
      * @param {object} emitter - Any object with EventEmitter-like interface
      * @param {string} event - The event name to emit
      * @param {...unknown} args - Arguments to pass to event listeners
      * @returns {Promise<void>} Resolves when all listeners have completed
      */
-    static asyncEmitAnon(emitter: object, event: string, ...args: unknown[]): Promise<void>;
+    static asyncEmitQuack(emitter: object, event: string, ...args: unknown[]): Promise<void>;
     /**
      * Determine the Levenshtein distance between two string values
      *

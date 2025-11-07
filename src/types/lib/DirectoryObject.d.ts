@@ -4,7 +4,7 @@
  *
  * @property {string} supplied - The supplied directory
  * @property {string} path - The resolved path
- * @property {string} uri - The directory URI
+ * @property {URL} url - The directory URL
  * @property {string} name - The directory name
  * @property {string} module - The directory name without extension
  * @property {string} extension - The directory extension (usually empty)
@@ -44,11 +44,11 @@ export default class DirectoryObject extends FS {
      */
     get path(): string;
     /**
-     * Returns the URI of the current directory.
+     * Returns the URL of the current directory.
      *
-     * @returns {string} The directory URI
+     * @returns {URL} The directory URL
      */
-    get uri(): string;
+    get url(): URL;
     /**
      * Returns the directory name with extension (if any) without the path.
      *
@@ -135,6 +135,22 @@ export default class DirectoryObject extends FS {
      */
     get walkUp(): object;
     /**
+     * Deletes an empty directory from the filesystem.
+     *
+     * Recursive deletion is intentionally not supported. If you need to delete
+     * a directory with contents, you must imperatively decide your deletion
+     * strategy and handle it explicitly.
+     *
+     * @returns {Promise<void>} Resolves when directory is deleted
+     * @throws {Sass} If the directory URL is invalid
+     * @throws {Sass} If the directory does not exist
+     * @throws {Error} If the directory is not empty (from fs.rmdir)
+     * @example
+     * const dir = new DirectoryObject('./temp/cache')
+     * await dir.delete() // Only works if directory is empty
+     */
+    delete(): Promise<void>;
+    /**
      * Custom inspect method for Node.js console.
      *
      * @returns {object} JSON representation of this object.
@@ -143,6 +159,7 @@ export default class DirectoryObject extends FS {
     #private;
 }
 import FS from "./FS.js";
+import { URL } from "node:url";
 import FileObject from "./FileObject.js";
 import util from "node:util";
 //# sourceMappingURL=DirectoryObject.d.ts.map

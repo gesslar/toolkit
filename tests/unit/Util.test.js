@@ -514,7 +514,7 @@ describe("Util", () => {
       })
     })
 
-    describe("asyncEmitAnon()", () => {
+    describe("asyncEmitQuack()", () => {
       it("works with EventEmitter-like objects (duck typing)", async () => {
         let called = false
         const fakeEmitter = {
@@ -527,7 +527,7 @@ describe("Util", () => {
           emit: () => {}
         }
 
-        await Util.asyncEmitAnon(fakeEmitter, "test")
+        await Util.asyncEmitQuack(fakeEmitter, "test")
         assert.ok(called)
       })
 
@@ -537,7 +537,7 @@ describe("Util", () => {
         }
 
         await assert.rejects(
-          () => Util.asyncEmitAnon(invalidEmitter, "test"),
+          () => Util.asyncEmitQuack(invalidEmitter, "test"),
           /must be an EventEmitter-like object/
         )
       })
@@ -550,7 +550,7 @@ describe("Util", () => {
         }
 
         await assert.rejects(
-          () => Util.asyncEmitAnon(partialEmitter, "test"),
+          () => Util.asyncEmitQuack(partialEmitter, "test"),
           Sass
         )
       })

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import fs from "node:fs/promises"
 import path from "node:path"
+import {URL} from "node:url"
 import {afterEach,beforeEach,describe,it} from "node:test"
 
 import {DirectoryObject,Sass} from "../../src/index.js"
@@ -16,7 +17,7 @@ describe("DirectoryObject", () => {
       assert.ok(dir instanceof DirectoryObject)
       assert.equal(typeof dir.supplied, "string")
       assert.equal(typeof dir.path, "string")
-      assert.equal(typeof dir.uri, "string")
+      assert.ok(dir.url instanceof URL)
       assert.equal(typeof dir.name, "string")
     })
 
@@ -66,8 +67,9 @@ describe("DirectoryObject", () => {
       assert.ok(path.isAbsolute(testDirObj.path))
     })
 
-    it("uri returns file URI", () => {
-      assert.ok(testDirObj.uri.startsWith("file://"))
+    it("url returns file URL", () => {
+      assert.ok(testDirObj.url instanceof URL)
+      assert.ok(testDirObj.url.href.startsWith("file://"))
     })
 
     it("name returns directory name", () => {
@@ -107,7 +109,9 @@ describe("DirectoryObject", () => {
       assert.equal(typeof json, "object")
       assert.ok("supplied" in json)
       assert.ok("path" in json)
-      assert.ok("uri" in json)
+      assert.ok("url" in json)
+      assert.equal(typeof json.url, "string")
+      assert.ok(json.url.startsWith("file://"))
       assert.ok("name" in json)
       assert.ok("module" in json)
       assert.ok("extension" in json)
@@ -505,6 +509,144 @@ describe("DirectoryObject", () => {
 
       assert.ok(first instanceof DirectoryObject)
       assert.equal(first.path, dir.path)
+    })
+  })
+
+  describe("delete method", () => {
+    let testDir
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("dir-delete-test")
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("deletes empty directory successfully", async () => {
+      const emptyDirPath = path.join(testDir, "empty-dir")
+      await fs.mkdir(emptyDirPath)
+      const dir = new DirectoryObject(emptyDirPath)
+
+      assert.equal(await dir.exists, true)
+
+      await dir.delete()
+
+      assert.equal(await dir.exists, false)
+    })
+
+    it("throws error when directory is not empty", async () => {
+      const dirPath = path.join(testDir, "not-empty")
+      await fs.mkdir(dirPath)
+      await fs.writeFile(path.join(dirPath, "file.txt"), "content")
+      const dir = new DirectoryObject(dirPath)
+
+      await assert.rejects(
+        () => dir.delete(),
+        (error) => {
+          // Should get an error from fs.rmdir about directory not being empty
+          return true
+        }
+      )
+
+      // Directory should still exist
+      assert.equal(await dir.exists, true)
+    })
+
+    it("throws Sass error when directory doesn't exist", async () => {
+      const nonExistent = new DirectoryObject(path.join(testDir, "missing"))
+
+      await assert.rejects(
+        () => nonExistent.delete(),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /No such resource/)
+          return true
+        }
+      )
+    })
+
+    it("throws Sass error for invalid path", async () => {
+      const dir = new DirectoryObject("/test")
+      // Manually break the path
+      Object.defineProperty(dir, "path", {get: () => null})
+
+      await assert.rejects(
+        () => dir.delete(),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /does not represent a valid resource/)
+          return true
+        }
+      )
+    })
+
+    it("does not support recursive deletion", async () => {
+      // Create nested structure
+      const parentPath = path.join(testDir, "parent")
+      const childPath = path.join(parentPath, "child")
+      await fs.mkdir(parentPath)
+      await fs.mkdir(childPath)
+
+      const parent = new DirectoryObject(parentPath)
+
+      // Should fail because directory is not empty
+      await assert.rejects(
+        () => parent.delete()
+      )
+
+      // Parent should still exist
+      assert.equal(await parent.exists, true)
+    })
+
+    it("returns Promise that resolves to undefined", async () => {
+      const emptyDirPath = path.join(testDir, "returns-undefined")
+      await fs.mkdir(emptyDirPath)
+      const dir = new DirectoryObject(emptyDirPath)
+
+      const result = await dir.delete()
+
+      assert.equal(result, undefined)
+    })
+
+    it("cannot delete directory twice", async () => {
+      const dirPath = path.join(testDir, "delete-twice")
+      await fs.mkdir(dirPath)
+      const dir = new DirectoryObject(dirPath)
+
+      await dir.delete()
+      assert.equal(await dir.exists, false)
+
+      await assert.rejects(
+        () => dir.delete(),
+        Sass
+      )
+    })
+
+    it("validates existence before attempting deletion", async () => {
+      const nonExistent = new DirectoryObject(path.join(testDir, "never-existed"))
+
+      // Should throw before calling fs.rmdir
+      await assert.rejects(
+        () => nonExistent.delete(),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /No such resource/)
+          return true
+        }
+      )
+    })
+
+    it("deletes directory with special characters in name", async () => {
+      const specialPath = path.join(testDir, "dir with spaces & symbols!")
+      await fs.mkdir(specialPath)
+      const specialDir = new DirectoryObject(specialPath)
+
+      assert.equal(await specialDir.exists, true)
+      await specialDir.delete()
+      assert.equal(await specialDir.exists, false)
     })
   })
 

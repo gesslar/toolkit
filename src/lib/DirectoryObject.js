@@ -7,6 +7,7 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import util from "node:util"
+import {URL} from "node:url"
 
 import FS from "./FS.js"
 import FileObject from "./FileObject.js"
@@ -18,7 +19,7 @@ import Sass from "./Sass.js"
  *
  * @property {string} supplied - The supplied directory
  * @property {string} path - The resolved path
- * @property {string} uri - The directory URI
+ * @property {URL} url - The directory URL
  * @property {string} name - The directory name
  * @property {string} module - The directory name without extension
  * @property {string} extension - The directory extension (usually empty)
@@ -32,7 +33,7 @@ export default class DirectoryObject extends FS {
    * @private
    * @property {string|null} supplied - User-supplied path
    * @property {string|null} path - The absolute file path
-   * @property {string|null} uri - The file URI
+   * @property {URL|null} url - The file URL
    * @property {string|null} name - The file name
    * @property {string|null} module - The file name without extension
    * @property {string|null} extension - The file extension
@@ -42,7 +43,7 @@ export default class DirectoryObject extends FS {
   #meta = Object.seal({
     supplied: null,
     path: null,
-    uri: null,
+    url: null,
     name: null,
     module: null,
     extension: null,
@@ -61,16 +62,15 @@ export default class DirectoryObject extends FS {
     super()
 
     const fixedDir = FS.fixSlashes(directory ?? ".")
-    const absolutePath = path.resolve(fixedDir)
-    const fileUri = FS.pathToUri(absolutePath)
-    const filePath = FS.uriToPath(fileUri)
-    const baseName = path.basename(absolutePath) || "."
-    const trail = filePath.split(path.sep)
+    const resolved = path.resolve(fixedDir)
+    const url = new URL(FS.pathToUri(resolved))
+    const baseName = path.basename(resolved) || "."
+    const trail = resolved.split(path.sep)
     const sep = path.sep
 
     this.#meta.supplied = fixedDir
-    this.#meta.path = filePath
-    this.#meta.uri = fileUri
+    this.#meta.path = resolved
+    this.#meta.url = url
     this.#meta.name = baseName
     this.#meta.extension = ""
     this.#meta.module = baseName
@@ -98,7 +98,7 @@ export default class DirectoryObject extends FS {
     return {
       supplied: this.supplied,
       path: this.path,
-      uri: this.uri,
+      url: this.url.toString(),
       name: this.name,
       module: this.module,
       extension: this.extension,
@@ -144,12 +144,12 @@ export default class DirectoryObject extends FS {
   }
 
   /**
-   * Returns the URI of the current directory.
+   * Returns the URL of the current directory.
    *
-   * @returns {string} The directory URI
+   * @returns {URL} The directory URL
    */
-  get uri() {
-    return this.#meta.uri
+  get url() {
+    return this.#meta.url
   }
 
   /**
@@ -239,10 +239,7 @@ export default class DirectoryObject extends FS {
    * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} The files and directories in the directory.
    */
   async read() {
-    const found = await fs.readdir(
-      new URL(this.uri),
-      {withFileTypes: true}
-    )
+    const found = await fs.readdir(this.url, {withFileTypes: true})
 
     const files = found
       .filter(dirent => dirent.isFile())
@@ -330,5 +327,32 @@ export default class DirectoryObject extends FS {
    */
   get walkUp() {
     return this.#walkUp()
+  }
+
+  /**
+   * Deletes an empty directory from the filesystem.
+   *
+   * Recursive deletion is intentionally not supported. If you need to delete
+   * a directory with contents, you must imperatively decide your deletion
+   * strategy and handle it explicitly.
+   *
+   * @returns {Promise<void>} Resolves when directory is deleted
+   * @throws {Sass} If the directory URL is invalid
+   * @throws {Sass} If the directory does not exist
+   * @throws {Error} If the directory is not empty (from fs.rmdir)
+   * @example
+   * const dir = new DirectoryObject('./temp/cache')
+   * await dir.delete() // Only works if directory is empty
+   */
+  async delete() {
+    const dirPath = this.path
+
+    if(!dirPath)
+      throw Sass.new("This object does not represent a valid resource.")
+
+    if(!(await this.exists))
+      throw Sass.new(`No such resource '${this.url.href}'`)
+
+    return await fs.rmdir(this.path)
   }
 }

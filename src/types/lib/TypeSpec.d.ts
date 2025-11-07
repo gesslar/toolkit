@@ -86,7 +86,7 @@ export default class TypeSpec {
     matches(value: unknown, options: {
         allowEmpty: boolean;
     }): boolean;
-    match(value: any, options: any): false | unknown[];
+    match(value: any, options: any): unknown[];
     #private;
 }
 //# sourceMappingURL=TypeSpec.d.ts.map
