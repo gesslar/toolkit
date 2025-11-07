@@ -4,7 +4,7 @@
  *
  * @property {string} supplied - User-supplied path
  * @property {string} path - The absolute file path
- * @property {string} uri - The file URI
+ * @property {URL} url - The file URL
  * @property {string} name - The file name
  * @property {string} module - The file name without extension
  * @property {string} extension - The file extension
@@ -43,23 +43,23 @@ export default class FileObject extends FS {
      */
     get exists(): Promise<boolean>;
     /**
-     * Return the user-supplied path
+     * Return the normalized path that was provided to the constructor.
      *
-     * @returns {string} The file path
+     * @returns {string} The sanitized user-supplied file path
      */
     get supplied(): string;
     /**
-     * Return the resolved path as passed to the constructor.
+     * Return the fully resolved absolute path to the file on disk.
      *
-     * @returns {string} The file path
+     * @returns {string} The fully resolved absolute file path
      */
     get path(): string;
     /**
-     * Returns the URI of the current file.
+     * Returns the URL of the current file.
      *
-     * @returns {string} The file URI
+     * @returns {URL} The file URL
      */
-    get uri(): string;
+    get url(): URL;
     /**
      * Returns the file name with extension (if any) without the path.
      *
@@ -174,6 +174,17 @@ export default class FileObject extends FS {
      */
     import(): Promise<object>;
     /**
+     * Deletes the file from the filesystem.
+     *
+     * @returns {Promise<void>} Resolves when file is deleted
+     * @throws {Sass} If the file URL is invalid
+     * @throws {Sass} If the file does not exist
+     * @example
+     * const file = new FileObject('./temp/data.json')
+     * await file.delete()
+     */
+    delete(): Promise<void>;
+    /**
      * Custom inspect method for Node.js console.
      *
      * @returns {object} JSON representation of this object.
@@ -182,6 +193,7 @@ export default class FileObject extends FS {
     #private;
 }
 import FS from "./FS.js";
+import { URL } from "node:url";
 import DirectoryObject from "./DirectoryObject.js";
 import util from "node:util";
 import JSON5 from "json5";

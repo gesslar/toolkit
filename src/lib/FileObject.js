@@ -9,6 +9,7 @@ import fs from "node:fs/promises"
 import path from "node:path"
 import util from "node:util"
 import YAML from "yaml"
+import {URL} from "node:url"
 
 import Data from "./Data.js"
 import DirectoryObject from "./DirectoryObject.js"
@@ -22,7 +23,7 @@ import Valid from "./Valid.js"
  *
  * @property {string} supplied - User-supplied path
  * @property {string} path - The absolute file path
- * @property {string} uri - The file URI
+ * @property {URL} url - The file URL
  * @property {string} name - The file name
  * @property {string} module - The file name without extension
  * @property {string} extension - The file extension
@@ -51,7 +52,7 @@ export default class FileObject extends FS {
    * @private
    * @property {string|null} supplied - User-supplied path
    * @property {string|null} path - The absolute file path
-   * @property {string|null} uri - The file URI
+   * @property {URL|null} url - The file URL
    * @property {string|null} name - The file name
    * @property {string|null} module - The file name without extension
    * @property {string|null} extension - The file extension
@@ -62,7 +63,7 @@ export default class FileObject extends FS {
   #meta = Object.seal({
     supplied: null,
     path: null,
-    uri: null,
+    url: null,
     name: null,
     module: null,
     extension: null,
@@ -102,11 +103,11 @@ export default class FileObject extends FS {
     const final = FS.resolvePath(directoryObject.path ?? ".", fixedFile)
 
     const resolved = final
-    const fileUri = FS.pathToUri(resolved)
+    const url = new URL(FS.pathToUri(resolved))
 
     this.#meta.supplied = fixedFile
     this.#meta.path = resolved
-    this.#meta.uri = fileUri
+    this.#meta.url = url
     this.#meta.name = base
     this.#meta.extension = ext
     this.#meta.module = path.basename(this.supplied, this.extension)
@@ -133,7 +134,7 @@ export default class FileObject extends FS {
     return {
       supplied: this.supplied,
       path: this.path,
-      uri: this.uri,
+      url: this.url.toString(),
       name: this.name,
       module: this.module,
       extension: this.extension,
@@ -180,12 +181,12 @@ export default class FileObject extends FS {
   }
 
   /**
-   * Returns the URI of the current file.
+   * Returns the URL of the current file.
    *
-   * @returns {string} The file URI
+   * @returns {URL} The file URL
    */
-  get uri() {
-    return this.#meta.uri
+  get url() {
+    return this.#meta.url
   }
 
   /**
@@ -385,7 +386,7 @@ export default class FileObject extends FS {
       await fs.writeFile(this.path, content, encoding)
 
     else
-      throw Sass.new(`Invalid directory, ${this.directory.uri}`)
+      throw Sass.new(`Invalid directory, ${this.directory.url.href}`)
   }
 
   /**
@@ -436,14 +437,36 @@ export default class FileObject extends FS {
    * @returns {Promise<object>} The file contents as a module.
    */
   async import() {
-    const fileUri = this.uri
+    const url = this.url
 
-    if(!fileUri)
-      throw Sass.new("No URI in file map")
+    if(!url)
+      throw Sass.new("No URL in file map")
 
     if(!(await this.exists))
-      throw Sass.new(`No such file '${fileUri}'`)
+      throw Sass.new(`No such file '${url.href}'`)
 
-    return await import(fileUri)
+    return await import(url.href)
+  }
+
+  /**
+   * Deletes the file from the filesystem.
+   *
+   * @returns {Promise<void>} Resolves when file is deleted
+   * @throws {Sass} If the file URL is invalid
+   * @throws {Sass} If the file does not exist
+   * @example
+   * const file = new FileObject('./temp/data.json')
+   * await file.delete()
+   */
+  async delete() {
+    const filePath = this.path
+
+    if(!filePath)
+      throw Sass.new("This object does not represent a valid resource.")
+
+    if(!(await this.exists))
+      throw Sass.new(`No such resource '${this.url.href}'`)
+
+    return await fs.unlink(this.path)
   }
 }

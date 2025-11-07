@@ -1,48 +1,34 @@
-# ACTUAL_TESTING.md
-
-## The Real Deal: How to Actually Test This Toolkit
-
-*Unlike TESTING.txt (which is fucking gold and stays!), this is your practical guide for adding new stuff without breaking everything.*
-
----
-
 ## 🎯 **When Adding New Methods/Classes**
 
-### **Step 0: New Project / Fresh Scaffold Checklist**
+### **Step 0: Project Baseline Checklist**
 
-Before anyone (human or otherwise) starts wiring in features, make sure the repo baseline is ready for the automation in the later steps:
+Before anyone (human or otherwise) starts wiring in features, verify the repo baseline:
 
-1. **Copy the tooling files** into the project root:
-   - `tsconfig.types.json` (the one that emits `.d.ts` + `.d.ts.map`)
-   - `eslint.config.js` (or merge its relevant bits if you already have one)
-   - `WIRE_UP_AND_TESTING.md` itself, so future contributors know the drill.
-2. **Update `package.json` scripts** so there is a `types:build` entry:
+1. **Verify ESLint is configured**:
+   - This developer ALWAYS includes `eslint.config.js` in projects
+   - If modifying code, run `npm run lint` before committing
+   - Use `npm run lint:fix` to auto-fix style issues when available
 
-   ```json
-   {
-     "scripts": {
-       "types:build": "tsc -p tsconfig.types.json && eslint --fix \"src/types/**/*.d.ts\""
-     }
-   }
-   ```
+2. **Check for type generation** (library projects only):
+   - **If `tsconfig.types.json` exists**: The project generates TypeScript declarations
+   - **If it exists**, ensure `package.json` has a `types:build` script
+   - Run `npm run types:build` after modifying exports
 
-   Adjust the quoting if you’re on Windows, but keep the same two commands.
-3. **Lock in the directory layout**:
-   - Runtime code lives under `src/lib/**` + `src/index.js`.
-   - Generated declarations land in `src/types/**` (commit them).
-   - Consumers import from `src/index.js`, so always expose new classes there.
-4. **Sanity check the pipeline**:
+3. **Identify the project structure**:
+   - Look for main entry point (usually `src/index.js` or similar)
+   - Check if there's a `src/lib/**` directory structure
+   - Understand the export pattern (individual exports, bundles, both)
+
+4. **Sanity check the available commands**:
 
    ```bash
-   npm install
-   npm run types:build
-   npm run lint
-   npm test
+   npm run lint          # ALWAYS present
+   npm run lint:fix      # Usually present
+   npm test              # Only if tests exist (not common)
+   npm run types:build   # Only if generating declarations
    ```
 
-   Running the types build once up front confirms everything is wired, and it gives you baseline `.d.ts` files with source maps for editors.
-
-With that scaffold in place, the rest of this playbook (Steps 1–5) applies cleanly.
+**Note**: This developer does NOT prioritize testing. Only a couple projects (libraries) have test suites. Don't assume tests exist or need to be written.
 
 ### **Step 1: Validate the Logic Thoroughly**
 
@@ -52,7 +38,7 @@ Before you write a single test, **audit your implementation**:
 - ✅ **Type Coercion**: Does your method handle non-expected types gracefully?
 - ✅ **Error Boundaries**: Where can this blow up? Handle it or document it.
 - ✅ **Performance**: Any obvious bottlenecks or inefficiencies?
-- ✅ **API Consistency**: Does it match the existing toolkit's patterns and voice?
+- ✅ **Pattern Consistency**: Does it match the existing codebase's patterns, naming conventions, and style?
 
 **🚨 CRITICAL**: Look for patterns like:
 
@@ -61,38 +47,41 @@ Before you write a single test, **audit your implementation**:
 - Missing validation on user inputs
 - Async operations without proper error handling
 
-### **Step 2: Wire Up the Class to `index.js`**
+### **Step 2: Wire Up Exports (If Library Project)**
 
-#### **Individual Export (Required)**
+**Skip this step if**: The project is an application or tool (not a library). Only library projects with a main entry point (like `src/index.js`) need export management.
 
-Add your new class to the individual exports section:
+#### **For Library Projects:**
+
+**Check the export pattern** by examining the main entry point:
+
+- **Individual exports only**: Simple list of exports
+- **Semantic bundles**: Grouped exports under namespace objects (e.g., `FileSystem`, `ActionSystem`)
+- **Both**: Mix of individual exports and semantic bundles
+
+#### **Individual Export Pattern**
+
+Add your new class to the exports:
 
 ```javascript
-// src/index.js
+// src/index.js or main entry point
 export { default as YourNewClass } from "./lib/YourNewClass.js"
+// OR
+export { YourNewClass } from "./lib/YourNewClass.js"
 ```
 
-#### **Semantic Bundle Export (Recommended)**
+#### **Semantic Bundle Pattern** (If Project Uses This)
 
-Add your class to the appropriate semantic bundle in `/src/bundles/`:
+If the project uses semantic bundles (check for a `src/bundles/` directory):
+
+1. **Add to existing bundle**:
 
 ```javascript
 // src/bundles/YourDomainSystem.js
 export {default as YourNewClass} from "../lib/YourNewClass.js"
 ```
 
-**Available Semantic Bundles:**
-
-- 📁 **`FileSystem`** - File and directory operations (FileObject, DirectoryObject, FS)
-- ⚡ **`ActionSystem`** - Action orchestration framework (Action, ActionBuilder, ActionRunner, Hooks, Piper)
-- 📊 **`DataSystem`** - Data manipulation and validation (Data, Valid, Collection, Cache, Type)
-- 🚨 **`ErrorSystem`** - Error handling and reporting (Sass, Tantrum)
-- 📋 **`ContractSystem`** - Contract negotiation and schema validation (Contract, Terms, Schemer)
-- 🖥️ **`LoggingSystem`** - Logging and terminal utilities (Glog, Term, Util)
-
-**Create New Bundle if Needed:**
-
-If your class doesn't fit existing bundles, create a new semantic bundle:
+2. **Or create new bundle** if it doesn't fit existing categories:
 
 ```javascript
 // src/bundles/YourNewDomainSystem.js
@@ -106,67 +95,93 @@ If your class doesn't fit existing bundles, create a new semantic bundle:
 export {default as YourClass} from "../lib/YourClass.js"
 ```
 
-Then add to main index.js:
+Then add to main index:
 
 ```javascript
 // Export the new bundle alongside others
 export * as YourNewDomainSystem from "./bundles/YourNewDomainSystem.js"
 ```
 
-**Naming Convention**:
+**Naming Conventions** (adapt to project patterns):
 
-- Classes: `PascalCase` (FileObject, Sass, Glog)
-- Utilities: `PascalCase` (Util, Data, FS)
-- Bundles: `PascalCase` + "System" (ActionSystem, FileSystem)
-- Keep it consistent with existing patterns
+- Match the existing style (PascalCase, camelCase, etc.)
+- Stay consistent with surrounding code
 
-### **Step 3: Keep the Type Definitions in Sync**
+### **Step 3: Update Type Definitions (If Generated)**
 
-`src/types` is now generated. Do **not** hand-edit anything in there. Instead:
+**Skip this step if**: Project doesn't have `tsconfig.types.json` or a `src/types/` directory.
 
-1. **Update and polish the JSDoc in your JS sources whenever you add or modify classes, methods, or exports.** This ensures that type definitions generated by `tsc --allowJs` are always accurate and up to date. The tighter the annotations, the better the emitted `.d.ts`.
-2. **Regenerate everything** after touching `src/lib/**` or `src/index.js`:
+**If the project generates TypeScript declarations** from JSDoc:
 
-  ```bash
-  npm run types:build
-  ```
+1. **Update JSDoc in your JS sources** whenever you add or modify classes, methods, or exports. Tighter annotations = better emitted `.d.ts`.
 
-  This runs `tsc -p tsconfig.types.json` (to emit `.d.ts` + `.d.ts.map`) and then `eslint --fix "src/types/**/*.d.ts"` so the generated files match our lint rules.
-3. **Verify the output** in `src/types/lib/*.d.ts` plus `src/types/index.d.ts`. You should see a matching `.d.ts.map` that points back to your JS implementation.
+2. **Regenerate after changes**:
 
-#### **JSDoc Style Guidelines for JavaScript Files**
+   ```bash
+   npm run types:build
+   ```
 
-These rules keep the generator honest:
+   This typically runs `tsc -p tsconfig.types.json` then `eslint --fix "src/types/**/*.d.ts"`
 
-- ❌ Never use `any` or `*` → use `unknown`.
-- ❌ Never use `[]` → use `Array<Type>`.
-- ❌ Never use bare `Function`/`Object` → describe the signature/shape explicitly.
+3. **Verify output** in `src/types/` - you should see `.d.ts` and `.d.ts.map` files
+
+#### **JSDoc Best Practices** (Always Follow, Even Without Type Generation)
+
+- ✅ **Always document public APIs** with JSDoc (enforced by eslint)
+- ❌ Never use `Object` (capital O) → use `object` (enforced by eslint)
+- ❌ Never use `Function` (capital F) → describe the function signature (enforced by eslint)
+- ❌ Never use `any` or `*` → use `unknown` (developer preference, strongly enforced)
+- ❌ Never use `[]` or `[]string` or `string[]` → use `Array<Type>` (developer hates antiquated syntax, strongly enforced)
+  - **Note**: Gemini loves to use `[]string` syntax (Go-style). Don't. Use `Array<string>` instead.
 
 ```javascript
-// ❌ BAD
-/** @param {any} data @param {Function} callback */
+// ❌ BAD - will get rejected in code review
+/** @param {any} data @param {Function} callback @returns {[]} */
 
-// ✅ GOOD
-/** @param {unknown} data @param {(result: string) => void} callback */
+// ✅ GOOD - follows all conventions
+/** @param {unknown} data @param {(result: string) => void} callback @returns {Array<string>} */
+
+// ❌ BAD - eslint WILL fail on these
+/** @param {Object} config @param {Function} handler */
+
+// ✅ GOOD - eslint will pass
+/** @param {object} config @param {(data: unknown) => void} handler */
 ```
 
-Why? It forces better inference, keeps the emitted declarations stable, and avoids eslint yelling at you.
+**Why these rules?**
 
-#### **Need richer types?**
+1. Some enforced by eslint (`Object`, `Function` capitalized = error)
+2. Others are developer's strong preferences (`any`, `*`, `[]` = code review rejection)
+3. Keeps code self-documenting and helps IDEs
+4. Makes type generation work better (if project uses it)
 
-Add more detailed JSDoc (overloads, generics via `@template`, etc.) directly in the JS source. Re-run `npm run types:build` and the declarations will pick it up automatically.
+### **Step 4: Verify Integration**
 
-### **Step 4: Check the Bundle Exports**
+After making changes:
 
-Because `tsc` reads `src/index.js`, any new export automatically shows up in `src/types/index.d.ts` after you run `npm run types:build`. Double-check that:
+1. **Run the linter** (ALWAYS):
 
-- Your new class is exported from `src/index.js` (Step 2).
-- The regenerated `src/types/index.d.ts` now re-exports it from `./lib/...`.
-- The matching `.d.ts.map` exists so F12 lands in the JS source.
+   ```bash
+   npm run lint
+   ```
 
-If something’s missing, it usually means the class wasn’t exported from `src/index.js` or the JSDoc left TypeScript guessing. Fix the source, rerun the build, done.
+2. **If library project with exports**: Verify exports are accessible from the main entry point
 
-### **Step 5: Write Comprehensive Tests**
+3. **If type generation exists**: Confirm `.d.ts` files were regenerated correctly
+
+4. **Test manually** if it's user-facing functionality
+
+### **Step 5: Write Tests (If Project Has Tests)**
+
+**Reality Check**: Most projects DON'T have tests. Check for:
+
+- `tests/` or `test/` directory
+- `npm test` script in package.json
+- If neither exists, **skip testing** - this developer doesn't prioritize tests for most projects
+
+**Testing Philosophy**: No fancy frameworks. No Jest, Mocha, Jasmine, or "Material Jaboogly Testing Frameworkbot 2005 XXL". This developer runs a **tight dependency ship with no cruft**.
+
+**If tests exist** (library projects mainly), they use **Node's built-in test runner** (`node:test` module). That's it. No extra dependencies.
 
 Create `tests/unit/YourNewClass.test.js`:
 
@@ -294,130 +309,63 @@ describe("YourNewClass", () => {
 
 ---
 
-## 🎨 **Toolkit-Specific Testing Patterns**
+## 🏃‍♂️ **Testing Workflow (If Tests Exist)**
 
-### **For Classes with Sass Integration:**
+1. **Implement your feature** (TDD optional, not enforced)
+2. **Run your specific test**: `node tests/unit/YourClass.test.js`
+3. **Run all tests**: `npm test` - check you didn't break anything
+4. **Run the linter**: `npm run lint` (ALWAYS required)
+5. **Fix any lint issues**: `npm run lint:fix`
+
+---
+
+## 🚨 **Common Code Issues to Avoid**
+
+Regardless of whether you write tests, watch for:
+
+- **Destructuring from `null`** → Use `[]` or `{}` as fallback
+- **Silent type failures** → Decide: throw or coerce? Be explicit
+- **Missing validation** on user inputs
+- **Regex edge cases** → Handle malformed inputs
+- **Async operations** without proper error handling
+- **File path issues** → Use `path.join()` for cross-platform compatibility
+
+---
+
+## 🎯 **Code Quality Standards**
+
+Every change should:
+
+- ✅ **Pass eslint** (ALWAYS enforced)
+- ✅ **Handle edge cases** (null, undefined, empty arrays, etc.)
+- ✅ **Include JSDoc** for public APIs
+- ✅ **Match existing patterns** in the codebase
+- ✅ **Be readable** by future contributors
+
+---
+
+## 📦 **For Library Projects: Semantic Bundle Pattern**
+
+**Note**: Only relevant if the project uses semantic bundles (check for `src/bundles/` directory)
+
+Semantic bundles group related exports under namespace objects:
 
 ```javascript
-// Test that Sass errors preserve context
-try {
-  await YourClass.method("bad input")
-  assert.fail("Should have thrown")
-} catch (error) {
-  assert.ok(error instanceof Sass)
-  assert.equal(error.message, "original error")
-  assert.match(error.trace[0], /your context/)
-}
+// Individual imports
+import {ClassA, ClassB, ClassC} from "@username/library"
+
+// VS semantic bundle
+import {DomainSystem} from "@username/library"
+const instanceA = new DomainSystem.ClassA()
+const instanceB = new DomainSystem.ClassB()
 ```
 
-### **For Async Methods:**
+**When to use bundles:**
 
-```javascript
-// Test timing if performance matters
-const {result, cost} = await Util.time(async () => {
-  return await YourClass.slowMethod()
-})
-assert.ok(cost < 100) // Or whatever makes sense
-```
-
-### **For File System Operations:**
-
-```javascript
-// Use test fixtures, not real files
-const fixturePath = TestUtils.getFixturePath("test.json")
-// Test with copies if you modify files
-```
+- 📦 Multiple related classes from same domain
+- 🎯 One or two specific classes? Use individual imports
+- 🔀 Mix both styles as needed
 
 ---
 
-## 🏃‍♂️ **Testing Workflow**
-
-1. **Write the failing test first** (TDD if you're into that)
-2. **Implement to make it pass**
-3. **Run your specific test**: `node tests/unit/YourClass.test.js`
-4. **Run all tests**: Check you didn't break anything
-5. **Run the linter**: `npm run lint` (fix issues)
-6. **Update documentation** if needed
-
----
-
-## 🚨 **Red Flags to Test For**
-
-Based on issues found in this toolkit:
-
-- **Destructuring from `null`** → Use `[]` instead
-- **Silent type coercion** → Document or validate
-- **Missing error context** → Ensure Sass traces are meaningful
-- **Regex edge cases** → Test malformed inputs
-- **Async error wrapping** → Test double-wrapping scenarios
-- **File path resolution** → Test relative/absolute path edge cases
-
----
-
-## 🎯 **Quality Standards**
-
-Your tests should:
-
-- ✅ **Cover edge cases** that real users will hit
-- ✅ **Validate error scenarios** thoroughly
-- ✅ **Match the toolkit's personality** (use the same patterns)
-- ✅ **Be readable** by future humans and robots
-- ✅ **Actually catch bugs** (not just test happy paths)
-
-Remember: **Good tests are like good sass - they catch problems early and give you attitude when something's wrong.** 😏
-
----
-
----
-
-## 🎨 **Semantic Bundle Usage Examples**
-
-### **Import Patterns Available to Users:**
-
-```javascript
-// ==========================================
-// SEMANTIC BUNDLES - Clean domain imports
-// ==========================================
-
-// Get everything for file operations
-import {FileSystem} from "@gesslar/toolkit"
-const file = new FileSystem.FileObject("data.json")
-const dir = new FileSystem.DirectoryObject("./src")
-const files = await FileSystem.FS.getFiles("*.js")
-
-// Get complete action system
-import {ActionSystem} from "@gesslar/toolkit"
-class MyAction extends ActionSystem.Action { /* ... */ }
-const builder = new ActionSystem.ActionBuilder(action)
-const piper = new ActionSystem.Piper()
-
-// Get data manipulation tools
-import {DataSystem} from "@gesslar/toolkit"
-DataSystem.Valid.assert(condition, "message")
-const type = DataSystem.Data.typeOf(value)
-const results = DataSystem.Collection.asyncMap(items, processor)
-
-// ==========================================
-// GRANULAR IMPORTS - Individual classes
-// ==========================================
-
-// Traditional approach still works
-import {FileObject, Action, Data, Sass} from "@gesslar/toolkit"
-
-// ==========================================
-// MIX AND MATCH - Best of both worlds
-// ==========================================
-
-// Use bundles for groups, individuals for specifics
-import {ActionSystem, Sass} from "@gesslar/toolkit"
-```
-
-### **When to Use Which Import Style:**
-
-- 📦 **Semantic Bundles**: When you need multiple related classes from the same domain
-- 🎯 **Individual Imports**: When you only need one or two specific classes
-- 🔀 **Mixed**: When you need a bundle plus some individual classes from other domains
-
----
-
-*Now go forth and test with confidence! And remember - TESTING.txt is still fucking gold.* ✨
+*Remember: Lint always, test if the project has them, document with JSDoc, and match existing patterns.* ✨
