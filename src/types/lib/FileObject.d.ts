@@ -139,18 +139,48 @@ export default class FileObject extends FS {
      */
     read(encoding?: string): Promise<string>;
     /**
+     * Reads binary data from a file asynchronously.
+     * Returns the file contents as a Buffer (Node.js binary data type).
+     *
+     * @returns {Promise<Buffer>} The file contents as a Buffer
+     * @throws {Sass} If the file URL is invalid
+     * @throws {Sass} If the file does not exist
+     * @example
+     * const file = new FileObject('./image.png')
+     * const buffer = await file.readBinary()
+     * // Use the buffer (e.g., send in HTTP response, process image, etc.)
+     */
+    readBinary(): Promise<Buffer>;
+    /**
      * Writes content to a file asynchronously.
      * Validates that the parent directory exists before writing.
      *
      * @param {string} content - The content to write
      * @param {string} [encoding] - The encoding in which to write (default: "utf8")
      * @returns {Promise<void>}
-     * @throws {Sass} If the file path is invalid or the parent directory doesn't exist
+     * @throws {Sass} If the file URL is invalid or the parent directory doesn't exist
      * @example
      * const file = new FileObject('./output/data.json')
      * await file.write(JSON.stringify({key: 'value'}))
      */
     write(content: string, encoding?: string): Promise<void>;
+    /**
+     * Writes binary data to a file asynchronously.
+     * Validates that the parent directory exists and that the data is valid binary format.
+     * Supports ArrayBuffer, TypedArrays (Uint8Array, etc.), Blob, and Node Buffer types.
+     *
+     * @param {ArrayBuffer|Blob|Buffer} data - The binary data to write
+     * @returns {Promise<void>}
+     * @throws {Sass} If the file URL is invalid
+     * @throws {Sass} If the parent directory doesn't exist
+     * @throws {Sass} If the data is not a valid binary type
+     * @example
+     * const file = new FileObject('./output/image.png')
+     * const response = await fetch('https://example.com/image.png')
+     * const buffer = await response.arrayBuffer()
+     * await file.writeBinary(buffer)
+     */
+    writeBinary(data: ArrayBuffer | Blob | Buffer): Promise<void>;
     /**
      * Loads an object from JSON or YAML file.
      * Attempts to parse content as JSON5 first, then falls back to YAML if specified.

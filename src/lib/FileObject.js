@@ -355,15 +355,39 @@ export default class FileObject extends FS {
    * @returns {Promise<string>} The file contents
    */
   async read(encoding="utf8") {
-    const filePath = this.path
+    const url = this.url
 
-    if(!filePath)
-      throw Sass.new("No absolute path in file map")
+    if(!url)
+      throw Sass.new("No URL in file map")
 
     if(!(await this.exists))
-      throw Sass.new(`No such file '${filePath}'`)
+      throw Sass.new(`No such file '${url.href}'`)
 
-    return await fs.readFile(filePath, encoding)
+    return await fs.readFile(url, encoding)
+  }
+
+  /**
+   * Reads binary data from a file asynchronously.
+   * Returns the file contents as a Buffer (Node.js binary data type).
+   *
+   * @returns {Promise<Buffer>} The file contents as a Buffer
+   * @throws {Sass} If the file URL is invalid
+   * @throws {Sass} If the file does not exist
+   * @example
+   * const file = new FileObject('./image.png')
+   * const buffer = await file.readBinary()
+   * // Use the buffer (e.g., send in HTTP response, process image, etc.)
+   */
+  async readBinary() {
+    const url = this.url
+
+    if(!url)
+      throw Sass.new("No URL in file map")
+
+    if(!(await this.exists))
+      throw Sass.new(`No such file '${url.href}'`)
+
+    return await fs.readFile(url)
   }
 
   /**
@@ -373,20 +397,53 @@ export default class FileObject extends FS {
    * @param {string} content - The content to write
    * @param {string} [encoding] - The encoding in which to write (default: "utf8")
    * @returns {Promise<void>}
-   * @throws {Sass} If the file path is invalid or the parent directory doesn't exist
+   * @throws {Sass} If the file URL is invalid or the parent directory doesn't exist
    * @example
    * const file = new FileObject('./output/data.json')
    * await file.write(JSON.stringify({key: 'value'}))
    */
   async write(content, encoding="utf8") {
-    if(!this.path)
-      throw Sass.new("No absolute path in file")
+    if(!this.url)
+      throw Sass.new("No URL in file")
 
     if(await this.directory.exists)
-      await fs.writeFile(this.path, content, encoding)
+      await fs.writeFile(this.url, content, encoding)
 
     else
       throw Sass.new(`Invalid directory, ${this.directory.url.href}`)
+  }
+
+  /**
+   * Writes binary data to a file asynchronously.
+   * Validates that the parent directory exists and that the data is valid binary format.
+   * Supports ArrayBuffer, TypedArrays (Uint8Array, etc.), Blob, and Node Buffer types.
+   *
+   * @param {ArrayBuffer|Blob|Buffer} data - The binary data to write
+   * @returns {Promise<void>}
+   * @throws {Sass} If the file URL is invalid
+   * @throws {Sass} If the parent directory doesn't exist
+   * @throws {Sass} If the data is not a valid binary type
+   * @example
+   * const file = new FileObject('./output/image.png')
+   * const response = await fetch('https://example.com/image.png')
+   * const buffer = await response.arrayBuffer()
+   * await file.writeBinary(buffer)
+   */
+  async writeBinary(data) {
+    if(!this.url)
+      throw Sass.new("No URL in file")
+
+    const exists = await this.directory.exists
+    Valid.assert(exists, `Invalid directory, ${this.directory.url.href}`)
+
+    Valid.assert(Data.isBinary(data), "Data must be binary (ArrayBuffer, TypedArray, Blob, or Buffer)")
+
+    // Convert ArrayBuffer to Buffer if needed (fs.writeFile doesn't accept ArrayBuffer directly)
+    const bufferData = data instanceof ArrayBuffer ? Buffer.from(data) : data
+
+    // According to the internet, if it's already binary, I don't need
+    // an encoding. 🤷
+    return await fs.writeFile(this.url, bufferData)
   }
 
   /**
@@ -459,14 +516,14 @@ export default class FileObject extends FS {
    * await file.delete()
    */
   async delete() {
-    const filePath = this.path
+    const url = this.url
 
-    if(!filePath)
+    if(!url)
       throw Sass.new("This object does not represent a valid resource.")
 
     if(!(await this.exists))
-      throw Sass.new(`No such resource '${this.url.href}'`)
+      throw Sass.new(`No such resource '${url.href}'`)
 
-    return await fs.unlink(this.path)
+    return await fs.unlink(url)
   }
 }

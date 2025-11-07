@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Get in, bitches, we're going toolkitting.",
   "main": "./src/index.js",
   "type": "module",
@@ -17,7 +17,7 @@
   ],
   "sideEffects": false,
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   },
   "scripts": {
     "types:build": "tsc -p tsconfig.types.json",
@@ -58,10 +58,10 @@
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^5.5.0",
-    "@types/node": "^24.9.1",
-    "@typescript-eslint/eslint-plugin": "^8.46.2",
-    "@typescript-eslint/parser": "^8.46.2",
-    "eslint": "^9.38.0",
-    "eslint-plugin-jsdoc": "^61.1.8"
+    "@types/node": "^24.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "eslint": "^9.39.1",
+    "eslint-plugin-jsdoc": "^61.1.12"
   }
 }

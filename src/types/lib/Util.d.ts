@@ -171,7 +171,7 @@ export default class Util {
      * @param {object} emitter - Any object with EventEmitter-like interface
      * @param {string} event - The event name to emit
      * @param {...unknown} args - Arguments to pass to event listeners
-     * @returns {Promise<void>} Resolves when all listeners have completed
+     * @returns {Promise<void>} Resolves when all listeners have completed, but no grapes.
      */
     static asyncEmitQuack(emitter: object, event: string, ...args: unknown[]): Promise<void>;
     /**

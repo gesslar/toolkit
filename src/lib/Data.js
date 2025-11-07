@@ -410,4 +410,28 @@ export default class Data {
 
     return proto === current
   }
+
+  /**
+   * Checks if a value is binary data.
+   * Returns true for ArrayBuffer, TypedArrays (Uint8Array, Int16Array, etc.),
+   * Blob, and Node Buffer instances.
+   *
+   * @param {unknown} value - The value to check
+   * @returns {boolean} True if the value is binary data, false otherwise
+   * @example
+   * Data.isBinary(new Uint8Array([1, 2, 3])) // true
+   * Data.isBinary(new ArrayBuffer(10)) // true
+   * Data.isBinary(Buffer.from('hello')) // true
+   * Data.isBinary(new Blob(['text'])) // true
+   * Data.isBinary('string') // false
+   * Data.isBinary({}) // false
+   * Data.isBinary(undefined) // false
+   */
+  static isBinary(value) {
+    return (value !== undefined) &&
+           (
+             ArrayBuffer.isView(value) ||
+             Data.isType(value, "ArrayBuffer|Blob|Buffer")
+           )
+  }
 }
