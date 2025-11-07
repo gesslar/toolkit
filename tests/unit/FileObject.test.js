@@ -649,10 +649,10 @@ describe("FileObject", () => {
       )
     })
 
-    it("throws Sass error for invalid path", async () => {
+    it("throws Sass error for invalid URL", async () => {
       const file = new FileObject("/test.txt")
-      // Manually break the path by mocking
-      Object.defineProperty(file, "path", {get: () => null})
+      // Manually break the URL by mocking
+      Object.defineProperty(file, "url", {get: () => null})
 
       await assert.rejects(
         () => file.delete(),
@@ -844,6 +844,200 @@ describe("FileObject", () => {
         const data = await file.loadData(type)
         assert.ok(data, `Failed for type: ${type}`)
       }
+    })
+  })
+
+  describe("binary file operations", () => {
+    let testDir, binaryFixture
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("binary-test")
+      binaryFixture = new FileObject("tests/fixtures/2015-01-13.jpg")
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    describe("readBinary", () => {
+      it("reads binary file as Buffer", async () => {
+        const buffer = await binaryFixture.readBinary()
+
+        assert.ok(buffer instanceof Buffer)
+        assert.ok(buffer.length > 0)
+      })
+
+      it("preserves binary data integrity", async () => {
+        const buffer1 = await binaryFixture.readBinary()
+        const buffer2 = await binaryFixture.readBinary()
+
+        assert.deepEqual(buffer1, buffer2)
+      })
+
+      it("throws Sass error for non-existent file", async () => {
+        const nonExistent = new FileObject(path.join(testDir, "missing.jpg"))
+
+        await assert.rejects(
+          () => nonExistent.readBinary(),
+          (error) => {
+            assert.ok(error instanceof Sass)
+            assert.match(error.message, /No such file/)
+            return true
+          }
+        )
+      })
+
+      it("throws Sass error for invalid URL", async () => {
+        const file = new FileObject("/test.jpg")
+        Object.defineProperty(file, "url", {get: () => null})
+
+        await assert.rejects(
+          () => file.readBinary(),
+          (error) => {
+            assert.ok(error instanceof Sass)
+            assert.match(error.message, /No URL/)
+            return true
+          }
+        )
+      })
+    })
+
+    describe("writeBinary", () => {
+      it("writes binary data to file", async () => {
+        const buffer = await binaryFixture.readBinary()
+        const outputFile = new FileObject(path.join(testDir, "output.jpg"))
+
+        await outputFile.writeBinary(buffer)
+
+        assert.equal(await outputFile.exists, true)
+        const writtenData = await outputFile.readBinary()
+        assert.deepEqual(writtenData, buffer)
+      })
+
+      it("overwrites existing binary file", async () => {
+        const buffer = await binaryFixture.readBinary()
+        const outputFile = new FileObject(path.join(testDir, "overwrite.jpg"))
+
+        // Write first time
+        await outputFile.writeBinary(buffer)
+        const size1 = await outputFile.size()
+
+        // Write again (smaller data)
+        const smallBuffer = Buffer.from([1, 2, 3, 4, 5])
+        await outputFile.writeBinary(smallBuffer)
+        const size2 = await outputFile.size()
+
+        assert.ok(size2 < size1)
+        const finalData = await outputFile.readBinary()
+        assert.deepEqual(finalData, smallBuffer)
+      })
+
+      it("accepts ArrayBuffer", async () => {
+        const arrayBuffer = new ArrayBuffer(10)
+        const view = new Uint8Array(arrayBuffer)
+        view.fill(42)
+
+        const outputFile = new FileObject(path.join(testDir, "arraybuffer.bin"))
+        await outputFile.writeBinary(arrayBuffer)
+
+        const written = await outputFile.readBinary()
+        assert.equal(written.length, 10)
+        assert.ok(written.every(byte => byte === 42))
+      })
+
+      it("accepts TypedArray (Uint8Array)", async () => {
+        const uint8 = new Uint8Array([1, 2, 3, 4, 5])
+        const outputFile = new FileObject(path.join(testDir, "uint8.bin"))
+
+        await outputFile.writeBinary(uint8)
+
+        const written = await outputFile.readBinary()
+        assert.deepEqual(Array.from(written), [1, 2, 3, 4, 5])
+      })
+
+      it("accepts Buffer", async () => {
+        const buffer = Buffer.from([10, 20, 30])
+        const outputFile = new FileObject(path.join(testDir, "buffer.bin"))
+
+        await outputFile.writeBinary(buffer)
+
+        const written = await outputFile.readBinary()
+        assert.deepEqual(written, buffer)
+      })
+
+      it("throws Sass error for non-binary data", async () => {
+        const outputFile = new FileObject(path.join(testDir, "invalid.bin"))
+
+        await assert.rejects(
+          () => outputFile.writeBinary("not binary"),
+          Sass
+        )
+
+        await assert.rejects(
+          () => outputFile.writeBinary({data: "object"}),
+          Sass
+        )
+
+        await assert.rejects(
+          () => outputFile.writeBinary(null),
+          Sass
+        )
+      })
+
+      it("throws Sass error for invalid directory", async () => {
+        const badFile = new FileObject(path.join(testDir, "nonexistent", "file.bin"))
+        const buffer = Buffer.from([1, 2, 3])
+
+        await assert.rejects(
+          () => badFile.writeBinary(buffer),
+          (error) => {
+            assert.ok(error instanceof Sass)
+            assert.match(error.message, /Invalid directory/)
+            return true
+          }
+        )
+      })
+
+      it("throws Sass error for invalid URL", async () => {
+        const file = new FileObject("/test.bin")
+        Object.defineProperty(file, "url", {get: () => null})
+        const buffer = Buffer.from([1, 2, 3])
+
+        await assert.rejects(
+          () => file.writeBinary(buffer),
+          (error) => {
+            assert.ok(error instanceof Sass)
+            assert.match(error.message, /No URL/)
+            return true
+          }
+        )
+      })
+    })
+
+    describe("round-trip binary operations", () => {
+      it("reads and writes binary data without corruption", async () => {
+        const original = await binaryFixture.readBinary()
+        const outputFile = new FileObject(path.join(testDir, "roundtrip.jpg"))
+
+        await outputFile.writeBinary(original)
+        const recovered = await outputFile.readBinary()
+
+        assert.deepEqual(recovered, original)
+        assert.equal(recovered.length, original.length)
+      })
+
+      it("handles large binary files", async () => {
+        // Read actual image fixture
+        const imageData = await binaryFixture.readBinary()
+        const outputFile = new FileObject(path.join(testDir, "large.jpg"))
+
+        await outputFile.writeBinary(imageData)
+
+        const recovered = await outputFile.readBinary()
+        assert.deepEqual(recovered, imageData)
+      })
     })
   })
 })
