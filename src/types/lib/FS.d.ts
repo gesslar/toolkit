@@ -65,6 +65,6 @@ export default class FS {
      */
     static resolvePath(fromPath: string, toPath: string): string;
 }
-import FileObject from "./FileObject.js";
-import DirectoryObject from "./DirectoryObject.js";
+export type FileObject = import("./FileObject.js").default;
+export type DirectoryObject = import("./DirectoryObject.js").default;
 //# sourceMappingURL=FS.d.ts.map

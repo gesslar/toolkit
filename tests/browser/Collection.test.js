@@ -3,7 +3,7 @@
 import { describe, it } from "node:test"
 import assert from "node:assert/strict"
 
-import { Collection, Sass } from "../../src/index.js"
+import { Collection, Sass } from "@gesslar/toolkit/browser"
 
 describe("Collection", () => {
   describe("evalArray()", () => {

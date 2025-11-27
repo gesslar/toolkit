@@ -1,7 +1,7 @@
 import Ajv from "ajv"
 
-import Data from "./Data.js"
-import Util from "./Util.js"
+import Data from "../browser/lib/Data.js"
+import Util from "../browser/lib/Util.js"
 import Valid from "./Valid.js"
 
 /**

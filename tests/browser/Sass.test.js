@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import {describe,it} from "node:test"
 
-import {Sass} from "../../src/index.js"
+import {Sass} from "@gesslar/toolkit/browser"
 
 // Helpers for intercepting console output
 /**
@@ -76,31 +76,7 @@ describe("Sass", () => {
     assert.deepEqual(err.trace, ["context", "oops"]) // context + original message
   })
 
-  it("report prints trace and optional nerd stack", () => {
-    const err = new Sass("Kaboom").addTrace("Context")
-
-    const output = captureConsole("error", () => {
-      err.report(false)
-    })
-
-    // Should include the header and both trace lines
-    assert.match(output, /\[Something Went Wrong\]/)
-    assert.match(output, /Context/)
-    assert.match(output, /Kaboom/)
-  })
-
-  it("report(nerdMode) includes formatted stack and cause stack when present", () => {
-    const cause = new Error("root cause")
-    const err = Sass.new("top", cause)
-
-    const output = captureConsole("error", () => {
-      err.report(true)
-    })
-
-    assert.match(output, /\[Something Went Wrong\]/)
-    assert.match(output, /\[Nerd Vittles\]/)
-    assert.match(output, /\[Rethrown From\]/)
-  })
+  // Note: report() formatting tests are in Node tests (uses Term)
 
   it("addTrace validates input type", () => {
     const err = new Sass("hi")

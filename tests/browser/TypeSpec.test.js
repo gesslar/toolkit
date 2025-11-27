@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import {describe,it} from "node:test"
 
-import {Sass,Type} from "../../src/index.js"
+import {Sass,Type} from "@gesslar/toolkit/browser"
 
 describe("Type", () => {
   describe("constructor and basic properties", () => {

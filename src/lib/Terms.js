@@ -1,8 +1,7 @@
 import JSON5 from "json5"
 import yaml from "yaml"
 
-import Data from "./Data.js"
-import DirectoryObject from "./DirectoryObject.js"
+import Data from "../browser/lib/Data.js"
 import FileObject from "./FileObject.js"
 import Sass from "./Sass.js"
 import Valid from "./Valid.js"
@@ -24,7 +23,7 @@ export default class Terms {
    * Parses terms data, handling file references
    *
    * @param {string|object} termsData - Terms data or reference
-   * @param {DirectoryObject?} directoryObject - Directory context for file resolution
+   * @param {import("./DirectoryObject.js").DirectoryObject?} directoryObject - Directory context for file resolution
    * @returns {object} Parsed terms data
    */
   static async parse(termsData, directoryObject) {

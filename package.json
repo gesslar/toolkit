@@ -1,11 +1,21 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "0.8.0",
+  "version": "1.0.0",
   "description": "Get in, bitches, we're going toolkitting.",
   "main": "./src/index.js",
   "type": "module",
   "exports": {
     ".": {
+      "types": "./src/types/index.d.ts",
+      "browser": "./src/browser/index.js",
+      "node": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./browser": {
+      "types": "./src/types/index.d.ts",
+      "default": "./src/browser/index.js"
+    },
+    "./node": {
       "types": "./src/types/index.d.ts",
       "default": "./src/index.js"
     }
@@ -25,7 +35,7 @@
     "lint:fix": "eslint src/ --fix",
     "submit": "npm publish --access public",
     "update": "npx npm-check-updates -u && npm install",
-    "test": "node --test tests/unit/*.test.js",
+    "test": "node --test tests/**/*.test.js",
     "pr": "gt submit --publish --restack --ai"
   },
   "repository": {
@@ -52,16 +62,18 @@
   "dependencies": {
     "@gesslar/colours": "^0.0.1",
     "ajv": "^8.17.1",
-    "globby": "^15.0.0",
+    "globby": "^16.0.0",
     "json5": "^2.2.3",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^5.5.0",
-    "@types/node": "^24.10.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.3",
-    "@typescript-eslint/parser": "^8.46.3",
+    "@gesslar/uglier": "^0.0.5",
+    "@stylistic/eslint-plugin": "^5.6.1",
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
     "eslint": "^9.39.1",
-    "eslint-plugin-jsdoc": "^61.1.12"
+    "eslint-plugin-jsdoc": "^61.4.1",
+    "globals": "^16.5.0"
   }
 }

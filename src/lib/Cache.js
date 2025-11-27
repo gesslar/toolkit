@@ -1,4 +1,3 @@
-import FileObject from "./FileObject.js"
 import Sass from "./Sass.js"
 
 /**
@@ -22,7 +21,7 @@ export default class Cache {
    * maintained.
    *
    * @private
-   * @param {FileObject} file - The file object to remove from cache
+   * @param {import("./FileObject.js").FileObject} file - The file object to remove from cache
    * @returns {void}
    */
   #cleanup(file) {
@@ -39,7 +38,7 @@ export default class Cache {
    * freshness while optimizing performance for repeated file access during
    * parallel processing.
    *
-   * @param {FileObject} fileObject - The file object to load and cache
+   * @param {import("./FileObject.js").FileObject} fileObject - The file object to load and cache
    * @returns {Promise<unknown>} The parsed file data (JSON5 or YAML)
    * @throws {Sass} If the file cannot be found or accessed
    */

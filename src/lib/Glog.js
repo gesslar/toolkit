@@ -13,9 +13,9 @@
 
 import c from "@gesslar/colours"
 
-import Data from "./Data.js"
+import Data from "../browser/lib/Data.js"
 import Term from "./Term.js"
-import Util from "./Util.js"
+import Util from "../browser/lib/Util.js"
 // ErrorStackParser will be dynamically imported when needed
 
 // Enhanced color system using @gesslar/colours

@@ -2,7 +2,6 @@
  * Validation utility class providing type checking and assertion methods.
  */
 export default class Valid {
-    static "__#private@#restrictedProto": string[];
     /**
      * Validates a value against a type. Uses Data.isType.
      *
@@ -21,6 +20,7 @@ export default class Valid {
      *                         met (optional)
      */
     static assert(condition: boolean, message: string, arg?: number): void;
+    static "__#private@#restrictedProto": string[];
     /**
      * Protects against prototype pollution by checking keys for dangerous property names.
      * Throws if any restricted prototype properties are found in the keys array.

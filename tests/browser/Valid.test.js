@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import {describe,it} from "node:test"
 
-import {Sass,Valid} from "../../src/index.js"
+import {Sass,Valid} from "@gesslar/toolkit/browser"
 
 describe("Valid", () => {
   describe("assert", () => {

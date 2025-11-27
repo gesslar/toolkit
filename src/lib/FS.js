@@ -9,11 +9,12 @@ import {globby} from "globby"
 import path from "node:path"
 import url from "node:url"
 
-import Collection from "./Collection.js"
-import DirectoryObject from "./DirectoryObject.js"
-import FileObject from "./FileObject.js"
+import Collection from "../browser/lib/Collection.js"
 import Sass from "./Sass.js"
 import Valid from "./Valid.js"
+
+/** @typedef {import("./FileObject.js").default} FileObject */
+/** @typedef {import("./DirectoryObject.js").default} DirectoryObject */
 
 const fdTypes = Object.freeze(["file", "directory"])
 const upperFdTypes = Object.freeze(fdTypes.map(type => type.toUpperCase()))
@@ -78,37 +79,31 @@ export default class FS {
    * @throws {Sass} If the glob pattern array is empty or for other search failures.
    */
   static async getFiles(glob) {
+    const isString = typeof glob === "string"
+    const isArray = Array.isArray(glob)
+    const isStringArray = isArray && glob.every(item => typeof item === "string")
+
     Valid.assert(
-      (
-        (typeof glob === "string" && glob.length > 0) ||
-        (
-          Collection.isArrayUniform(glob, "string") &&
-          glob.length > 0
-        )
-      ),
+      (isString && glob.length > 0) ||
+      (isStringArray && glob.length > 0),
       "glob must be a non-empty string or array of strings.",
       1
     )
 
     const globbyArray = (
-      typeof glob === "string"
-        ? glob
-          .split("|")
-          .map(g => g.trim())
-          .filter(Boolean)
+      isString
+        ? glob.split("|").map(g => g.trim()).filter(Boolean)
         : glob
     ).map(g => FS.fixSlashes(g))
 
-    if(
-      Array.isArray(globbyArray) &&
-      Collection.isArrayUniform(globbyArray, "string") &&
-      !globbyArray.length
-    )
+    if(isArray && !globbyArray.length)
       throw Sass.new(
         `Invalid glob pattern: Array cannot be empty. Got ${JSON.stringify(glob)}`,
       )
 
     // Use Globby to fetch matching files
+    const {default: FileObject} = await import("./FileObject.js")
+
     const filesArray = await globby(globbyArray)
     const files = filesArray.map(file => new FileObject(file))
 
