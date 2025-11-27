@@ -92,5 +92,5 @@ jobs:
         with:
           tag_name: ${{ env.tag }}
           name: ${{ env.tag }}
-          target_commitish: HEAD
+          target_commitish: ${GITHUB_SHA}
           generate_release_notes: true
