@@ -34,12 +34,14 @@ jobs:
       - name: Derive version and tag from package.json
         id: version
         run: |
-          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version")
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+
           echo "version=$VERSION" >> $GITHUB_ENV
-          echo "tag=v$VERSION" >> $GITHUB_ENV
+          echo "tag=$TAG" >> $GITHUB_ENV
+          
           echo "Version: $VERSION"
           echo "Tag: $TAG"
-
       - name: Ensure tag does not already exist
         env:
           TAG: ${{ env.tag }}
