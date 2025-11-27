@@ -1,9 +1,10 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Get in, bitches, we're going toolkitting.",
   "main": "./src/index.js",
   "type": "module",
+  "types": "./src/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./src/types/index.d.ts",
@@ -31,6 +32,7 @@
   },
   "scripts": {
     "types:build": "tsc -p tsconfig.types.json",
+    "prepublishOnly": "npm run types:build",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "submit": "npm publish --access public",
