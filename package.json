@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Get in, bitches, we're going toolkitting.",
   "main": "./src/index.js",
   "type": "module",

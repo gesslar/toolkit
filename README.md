@@ -30,10 +30,10 @@ available in the browser version.
 **Browser via CDN (no install):**
 
 - jsDelivr (runtime only):
-  `https://cdn.jsdelivr.net/npm/@gesslar/toolkit/browser`
+  `https://cdn.jsdelivr.net/npm/@gesslar/toolkit@__VERSION__/browser`
 - esm.sh (runtime + optional types):
-  `https://esm.sh/@gesslar/toolkit@0.8.0/browser`
-  `https://esm.sh/@gesslar/toolkit@0.8.0/browser?dts` (serves `.d.ts` for editors)
+  `https://esm.sh/@gesslar/toolkit@__VERSION__/browser`
+  `https://esm.sh/@gesslar/toolkit@__VERSION__/browser?dts` (serves `.d.ts` for editors)
 
 Notes:
 
