@@ -230,7 +230,7 @@ export default class Contract {
   /**
    * Get the provider terms (if any)
    *
-   * @returns {Terms|null} Provider terms
+   * @returns {import("./Terms.js").default|null} Provider terms
    */
   get providerTerms() {
     return this.#providerTerms
@@ -239,7 +239,7 @@ export default class Contract {
   /**
    * Get the consumer terms (if any)
    *
-   * @returns {Terms|null} Consumer terms
+   * @returns {import("./Terms.js").default|null} Consumer terms
    */
   get consumerTerms() {
     return this.#consumerTerms

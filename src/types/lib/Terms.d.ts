@@ -7,10 +7,10 @@ export default class Terms {
      * Parses terms data, handling file references
      *
      * @param {string|object} termsData - Terms data or reference
-     * @param {DirectoryObject?} directoryObject - Directory context for file resolution
+     * @param {import("./DirectoryObject.js").DirectoryObject?} directoryObject - Directory context for file resolution
      * @returns {object} Parsed terms data
      */
-    static parse(termsData: string | object, directoryObject: DirectoryObject | null): object;
+    static parse(termsData: string | object, directoryObject: import("./DirectoryObject.js").DirectoryObject | null): object;
     constructor(definition: any);
     /**
      * Get the terms definition
@@ -20,5 +20,4 @@ export default class Terms {
     get definition(): object;
     #private;
 }
-import DirectoryObject from "./DirectoryObject.js";
 //# sourceMappingURL=Terms.d.ts.map

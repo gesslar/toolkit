@@ -32,14 +32,16 @@ available in the browser version.
 Substitute the `__VERSION__` below with the release version you are seeking.
 
 - jsDelivr (runtime only):
-  `https://cdn.jsdelivr.net/npm/@gesslar/toolkit@v__VERSION__/browser`
+  `https://cdn.jsdelivr.net/npm/@gesslar/toolkit@__VERSION__/browser`
+
 - esm.sh (runtime + optional types):
-  `https://esm.sh/@gesslar/toolkit@v__VERSION__/browser`
-  `https://esm.sh/@gesslar/toolkit@v__VERSION__/browser?dts` (serves `.d.ts` for editors)
+  `https://esm.sh/@gesslar/toolkit@__VERSION__/browser`
+  `https://esm.sh/@gesslar/toolkit@__VERSION__/browser?dts` (serves `.d.ts` for editors)
 
 Notes:
 
-- Nothing to configure in this repo for CDN use; both URLs just work.
+- Nothing to configure in this repo for CDN use; both URLs just work after
+  the version is published to npm.
 - TypeScript editors do not pick up types from jsDelivr. If you want inline
   types without installing from npm, use the esm.sh `?dts` URL or install the
   package locally for development and use the CDN at runtime.

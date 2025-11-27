@@ -26,12 +26,12 @@ export default class Contract {
     /**
      * Creates a contract by negotiating between provider and consumer terms
      *
-     * @param {Terms} providerTerms - What the provider offers
-     * @param {Terms} consumerTerms - What the consumer expects
+     * @param {import("./Terms.js").Terms} providerTerms - What the provider offers
+     * @param {import("./Terms.js").Terms} consumerTerms - What the consumer expects
      * @param {object} options - Configuration options
      * @param {import('../types.js').DebugFunction} [options.debug] - Debug function
      */
-    constructor(providerTerms: Terms, consumerTerms: Terms, { debug }?: {
+    constructor(providerTerms: import("./Terms.js").Terms, consumerTerms: import("./Terms.js").Terms, { debug }?: {
         debug?: any;
     });
     /**
@@ -51,15 +51,15 @@ export default class Contract {
     /**
      * Get the provider terms (if any)
      *
-     * @returns {Terms|null} Provider terms
+     * @returns {import("./Terms.js").default|null} Provider terms
      */
-    get providerTerms(): Terms | null;
+    get providerTerms(): import("./Terms.js").default | null;
     /**
      * Get the consumer terms (if any)
      *
-     * @returns {Terms|null} Consumer terms
+     * @returns {import("./Terms.js").default|null} Consumer terms
      */
-    get consumerTerms(): Terms | null;
+    get consumerTerms(): import("./Terms.js").default | null;
     /**
      * Get the contract validator
      *
@@ -68,5 +68,4 @@ export default class Contract {
     get validator(): (data: object) => boolean | null;
     #private;
 }
-import Terms from "./Terms.js";
 //# sourceMappingURL=Contract.d.ts.map

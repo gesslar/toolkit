@@ -17,12 +17,11 @@ export default class Cache {
      * freshness while optimizing performance for repeated file access during
      * parallel processing.
      *
-     * @param {FileObject} fileObject - The file object to load and cache
+     * @param {import("./FileObject.js").FileObject} fileObject - The file object to load and cache
      * @returns {Promise<unknown>} The parsed file data (JSON5 or YAML)
      * @throws {Sass} If the file cannot be found or accessed
      */
-    loadCachedData(fileObject: FileObject): Promise<unknown>;
+    loadCachedData(fileObject: import("./FileObject.js").FileObject): Promise<unknown>;
     #private;
 }
-import FileObject from "./FileObject.js";
 //# sourceMappingURL=Cache.d.ts.map
