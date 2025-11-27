@@ -29,11 +29,13 @@ available in the browser version.
 
 **Browser via CDN (no install):**
 
+Substitute the `__VERSION__` below with the release version you are seeking.
+
 - jsDelivr (runtime only):
-  `https://cdn.jsdelivr.net/npm/@gesslar/toolkit@__VERSION__/browser`
+  `https://cdn.jsdelivr.net/npm/@gesslar/toolkit@v__VERSION__/browser`
 - esm.sh (runtime + optional types):
-  `https://esm.sh/@gesslar/toolkit@__VERSION__/browser`
-  `https://esm.sh/@gesslar/toolkit@__VERSION__/browser?dts` (serves `.d.ts` for editors)
+  `https://esm.sh/@gesslar/toolkit@v__VERSION__/browser`
+  `https://esm.sh/@gesslar/toolkit@v__VERSION__/browser?dts` (serves `.d.ts` for editors)
 
 Notes:
 

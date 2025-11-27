@@ -52,36 +52,36 @@ jobs:
             exit 1
           fi
 
-      - name: Update README version placeholder
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          node <<'NODE'
-          const fs = require('fs');
-          const path = 'README.md';
-          const version = process.env.VERSION;
-          const content = fs.readFileSync(path, 'utf8');
-          const updated = content.replace(/__VERSION__/g, version);
-          if (content === updated) {
-            console.log('No __VERSION__ placeholders found to update.');
-          }
-          fs.writeFileSync(path, updated);
-          NODE
+      # - name: Update README version placeholder
+      #   env:
+      #     VERSION: ${{ steps.version.outputs.version }}
+      #   run: |
+      #     node <<'NODE'
+      #     const fs = require('fs');
+      #     const path = 'README.md';
+      #     const version = process.env.VERSION;
+      #     const content = fs.readFileSync(path, 'utf8');
+      #     const updated = content.replace(/__VERSION__/g, version);
+      #     if (content === updated) {
+      #       console.log('No __VERSION__ placeholders found to update.');
+      #     }
+      #     fs.writeFileSync(path, updated);
+      #     NODE
 
-      - name: Commit README update (if needed)
-        env:
-          TAG: ${{ steps.version.outputs.tag }}
-          BRANCH: ${{ github.ref_name }}
-        run: |
-          if git diff --quiet; then
-            echo "No README changes to commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md
-          git commit -m "docs: update README for ${TAG}"
-          git push origin "HEAD:${BRANCH}"
+      # - name: Commit README update (if needed)
+      #   env:
+      #     TAG: ${{ steps.version.outputs.tag }}
+      #     BRANCH: ${{ github.ref_name }}
+      #   run: |
+      #     if git diff --quiet; then
+      #       echo "No README changes to commit."
+      #       exit 0
+      #     fi
+      #     git config user.name "github-actions[bot]"
+      #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      #     git add README.md
+      #     git commit -m "docs: update README for ${TAG}"
+      #     git push origin "HEAD:${BRANCH}"
 
       - name: Create release
         uses: softprops/action-gh-release@v2
