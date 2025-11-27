@@ -1,34 +1,21 @@
 ## 🎯 **When Adding New Methods/Classes**
 
-### **Step 0: Project Baseline Checklist**
+### **Step 0: Project Snapshot (current state)**
 
-Before anyone (human or otherwise) starts wiring in features, verify the repo baseline:
+- Library shipped as ESM with dual entry points:
+  - `src/index.js` (default/Node build, also exports browser-safe utilities)
+  - `src/browser/index.js` (browser/Tauri-safe utilities only)
+- `package.json` exports map already publishes `@gesslar/toolkit`, `@gesslar/toolkit/browser`, and `@gesslar/toolkit/node`
+- Tooling commands (run these whenever you touch code):
 
-1. **Verify ESLint is configured**:
-   - This developer ALWAYS includes `eslint.config.js` in projects
-   - If modifying code, run `npm run lint` before committing
-   - Use `npm run lint:fix` to auto-fix style issues when available
+  ```bash
+  npm run lint            # ESLint + JSDoc rules
+  npm run lint:fix        # Auto-fix style issues
+  npm test                # node:test suite in tests/browser + tests/node
+  npm run types:build     # Regenerates src/types/*
+  ```
 
-2. **Check for type generation** (library projects only):
-   - **If `tsconfig.types.json` exists**: The project generates TypeScript declarations
-   - **If it exists**, ensure `package.json` has a `types:build` script
-   - Run `npm run types:build` after modifying exports
-
-3. **Identify the project structure**:
-   - Look for main entry point (usually `src/index.js` or similar)
-   - Check if there's a `src/lib/**` directory structure
-   - Understand the export pattern (individual exports, bundles, both)
-
-4. **Sanity check the available commands**:
-
-   ```bash
-   npm run lint          # ALWAYS present
-   npm run lint:fix      # Usually present
-   npm test              # Only if tests exist (not common)
-   npm run types:build   # Only if generating declarations
-   ```
-
-**Note**: This developer does NOT prioritize testing. Only a couple projects (libraries) have test suites. Don't assume tests exist or need to be written.
+- Node >= 20 required; repo is `type: "module"`
 
 ### **Step 1: Validate the Logic Thoroughly**
 
@@ -47,275 +34,90 @@ Before you write a single test, **audit your implementation**:
 - Missing validation on user inputs
 - Async operations without proper error handling
 
-### **Step 2: Wire Up Exports (If Library Project)**
+### **Step 2: Wire Up Exports**
 
-**Skip this step if**: The project is an application or tool (not a library). Only library projects with a main entry point (like `src/index.js`) need export management.
+This repo is a library—every new module/class must be exported correctly.
 
-#### **For Library Projects:**
+- **Browser-safe utilities** (pure JS, no `fs/path/process` access):
+  - Export from `src/browser/lib/Foo.js`
+  - Add to `src/browser/index.js`
+  - Also export from `src/index.js` so Node users get the same API
 
-**Check the export pattern** by examining the main entry point:
+- **Node-only utilities** (use filesystem, terminal, crypto, etc.):
+  - Implement in `src/lib/Foo.js`
+  - Export from `src/index.js` **only** (do NOT add to the browser index)
 
-- **Individual exports only**: Simple list of exports
-- **Semantic bundles**: Grouped exports under namespace objects (e.g., `FileSystem`, `ActionSystem`)
-- **Both**: Mix of individual exports and semantic bundles
+- **Keep exports map coherent**: default export pattern is `export {default as Foo} from "./lib/Foo.js"`. Make sure the class/file name matches the rest of the tree.
 
-#### **Individual Export Pattern**
+### **Step 3: Update Type Definitions**
 
-Add your new class to the exports:
+Type declarations are generated from the JSDoc in `src/**`:
 
-```javascript
-// src/index.js or main entry point
-export { default as YourNewClass } from "./lib/YourNewClass.js"
-// OR
-export { YourNewClass } from "./lib/YourNewClass.js"
-```
+1. Add/adjust JSDoc on any public API you touch.
+2. Regenerate: `npm run types:build`
+3. Check `src/types/index.d.ts` and `src/types/lib/*.d.ts` picked up new exports.
 
-#### **Semantic Bundle Pattern** (If Project Uses This)
+JSDoc expectations:
 
-If the project uses semantic bundles (check for a `src/bundles/` directory):
-
-1. **Add to existing bundle**:
-
-```javascript
-// src/bundles/YourDomainSystem.js
-export {default as YourNewClass} from "../lib/YourNewClass.js"
-```
-
-2. **Or create new bundle** if it doesn't fit existing categories:
-
-```javascript
-// src/bundles/YourNewDomainSystem.js
-/**
- * Your New Domain System Bundle
- *
- * Provides [domain description] including:
- * - YourClass: Brief description of what it does
- */
-
-export {default as YourClass} from "../lib/YourClass.js"
-```
-
-Then add to main index:
-
-```javascript
-// Export the new bundle alongside others
-export * as YourNewDomainSystem from "./bundles/YourNewDomainSystem.js"
-```
-
-**Naming Conventions** (adapt to project patterns):
-
-- Match the existing style (PascalCase, camelCase, etc.)
-- Stay consistent with surrounding code
-
-### **Step 3: Update Type Definitions (If Generated)**
-
-**Skip this step if**: Project doesn't have `tsconfig.types.json` or a `src/types/` directory.
-
-**If the project generates TypeScript declarations** from JSDoc:
-
-1. **Update JSDoc in your JS sources** whenever you add or modify classes, methods, or exports. Tighter annotations = better emitted `.d.ts`.
-
-2. **Regenerate after changes**:
-
-   ```bash
-   npm run types:build
-   ```
-
-   This typically runs `tsc -p tsconfig.types.json` then `eslint --fix "src/types/**/*.d.ts"`
-
-3. **Verify output** in `src/types/` - you should see `.d.ts` and `.d.ts.map` files
-
-#### **JSDoc Best Practices** (Always Follow, Even Without Type Generation)
-
-- ✅ **Always document public APIs** with JSDoc (enforced by eslint)
-- ❌ Never use `Object` (capital O) → use `object` (enforced by eslint)
-- ❌ Never use `Function` (capital F) → describe the function signature (enforced by eslint)
-- ❌ Never use `any` or `*` → use `unknown` (developer preference, strongly enforced)
-- ❌ Never use `[]` or `[]string` or `string[]` → use `Array<Type>` (developer hates antiquated syntax, strongly enforced)
-  - **Note**: Gemini loves to use `[]string` syntax (Go-style). Don't. Use `Array<string>` instead.
-
-```javascript
-// ❌ BAD - will get rejected in code review
-/** @param {any} data @param {Function} callback @returns {[]} */
-
-// ✅ GOOD - follows all conventions
-/** @param {unknown} data @param {(result: string) => void} callback @returns {Array<string>} */
-
-// ❌ BAD - eslint WILL fail on these
-/** @param {Object} config @param {Function} handler */
-
-// ✅ GOOD - eslint will pass
-/** @param {object} config @param {(data: unknown) => void} handler */
-```
-
-**Why these rules?**
-
-1. Some enforced by eslint (`Object`, `Function` capitalized = error)
-2. Others are developer's strong preferences (`any`, `*`, `[]` = code review rejection)
-3. Keeps code self-documenting and helps IDEs
-4. Makes type generation work better (if project uses it)
+- Use `object`, `unknown`, `Array<Type>` (avoid `Object`, `Function`, or `any`)
+- Prefer explicit function signatures in params/returns
+- Keep docstrings concise but present on public APIs (eslint enforces)
 
 ### **Step 4: Verify Integration**
 
-After making changes:
+After code changes:
 
-1. **Run the linter** (ALWAYS):
+1. `npm run lint`
+2. `npm run types:build` (when exports or JSDoc change)
+3. `npm test` (runs both browser and node suites)
+4. For browser-safe additions, sanity check both `@gesslar/toolkit` and `@gesslar/toolkit/browser` imports resolve to the same implementation.
 
-   ```bash
-   npm run lint
-   ```
+### **Step 5: Tests (required for this repo)**
 
-2. **If library project with exports**: Verify exports are accessible from the main entry point
+There is a real test suite. It uses the built-in `node:test` runner and lives in `tests/browser` (browser-safe API) and `tests/node` (Node-only API).
 
-3. **If type generation exists**: Confirm `.d.ts` files were regenerated correctly
+- **Run everything**: `npm test`
+- **Targeted runs**: `npm test -- tests/browser/Valid.test.js`
+- **Helpers**: `tests/helpers/test-utils.js` provides fixture helpers and cleanup.
 
-4. **Test manually** if it's user-facing functionality
-
-### **Step 5: Write Tests (If Project Has Tests)**
-
-**Reality Check**: Most projects DON'T have tests. Check for:
-
-- `tests/` or `test/` directory
-- `npm test` script in package.json
-- If neither exists, **skip testing** - this developer doesn't prioritize tests for most projects
-
-**Testing Philosophy**: No fancy frameworks. No Jest, Mocha, Jasmine, or "Material Jaboogly Testing Frameworkbot 2005 XXL". This developer runs a **tight dependency ship with no cruft**.
-
-**If tests exist** (library projects mainly), they use **Node's built-in test runner** (`node:test` module). That's it. No extra dependencies.
-
-Create `tests/unit/YourNewClass.test.js`:
-
-#### **Test Structure Template:**
+#### **Test Template**
 
 ```javascript
 #!/usr/bin/env node
 
-import { describe, it } from "node:test"
 import assert from "node:assert/strict"
+import {before,after,describe,it} from "node:test"
 
-// Test both import styles
-import { YourNewClass } from "../../src/index.js"
-import { YourDomainSystem } from "../../src/index.js"
+// Prefer package-style imports to verify exports wiring
+import {YourClass} from "@gesslar/toolkit" // or "@gesslar/toolkit/browser"
 
-describe("YourNewClass", () => {
-  describe("import compatibility", () => {
-    it("works with individual import", () => {
-      // Test individual class import
-      const result = YourNewClass.methodName("input")
-      assert.equal(result, "expected")
-    })
-
-    it("works with semantic bundle import", () => {
-      // Test semantic bundle import
-      const {YourNewClass: BundledClass} = YourDomainSystem
-      const result = BundledClass.methodName("input")
-      assert.equal(result, "expected")
-    })
-
-    it("both import styles reference same class", () => {
-      // Verify they're the same constructor
-      assert.equal(YourNewClass, YourDomainSystem.YourNewClass)
-    })
+describe("YourClass", () => {
+  before(() => {
+    // setup if needed
   })
 
-  describe("methodName()", () => {
-    it("handles normal cases", () => {
-      // Test the happy path
-      const result = YourNewClass.methodName("input")
-      assert.equal(result, "expected")
-    })
-
-    it("handles edge cases", () => {
-      // Test the weird stuff
-      assert.equal(YourNewClass.methodName(""), "")
-      assert.equal(YourNewClass.methodName(null), null)
-      // etc.
-    })
-
-    it("validates input types", () => {
-      // Test type handling
-      assert.throws(() => YourNewClass.methodName(123))
-      // OR test graceful coercion
-      assert.equal(YourNewClass.methodName(123), "123")
-    })
-
-    it("throws appropriate errors", () => {
-      // Test error conditions
-      await assert.rejects(
-        () => YourNewClass.asyncMethod("bad input"),
-        /expected error message/
-      )
-    })
+  after(() => {
+    // cleanup
   })
 
-  describe("error scenarios", () => {
-    // Test failure modes, async rejections, etc.
-  })
+  describe("methodName", () => {
+    it("handles the happy path", () => {
+      assert.equal(YourClass.methodName("input"), "expected")
+    })
 
-  describe("performance and edge cases", () => {
-    // Test boundary conditions, large inputs, etc.
+    it("guards against bad input", () => {
+      assert.throws(() => YourClass.methodName(123), /expected/i)
+    })
   })
 })
 ```
 
-#### **Testing Best Practices:**
+Focus tests on:
 
-1. **🎯 Test the Implementation, Not Just the Interface**
-   - Don't just test that it works, test that it **handles edge cases**
-   - Look for the "what if" scenarios that will break in production
-
-2. **🚨 Edge Cases Are Your Friend**
-
-   ```javascript
-   // Test ALL of these:
-   YourMethod(null)
-   YourMethod(undefined)
-   YourMethod("")
-   YourMethod([])
-   YourMethod({})
-   YourMethod(0)
-   YourMethod(-1)
-   YourMethod("   ")  // whitespace
-   ```
-
-3. **🔄 Test Error Handling**
-
-   ```javascript
-   // If it can throw, test the throw
-   await assert.rejects(() => method("bad"), ExpectedErrorType)
-
-   // If it uses Sass, test the trace
-   assert.equal(error.trace.length, 2)
-   assert.match(error.trace[0], /expected context/)
-   ```
-
-4. **📊 Test Real-World Usage**
-
-   ```javascript
-   it("supports typical use cases", () => {
-     // Test how people will actually use it
-   })
-   ```
-
-5. **🧪 Use Descriptive Test Names**
-
-   ```javascript
-   // ❌ Bad
-   it("works", () => {})
-
-   // ✅ Good
-   it("returns empty string when input is null", () => {})
-   ```
-
----
-
-## 🏃‍♂️ **Testing Workflow (If Tests Exist)**
-
-1. **Implement your feature** (TDD optional, not enforced)
-2. **Run your specific test**: `node tests/unit/YourClass.test.js`
-3. **Run all tests**: `npm test` - check you didn't break anything
-4. **Run the linter**: `npm run lint` (ALWAYS required)
-5. **Fix any lint issues**: `npm run lint:fix`
+- Edge cases (`null`, `undefined`, empty strings/arrays/objects, negatives)
+- Error surfaces (message + error type)
+- Import compatibility (`@gesslar/toolkit` vs `/browser` where relevant)
+- Real-world usage paths
 
 ---
 
@@ -346,7 +148,7 @@ Every change should:
 
 ## 📦 **For Library Projects: Semantic Bundle Pattern**
 
-**Note**: Only relevant if the project uses semantic bundles (check for `src/bundles/` directory)
+*The toolkit does not use bundles today; this is here only if we ever add a `src/bundles/` directory.*
 
 Semantic bundles group related exports under namespace objects:
 

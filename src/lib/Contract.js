@@ -1,7 +1,6 @@
 import Sass from "./Sass.js"
 import Schemer from "./Schemer.js"
-import Terms from "./Terms.js"
-import Data from "./Data.js"
+import Data from "../browser/lib/Data.js"
 
 /**
  * Contract represents a successful negotiation between Terms.
@@ -18,8 +17,8 @@ export default class Contract {
   /**
    * Creates a contract by negotiating between provider and consumer terms
    *
-   * @param {Terms} providerTerms - What the provider offers
-   * @param {Terms} consumerTerms - What the consumer expects
+   * @param {import("./Terms.js").Terms} providerTerms - What the provider offers
+   * @param {import("./Terms.js").Terms} consumerTerms - What the consumer expects
    * @param {object} options - Configuration options
    * @param {import('../types.js').DebugFunction} [options.debug] - Debug function
    */

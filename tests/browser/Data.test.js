@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import {describe,it} from "node:test"
 
-import {Data,Type,Collection} from "../../src/index.js"
+import {Data,Type,Collection} from "@gesslar/toolkit/browser"
 
 describe("Data", () => {
   describe("static properties", () => {

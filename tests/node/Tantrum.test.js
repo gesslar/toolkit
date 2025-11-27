@@ -3,7 +3,8 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
-import { Sass, Tantrum } from "../../src/index.js"
+import Sass from "../../src/lib/Sass.js"
+import Tantrum from "../../src/lib/Tantrum.js"
 
 // Helper for intercepting console output
 /**
@@ -95,14 +96,13 @@ describe("Tantrum", () => {
       assert.ok(tantrum instanceof Tantrum)
       assert.deepEqual(tantrum.errors, [])
     })
-
     it("works with no errors parameter", () => {
       const tantrum = Tantrum.new("No errors")
 
       assert.ok(tantrum instanceof Tantrum)
       assert.deepEqual(tantrum.errors, [])
+      })
     })
-  })
 
   describe("report()", () => {
     it("reports header with error count and delegates to individual Sass instances", () => {
@@ -248,5 +248,6 @@ describe("Tantrum", () => {
         assert.match(output, /Batch processing failed/)
       }
     })
+
   })
 })

@@ -1,20 +1,18 @@
 /**
  * @file Valid.js
  *
- * Node-flavoured validation utilities that throw the Node Sass error type.
- * Mirrors the browser Valid API so browser and Node callers behave the same.
+ * Provides validation utilities for type checking and assertion.
+ * Includes prototype pollution protection for secure object manipulation.
  */
 
 import Sass from "./Sass.js"
-import Data from "../browser/lib/Data.js"
-import Collection from "../browser/lib/Collection.js"
+import Data from "./Data.js"
+import Collection from "./Collection.js"
 
 /**
  * Validation utility class providing type checking and assertion methods.
  */
 export default class Valid {
-  static #restrictedProto = ["__proto__", "constructor", "prototype"]
-
   /**
    * Validates a value against a type. Uses Data.isType.
    *
@@ -55,6 +53,8 @@ export default class Valid {
     if(!condition)
       throw Sass.new(`${message}${arg ? `: ${arg}` : ""}`)
   }
+
+  static #restrictedProto = ["__proto__", "constructor", "prototype"]
 
   /**
    * Protects against prototype pollution by checking keys for dangerous property names.

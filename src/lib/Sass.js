@@ -11,61 +11,14 @@
  * debugging.
  */
 
+import {Sass as BrowserSass} from "../browser/index.js"
 import Term from "./Term.js"
-import Tantrum from "./Tantrum.js"
 
 /**
  * Custom error class for toolkit errors.
  * Provides error chaining, trace management, and formatted error reporting.
  */
-export default class Sass extends Error {
-  #trace = []
-
-  /**
-   * Creates a new Sass instance.
-   *
-   * @param {string} message - The error message
-   * @param {...unknown} [arg] - Additional arguments passed to parent Error constructor
-   */
-  constructor(message, ...arg) {
-    super(message, ...arg)
-
-    this.trace = message
-  }
-
-  /**
-   * Gets the error trace array.
-   *
-   * @returns {Array<string>} Array of trace messages
-   */
-  get trace() {
-    return this.#trace
-  }
-
-  /**
-   * Adds a message to the beginning of the trace array.
-   *
-   * @param {string} message - The trace message to add
-   */
-  set trace(message) {
-    this.#trace.unshift(message)
-  }
-
-  /**
-   * Adds a trace message and returns this instance for chaining.
-   *
-   * @param {string} message - The trace message to add
-   * @returns {this} This Sass instance for method chaining
-   */
-  addTrace(message) {
-    if(typeof message !== "string")
-      throw Sass.new(`Sass.addTrace expected string, got ${JSON.stringify(message)}`)
-
-    this.trace = message
-
-    return this
-  }
-
+export default class Sass extends BrowserSass {
   /**
    * Reports the error to the terminal with formatted output.
    * Optionally includes detailed stack trace information.
@@ -123,47 +76,5 @@ export default class Sass extends Error {
     }
 
     return lines.join("\n")
-  }
-
-  /**
-   * Creates an Sass from an existing Error object with additional
-   * trace message.
-   *
-   * @param {Error} error - The original error object
-   * @param {string} message - Additional trace message to add
-   * @returns {Sass} New Sass instance with trace from the original error
-   * @throws {Sass} If the first parameter is not an Error instance
-   */
-  static from(error, message) {
-    if(!(error instanceof Error))
-      throw Sass.new("Sass.from must take an Error object.")
-
-    const oldMessage = error.message
-    const newError = new Sass(oldMessage, {cause: error}).addTrace(message)
-
-    return newError
-  }
-
-  /**
-   * Factory method to create or enhance Sass instances.
-   * If error parameter is provided, enhances existing Sass or wraps
-   * other errors. Otherwise creates a new Sass instance.
-   *
-   * @param {string} message - The error message
-   * @param {Error|Sass|Tantrum} [error] - Optional existing error to wrap or enhance
-   * @returns {Sass} New or enhanced Sass instance
-   */
-  static new(message, error) {
-    if(error) {
-      if(error instanceof Tantrum)
-        return Tantrum.new(message, error)
-
-      return error instanceof Sass
-        ? error.addTrace(message)
-        : Sass.from(error, message)
-    } else {
-
-      return new Sass(message)
-    }
   }
 }

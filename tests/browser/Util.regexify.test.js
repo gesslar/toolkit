@@ -3,7 +3,7 @@
 import { describe, it } from "node:test"
 import assert from "node:assert/strict"
 
-import { Util } from "../../src/index.js"
+import { Util } from "@gesslar/toolkit/browser"
 
 describe("Util.regexify()", () => {
   describe("basic functionality", () => {

@@ -11,7 +11,7 @@ import util from "node:util"
 import YAML from "yaml"
 import {URL} from "node:url"
 
-import Data from "./Data.js"
+import Data from "../browser/lib/Data.js"
 import DirectoryObject from "./DirectoryObject.js"
 import FS from "./FS.js"
 import Sass from "./Sass.js"
