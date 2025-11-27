@@ -52,7 +52,7 @@
   "dependencies": {
     "@gesslar/colours": "^0.0.1",
     "ajv": "^8.17.1",
-    "globby": "^15.0.0",
+    "globby": "^16.0.0",
     "json5": "^2.2.3",
     "yaml": "^2.8.1"
   },
