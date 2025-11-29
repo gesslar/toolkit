@@ -6,6 +6,6 @@ export { default as Tantrum } from "./lib/Tantrum.js";
 export { default as Type } from "./lib/TypeSpec.js";
 export { default as Util } from "./lib/Util.js";
 export { default as Valid } from "./lib/Valid.js";
-export { default as Disposable, Disposable as DisposableClass } from "./lib/Disposable.js";
+export { default as Disposer, Disposer as DisposerClass } from "./lib/Disposer.js";
 export { default as HTML, HTML as HTMLClass } from "./lib/HTML.js";
 //# sourceMappingURL=index.d.ts.map

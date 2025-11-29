@@ -3,15 +3,15 @@
 import assert from "node:assert/strict"
 import {describe, it} from "node:test"
 
-import {DisposableClass as Disposable} from "@gesslar/toolkit/browser"
+import {DisposerClass as Disposer} from "@gesslar/toolkit/browser"
 
-describe("Disposable", () => {
+describe("Disposer", () => {
   it("runs disposers in reverse order", () => {
     const calls = []
-    const disposable = new Disposable()
+    const disposable = new Disposer()
 
-    disposable.registerDisposer(() => calls.push("first"))
-    disposable.registerDisposer(() => calls.push("second"))
+    disposable.register(() => calls.push("first"))
+    disposable.register(() => calls.push("second"))
 
     disposable.dispose()
 
@@ -20,10 +20,10 @@ describe("Disposable", () => {
 
   it("removes an individual disposer via returned unregister", () => {
     const calls = []
-    const disposable = new Disposable()
+    const disposable = new Disposer()
 
-    const unregister = disposable.registerDisposer(() => calls.push("kept"))
-    disposable.registerDisposer(() => calls.push("removed"))
+    const unregister = disposable.register(() => calls.push("kept"))
+    disposable.register(() => calls.push("removed"))
 
     unregister()
     disposable.dispose()
@@ -32,9 +32,9 @@ describe("Disposable", () => {
   })
 
   it("aggregates errors thrown during disposal", () => {
-    const disposable = new Disposable()
+    const disposable = new Disposer()
 
-    disposable.registerDisposer(() => {
+    disposable.register(() => {
       throw new Error("boom")
     })
 
@@ -47,13 +47,13 @@ describe("Disposable", () => {
   })
 
   it("returns empty disposer when already disposed or invalid input", () => {
-    const disposable = new Disposable()
+    const disposable = new Disposer()
 
-    const noop = disposable.registerDisposer("not a function")
+    const noop = disposable.register("not a function")
     assert.equal(typeof noop, "function")
 
     disposable.dispose()
-    const unregister = disposable.registerDisposer(() => {})
+    const unregister = disposable.register(() => {})
     unregister()
 
     assert.equal(disposable.disposed, true)
