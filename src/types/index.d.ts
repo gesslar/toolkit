@@ -1,6 +1,5 @@
 export { default as Collection } from "./browser/lib/Collection.js";
 export { default as Data } from "./browser/lib/Data.js";
-export { default as Disposable } from "./browser/lib/Disposable.js";
 export { default as Type } from "./browser/lib/TypeSpec.js";
 export { default as Valid } from "./lib/Valid.js";
 export { default as Sass } from "./lib/Sass.js";
@@ -15,4 +14,5 @@ export { default as Glog } from "./lib/Glog.js";
 export { default as Schemer } from "./lib/Schemer.js";
 export { default as Term } from "./lib/Term.js";
 export { default as Terms } from "./lib/Terms.js";
+export { default as Disposable, Disposable as DisposableClass } from "./browser/lib/Disposable.js";
 //# sourceMappingURL=index.d.ts.map

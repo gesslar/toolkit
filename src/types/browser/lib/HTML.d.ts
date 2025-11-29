@@ -1,4 +1,4 @@
-export default class HTML {
+export class HTML {
     /**
      * Lightweight HTML helper utilities for browser contexts.
      *
@@ -35,4 +35,6 @@ export default class HTML {
     clearHTMLContent(element: Element): void;
     #private;
 }
+declare const _default: HTML;
+export default _default;
 //# sourceMappingURL=HTML.d.ts.map
