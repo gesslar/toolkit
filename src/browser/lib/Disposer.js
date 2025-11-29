@@ -6,8 +6,6 @@ import Valid from "./Valid.js"
  */
 export class Disposer {
   #disposers = []
-  #disposed = false
-  #noop = () => {}
 
   /**
    * Registers a disposer callback to be executed when disposed.
@@ -21,13 +19,6 @@ export class Disposer {
    */
   register(...disposers) {
     const normalized = this.#normalizeDisposers(disposers)
-
-    if(this.#disposed) {
-      return normalized.length === 1
-        ? this.#noop
-        : normalized.map(() => this.#noop)
-    }
-
     const unregisters = normalized.map(
       disposer => this.#registerDisposer(disposer)
     )
@@ -36,7 +27,7 @@ export class Disposer {
   }
 
   #registerDisposer(disposer) {
-    if(this.#disposed || typeof disposer !== "function")
+    if(typeof disposer !== "function")
       return () => {}
 
     this.#disposers.push(disposer)
@@ -50,11 +41,6 @@ export class Disposer {
    * @returns {void}
    */
   dispose() {
-    if(this.#disposed)
-      return
-
-    this.#disposed = true
-
     const errors = []
     this.#disposers.toReversed().forEach(disposer => {
       try {
@@ -79,15 +65,6 @@ export class Disposer {
     Valid.type(normalized, "Function[]")
 
     return normalized
-  }
-
-  /**
-   * Whether disposal has run.
-   *
-   * @returns {boolean} True when dispose() has already been called.
-   */
-  get disposed() {
-    return this.#disposed
   }
 
   /**

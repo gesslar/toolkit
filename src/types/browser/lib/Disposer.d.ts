@@ -21,12 +21,6 @@ export class Disposer {
      */
     dispose(): void;
     /**
-     * Whether disposal has run.
-     *
-     * @returns {boolean} True when dispose() has already been called.
-     */
-    get disposed(): boolean;
-    /**
      * Read-only list of registered disposers.
      *
      * @returns {Array<() => void>} Snapshot of disposer callbacks.
