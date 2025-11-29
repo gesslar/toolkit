@@ -3,8 +3,8 @@
 
 export {default as Collection} from "./lib/Collection.js"
 export {default as Data} from "./lib/Data.js"
-export {default as Disposable} from "./lib/Disposable.js"
-export {Disposable as DisposableClass} from "./lib/Disposable.js"
+export {default as Disposer} from "./lib/Disposer.js"
+export {Disposer as DisposerClass} from "./lib/Disposer.js"
 export {default as HTML} from "./lib/HTML.js"
 export {HTML as HTMLClass} from "./lib/HTML.js"
 export {default as Notify} from "./lib/Notify.js"

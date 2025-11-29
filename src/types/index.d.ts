@@ -14,5 +14,5 @@ export { default as Glog } from "./lib/Glog.js";
 export { default as Schemer } from "./lib/Schemer.js";
 export { default as Term } from "./lib/Term.js";
 export { default as Terms } from "./lib/Terms.js";
-export { default as Disposable, Disposable as DisposableClass } from "./browser/lib/Disposable.js";
+export { default as Disposer, Disposer as DisposerClass } from "./browser/lib/Disposer.js";
 //# sourceMappingURL=index.d.ts.map
