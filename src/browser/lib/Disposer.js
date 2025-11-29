@@ -1,3 +1,5 @@
+import Valid from "./Valid.js"
+
 /**
  * Simple lifecycle helper that tracks disposer callbacks.
  * Register any teardown functions and call dispose() to run them in reverse.
@@ -5,14 +7,35 @@
 export class Disposer {
   #disposers = []
   #disposed = false
+  #noop = () => {}
 
   /**
    * Registers a disposer callback to be executed when disposed.
    *
-   * @param {() => void} disposer - Cleanup callback.
-   * @returns {() => void} Function to unregister the disposer.
+   * Accepts one or more callbacks (or a single array) and returns matching
+   * unregisters. A single disposer returns a single unregister for
+   * convenience.
+   *
+   * @param {...(() => void)|Array<() => void>} disposers - Cleanup callbacks.
+   * @returns {(() => void)|Array<() => void>} Unregister function(s).
    */
-  register(disposer) {
+  register(...disposers) {
+    const normalized = this.#normalizeDisposers(disposers)
+
+    if(this.#disposed) {
+      return normalized.length === 1
+        ? this.#noop
+        : normalized.map(() => this.#noop)
+    }
+
+    const unregisters = normalized.map(
+      disposer => this.#registerDisposer(disposer)
+    )
+
+    return unregisters.length === 1 ? unregisters[0] : unregisters
+  }
+
+  #registerDisposer(disposer) {
     if(this.#disposed || typeof disposer !== "function")
       return () => {}
 
@@ -44,6 +67,18 @@ export class Disposer {
 
     if(errors.length > 0)
       throw new AggregateError(errors, "Errors occurred during disposal.")
+  }
+
+  #normalizeDisposers(disposers) {
+    const normalized = (
+      disposers.length === 1 && Array.isArray(disposers[0])
+        ? disposers[0]
+        : disposers
+    )
+
+    Valid.type(normalized, "Function[]")
+
+    return normalized
   }
 
   /**

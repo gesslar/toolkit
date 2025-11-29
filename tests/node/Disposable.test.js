@@ -15,4 +15,36 @@ describe("Disposer (node entry)", () => {
 
     assert.deepEqual(calls, ["done"])
   })
+
+  it("returns unregister array when multiple disposers are registered", () => {
+    const calls = []
+    const disposable = new Disposer()
+
+    const unregisters = disposable.register(
+      () => calls.push("skip"),
+      () => calls.push("keep")
+    )
+
+    unregisters[0]()
+    disposable.dispose()
+
+    assert.ok(Array.isArray(unregisters))
+    assert.deepEqual(calls, ["keep"])
+  })
+
+  it("supports array input for disposers", () => {
+    const calls = []
+    const disposable = new Disposer()
+
+    const unregisters = disposable.register([
+      () => calls.push("one"),
+      () => calls.push("two")
+    ])
+
+    unregisters[0]()
+    disposable.dispose()
+
+    assert.ok(Array.isArray(unregisters))
+    assert.deepEqual(calls, ["two"])
+  })
 })

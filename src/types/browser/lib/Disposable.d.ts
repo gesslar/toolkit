@@ -6,10 +6,10 @@ export class Disposer {
   /**
    * Registers a disposer callback to be executed when disposed.
    *
-   * @param {() => void} disposer - Cleanup callback.
-   * @returns {() => void} Function to unregister the disposer.
+   * @param {...(() => void)|Array<() => void>} disposers - Cleanup callbacks.
+   * @returns {(() => void)|Array<() => void>} Function(s) to unregister the disposer(s).
    */
-  register(disposer: () => void): () => void;
+  register(...disposers: Array<(() => void) | Array<() => void>>): (() => void) | Array<() => void>;
   /**
    * Runs all registered disposers in reverse order.
    *

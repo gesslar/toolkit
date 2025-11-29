@@ -18,6 +18,39 @@ describe("Disposer", () => {
     assert.deepEqual(calls, ["second", "first"])
   })
 
+  it("registers multiple disposers and returns matching unregisters", () => {
+    const calls = []
+    const disposable = new Disposer()
+
+    const unregisters = disposable.register(
+      () => calls.push("first"),
+      () => calls.push("second")
+    )
+
+    assert.ok(Array.isArray(unregisters))
+    assert.equal(unregisters.length, 2)
+
+    unregisters[0]()
+    disposable.dispose()
+
+    assert.deepEqual(calls, ["second"])
+  })
+
+  it("registers array of disposers and returns matching unregisters", () => {
+    const calls = []
+    const disposable = new Disposer()
+
+    const unregisters = disposable.register([
+      () => calls.push("first"),
+      () => calls.push("second")
+    ])
+
+    unregisters[1]()
+    disposable.dispose()
+
+    assert.deepEqual(calls, ["first"])
+  })
+
   it("removes an individual disposer via returned unregister", () => {
     const calls = []
     const disposable = new Disposer()
@@ -46,11 +79,17 @@ describe("Disposer", () => {
     })
   })
 
-  it("returns empty disposer when already disposed or invalid input", () => {
+  it("throws on invalid input", () => {
     const disposable = new Disposer()
 
-    const noop = disposable.register("not a function")
-    assert.equal(typeof noop, "function")
+    assert.throws(
+      () => disposable.register("not a function"),
+      /Invalid type\. Expected Function\[\]/
+    )
+  })
+
+  it("returns empty disposer when already disposed", () => {
+    const disposable = new Disposer()
 
     disposable.dispose()
     const unregister = disposable.register(() => {})
