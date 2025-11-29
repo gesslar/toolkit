@@ -1,7 +1,7 @@
 import DOMPurify from "./vendor/dompurify.esm.js"
 import Sass from "./Sass.js"
 
-export default class HTML {
+export class HTML {
   #domPurify
 
   /**
@@ -135,3 +135,5 @@ export default class HTML {
     throw Sass.new("DOMPurify sanitization is unavailable in this environment.")
   }
 }
+
+export default new HTML()

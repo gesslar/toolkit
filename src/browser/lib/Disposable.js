@@ -2,7 +2,7 @@
  * Simple lifecycle helper that tracks disposer callbacks.
  * Register any teardown functions and call dispose() to run them in reverse.
  */
-export default class Disposable {
+export class Disposable {
   #disposers = []
   #disposed = false
 
@@ -71,3 +71,5 @@ export default class Disposable {
       this.#disposers.splice(index, 1)
   }
 }
+
+export default new Disposable()

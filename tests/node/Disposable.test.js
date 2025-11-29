@@ -3,7 +3,7 @@
 import assert from "node:assert/strict"
 import {describe, it} from "node:test"
 
-import {Disposable} from "@gesslar/toolkit"
+import {DisposableClass as Disposable} from "@gesslar/toolkit"
 
 describe("Disposable (node entry)", () => {
   it("is exported and disposes registered callbacks", () => {

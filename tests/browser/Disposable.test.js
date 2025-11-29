@@ -3,7 +3,7 @@
 import assert from "node:assert/strict"
 import {describe, it} from "node:test"
 
-import {Disposable} from "@gesslar/toolkit/browser"
+import {DisposableClass as Disposable} from "@gesslar/toolkit/browser"
 
 describe("Disposable", () => {
   it("runs disposers in reverse order", () => {

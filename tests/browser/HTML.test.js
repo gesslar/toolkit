@@ -3,7 +3,7 @@
 import assert from "node:assert/strict"
 import {after, afterEach, before, describe, it} from "node:test"
 
-import {HTML, Sass} from "@gesslar/toolkit/browser"
+import {HTMLClass as HTML, Sass} from "@gesslar/toolkit/browser"
 
 describe("HTML", () => {
   const fakeSanitizer = input => `safe:${input}`
