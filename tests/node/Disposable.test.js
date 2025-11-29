@@ -47,4 +47,15 @@ describe("Disposer (node entry)", () => {
     assert.ok(Array.isArray(unregisters))
     assert.deepEqual(calls, ["two"])
   })
+
+  it("allows registering again after a dispose", () => {
+    const calls = []
+    const disposable = new Disposer()
+
+    disposable.dispose()
+    disposable.register(() => calls.push("again"))
+    disposable.dispose()
+
+    assert.deepEqual(calls, ["again"])
+  })
 })

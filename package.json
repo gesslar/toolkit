@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Get in, bitches, we're going toolkitting.",
   "main": "./src/index.js",
   "type": "module",
@@ -31,7 +31,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "types:build": "tsc -p tsconfig.types.json",
+    "types:build": "node -e \"require('fs').rmSync('src/types',{recursive:true,force:true});\" && tsc -p tsconfig.types.json",
     "prepublishOnly": "npm run types:build",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",

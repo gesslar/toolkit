@@ -88,13 +88,14 @@ describe("Disposer", () => {
     )
   })
 
-  it("returns empty disposer when already disposed", () => {
+  it("allows registering again after a dispose", () => {
+    const calls = []
     const disposable = new Disposer()
 
     disposable.dispose()
-    const unregister = disposable.register(() => {})
-    unregister()
+    disposable.register(() => calls.push("again"))
+    disposable.dispose()
 
-    assert.equal(disposable.disposed, true)
+    assert.deepEqual(calls, ["again"])
   })
 })
