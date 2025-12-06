@@ -775,4 +775,161 @@ describe("DirectoryObject", () => {
       }
     })
   })
+
+  describe("hasFile method", () => {
+    let testDir
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("dir-hasfile-test")
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("returns true when file exists in directory", async () => {
+      const filePath = path.join(testDir, "test.txt")
+      await fs.writeFile(filePath, "test content")
+
+      const dir = new DirectoryObject(testDir)
+      const exists = await dir.hasFile("test.txt")
+
+      assert.equal(exists, true)
+    })
+
+    it("returns false when file does not exist", async () => {
+      const dir = new DirectoryObject(testDir)
+      const exists = await dir.hasFile("nonexistent.txt")
+
+      assert.equal(exists, false)
+    })
+
+    it("checks for files with complex names", async () => {
+      const filename = "file with spaces & symbols!.json"
+      const filePath = path.join(testDir, filename)
+      await fs.writeFile(filePath, "{}")
+
+      const dir = new DirectoryObject(testDir)
+      const exists = await dir.hasFile(filename)
+
+      assert.equal(exists, true)
+    })
+
+    it("handles files with multiple extensions", async () => {
+      const filename = "archive.tar.gz"
+      const filePath = path.join(testDir, filename)
+      await fs.writeFile(filePath, "compressed")
+
+      const dir = new DirectoryObject(testDir)
+      const exists = await dir.hasFile(filename)
+
+      assert.equal(exists, true)
+    })
+
+    it("returns Promise<boolean>", async () => {
+      const dir = new DirectoryObject(testDir)
+      const result = dir.hasFile("test.txt")
+
+      assert.ok(result instanceof Promise)
+
+      const exists = await result
+      assert.equal(typeof exists, "boolean")
+    })
+
+    it("handles relative file paths", async () => {
+      const filePath = path.join(testDir, "subfile.txt")
+      await fs.writeFile(filePath, "content")
+
+      const dir = new DirectoryObject(testDir)
+      const exists = await dir.hasFile("./subfile.txt")
+
+      assert.equal(exists, true)
+    })
+  })
+
+  describe("hasDirectory method", () => {
+    let testDir
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("dir-hasdir-test")
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("returns true when subdirectory exists", async () => {
+      const subDirPath = path.join(testDir, "subdir")
+      await fs.mkdir(subDirPath)
+
+      const dir = new DirectoryObject(testDir)
+      const exists = await dir.hasDirectory("subdir")
+
+      assert.equal(exists, true)
+    })
+
+    it("returns false when subdirectory does not exist", async () => {
+      const dir = new DirectoryObject(testDir)
+      const exists = await dir.hasDirectory("nonexistent")
+
+      assert.equal(exists, false)
+    })
+
+    it("checks for directories with special characters", async () => {
+      const dirname = "dir with spaces & symbols!"
+      const dirPath = path.join(testDir, dirname)
+      await fs.mkdir(dirPath)
+
+      const dir = new DirectoryObject(testDir)
+      const exists = await dir.hasDirectory(dirname)
+
+      assert.equal(exists, true)
+    })
+
+    it("handles nested directory paths", async () => {
+      const nestedPath = path.join(testDir, "level1", "level2")
+      await fs.mkdir(path.join(testDir, "level1"))
+      await fs.mkdir(nestedPath)
+
+      const dir = new DirectoryObject(testDir)
+      const exists = await dir.hasDirectory("level1/level2")
+
+      assert.equal(exists, true)
+    })
+
+    it("returns Promise<boolean>", async () => {
+      const dir = new DirectoryObject(testDir)
+      const result = dir.hasDirectory("test")
+
+      assert.ok(result instanceof Promise)
+
+      const exists = await result
+      assert.equal(typeof exists, "boolean")
+    })
+
+    it("handles relative directory paths", async () => {
+      const subDirPath = path.join(testDir, "relative")
+      await fs.mkdir(subDirPath)
+
+      const dir = new DirectoryObject(testDir)
+      const exists = await dir.hasDirectory("./relative")
+
+      assert.equal(exists, true)
+    })
+
+    it("uses mergeOverlappingPaths for path resolution", async () => {
+      const subDirPath = path.join(testDir, "target")
+      await fs.mkdir(subDirPath)
+
+      const dir = new DirectoryObject(testDir)
+      // This should work with overlapping path segments
+      const exists = await dir.hasDirectory(path.join(testDir, "target"))
+
+      assert.equal(exists, true)
+    })
+  })
 })

@@ -151,6 +151,20 @@ export default class DirectoryObject extends FS {
      */
     delete(): Promise<void>;
     /**
+     * Checks if a file exists within this directory.
+     *
+     * @param {string} filename - The filename to check for
+     * @returns {Promise<boolean>} True if the file exists, false otherwise
+     */
+    hasFile(filename: string): Promise<boolean>;
+    /**
+     * Checks if a subdirectory exists within this directory.
+     *
+     * @param {string} dirname - The directory name to check for
+     * @returns {Promise<boolean>} True if the directory exists, false otherwise
+     */
+    hasDirectory(dirname: string): Promise<boolean>;
+    /**
      * Custom inspect method for Node.js console.
      *
      * @returns {object} JSON representation of this object.

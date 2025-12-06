@@ -1,26 +1,26 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@gesslar/toolkit",
-      "version": "1.6.0",
+      "version": "1.7.0",
       "license": "Unlicense",
       "dependencies": {
         "@gesslar/colours": "^0.0.1",
         "ajv": "^8.17.1",
         "globby": "^16.0.0",
         "json5": "^2.2.3",
-        "yaml": "^2.8.1"
+        "yaml": "^2.8.2"
       },
       "devDependencies": {
         "@gesslar/uglier": "^0.0.5",
         "@stylistic/eslint-plugin": "^5.6.1",
         "@types/node": "^24.10.1",
-        "@typescript-eslint/eslint-plugin": "^8.48.0",
-        "@typescript-eslint/parser": "^8.48.0",
+        "@typescript-eslint/eslint-plugin": "^8.48.1",
+        "@typescript-eslint/parser": "^8.48.1",
         "eslint": "^9.39.1",
         "eslint-plugin-jsdoc": "^61.4.1",
         "globals": "^16.5.0"

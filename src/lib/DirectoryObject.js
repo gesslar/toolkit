@@ -355,4 +355,29 @@ export default class DirectoryObject extends FS {
 
     return await fs.rmdir(this.path)
   }
+
+  /**
+   * Checks if a file exists within this directory.
+   *
+   * @param {string} filename - The filename to check for
+   * @returns {Promise<boolean>} True if the file exists, false otherwise
+   */
+  async hasFile(filename) {
+    const file = new FileObject(filename, this)
+
+    return await file.exists
+  }
+
+  /**
+   * Checks if a subdirectory exists within this directory.
+   *
+   * @param {string} dirname - The directory name to check for
+   * @returns {Promise<boolean>} True if the directory exists, false otherwise
+   */
+  async hasDirectory(dirname) {
+    const resolved = FS.resolvePath(this.path, dirname)
+    const directory = new DirectoryObject(resolved)
+
+    return await directory.exists
+  }
 }
