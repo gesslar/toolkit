@@ -11,6 +11,7 @@ export { default as DirectoryObject } from "./lib/DirectoryObject.js";
 export { default as FileObject } from "./lib/FileObject.js";
 export { default as FS } from "./lib/FS.js";
 export { default as Glog } from "./lib/Glog.js";
+export { default as Notify } from "./lib/Notify.js";
 export { default as Schemer } from "./lib/Schemer.js";
 export { default as Term } from "./lib/Term.js";
 export { default as Terms } from "./lib/Terms.js";

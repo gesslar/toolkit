@@ -1,12 +1,12 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@gesslar/toolkit",
-      "version": "1.7.0",
+      "version": "1.8.0",
       "license": "Unlicense",
       "dependencies": {
         "@gesslar/colours": "^0.0.1",
@@ -568,7 +568,6 @@
       "integrity": "sha512-PC0PDZfJg8sP7cmKe6L3QIL8GZwU5aRvUFedqSIpw3B+QjRSUZeeITC2M5XKeMXEzL6wccN196iy3JLwKNvDVA==",
       "dev": true,
       "license": "MIT",
-      "peer": true,
       "dependencies": {
         "@typescript-eslint/scope-manager": "8.48.1",
         "@typescript-eslint/types": "8.48.1",
@@ -877,7 +876,6 @@
       "integrity": "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==",
       "dev": true,
       "license": "MIT",
-      "peer": true,
       "bin": {
         "acorn": "bin/acorn"
       },
@@ -1096,7 +1094,6 @@
       "integrity": "sha512-BhHmn2yNOFA9H9JmmIVKJmd288g9hrVRDkdoIgRCRuSySRUHH7r/DI6aAXW9T1WwUuY3DFgrcaqB+deURBLR5g==",
       "dev": true,
       "license": "MIT",
-      "peer": true,
       "dependencies": {
         "@eslint-community/eslint-utils": "^4.8.0",
         "@eslint-community/regexpp": "^4.12.1",
