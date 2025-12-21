@@ -14,6 +14,7 @@
  * @property {Promise<boolean>} exists - Whether the file exists (async)
  */
 export default class FileObject extends FS {
+    [x: number]: () => object;
     /**
      * Configuration mapping data types to their respective parser modules for loadData method.
      * Each parser module must have a .parse() method that accepts a string and returns parsed data.
@@ -26,10 +27,10 @@ export default class FileObject extends FS {
     /**
      * Constructs a FileObject instance.
      *
-     * @param {string} fileName - The file path
+     * @param {string | FileObject} fileName - The file path or FileObject
      * @param {DirectoryObject|string|null} [directory] - The parent directory (object or string)
      */
-    constructor(fileName: string, directory?: DirectoryObject | string | null);
+    constructor(fileName: string | FileObject, directory?: DirectoryObject | string | null);
     /**
      * Returns a JSON representation of the FileObject.
      *
@@ -214,18 +215,10 @@ export default class FileObject extends FS {
      * await file.delete()
      */
     delete(): Promise<void>;
-    /**
-     * Custom inspect method for Node.js console.
-     *
-     * @returns {object} JSON representation of this object.
-     */
-    [util.inspect.custom](): object;
     #private;
 }
 import FS from "./FS.js";
-import { URL } from "node:url";
 import DirectoryObject from "./DirectoryObject.js";
-import util from "node:util";
 import JSON5 from "json5";
 import YAML from "yaml";
 //# sourceMappingURL=FileObject.d.ts.map

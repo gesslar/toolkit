@@ -75,11 +75,15 @@ export default class FileObject extends FS {
   /**
    * Constructs a FileObject instance.
    *
-   * @param {string} fileName - The file path
+   * @param {string | FileObject} fileName - The file path or FileObject
    * @param {DirectoryObject|string|null} [directory] - The parent directory (object or string)
    */
   constructor(fileName, directory=null) {
     super()
+
+    // If passed a FileObject, extract its path
+    if(Data.isType(fileName, "FileObject"))
+      fileName = fileName.path
 
     if(!fileName || typeof fileName !== "string" || fileName.length === 0) {
       throw Sass.new("fileName must be a non-empty string")

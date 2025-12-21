@@ -4,14 +4,15 @@
  * resolution and existence checks.
  */
 
-import fs from "node:fs/promises"
+import {mkdir, opendir, readdir, rmdir} from "node:fs/promises"
 import path from "node:path"
-import util from "node:util"
 import {URL} from "node:url"
+import util from "node:util"
 
 import FS from "./FS.js"
 import FileObject from "./FileObject.js"
 import Sass from "./Sass.js"
+import {Data, Valid} from "../browser/index.js"
 
 /**
  * DirectoryObject encapsulates metadata and operations for a directory,
@@ -51,15 +52,23 @@ export default class DirectoryObject extends FS {
     isDirectory: true,
     trail: null,
     sep: null,
+    temporary: null,
   })
 
   /**
    * Constructs a DirectoryObject instance.
    *
-   * @param {string} directory - The directory path
+   * @param {string? | DirectoryObject?} directory - The directory path or DirectoryObject
+   * @param {boolean} [temporary] - Whether this is a temporary directory.
    */
-  constructor(directory) {
+  constructor(directory=null, temporary=false) {
     super()
+
+    Valid.type(directory, "String|DirectoryObject|Null")
+
+    // If passed a DirectoryObject, extract its path
+    if(Data.isType(directory, "DirectoryObject"))
+      directory = directory.path
 
     const fixedDir = FS.fixSlashes(directory ?? ".")
     const resolved = path.resolve(fixedDir)
@@ -76,6 +85,7 @@ export default class DirectoryObject extends FS {
     this.#meta.module = baseName
     this.#meta.trail = trail
     this.#meta.sep = sep
+    this.#meta.temporary = temporary
 
     Object.freeze(this.#meta)
   }
@@ -201,6 +211,50 @@ export default class DirectoryObject extends FS {
   }
 
   /**
+   * Returns whether this directory is marked as temporary.
+   *
+   * @returns {boolean} True if this is a temporary directory, false otherwise
+   */
+  get temporary() {
+    return this.#meta.temporary
+  }
+
+  /**
+   * Recursively removes a temporary directory and all its contents.
+   *
+   * This method will delete all files and subdirectories within this directory,
+   * then delete the directory itself. It only works on directories explicitly
+   * marked as temporary for safety.
+   *
+   * @async
+   * @returns {Promise<void>}
+   * @throws {Sass} If the directory is not marked as temporary
+   * @throws {Sass} If the directory deletion fails
+   * @example
+   * const tempDir = await FS.tempDirectory("my-temp")
+   * // ... use the directory ...
+   * await tempDir.remove() // Recursively deletes everything
+   */
+  async remove() {
+    if(!this.temporary)
+      throw Sass.new("This is not a temporary directory.")
+
+    /** @type {{files: Array<FileObject>, directories: Array<DirectoryObject>}} */
+    const {files, directories} = await this.read()
+
+    // Remove subdirectories recursively
+    for(const dir of directories)
+      await dir.remove()
+
+    // Remove files
+    for(const file of files)
+      await file.delete()
+
+    // Delete the now-empty directory
+    await this.delete()
+  }
+
+  /**
    * Returns false. Because this is a directory.
    *
    * @returns {boolean} Always false
@@ -225,7 +279,7 @@ export default class DirectoryObject extends FS {
    */
   async #directoryExists() {
     try {
-      (await fs.opendir(this.path)).close()
+      (await opendir(this.path)).close()
 
       return true
     } catch(_) {
@@ -239,7 +293,7 @@ export default class DirectoryObject extends FS {
    * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} The files and directories in the directory.
    */
   async read() {
-    const found = await fs.readdir(this.url, {withFileTypes: true})
+    const found = await readdir(this.url, {withFileTypes: true})
 
     const files = found
       .filter(dirent => dirent.isFile())
@@ -247,7 +301,11 @@ export default class DirectoryObject extends FS {
 
     const directories = found
       .filter(dirent => dirent.isDirectory())
-      .map(dirent => new DirectoryObject(path.join(this.path, dirent.name)))
+      .map(dirent => {
+        const dirPath = path.join(this.path, dirent.name)
+
+        return new DirectoryObject(dirPath, this.temporary)
+      })
 
     return {files, directories}
   }
@@ -270,7 +328,7 @@ export default class DirectoryObject extends FS {
       return
 
     try {
-      await fs.mkdir(this.path, options)
+      await mkdir(this.path, options)
     } catch(e) {
       if(e.code === "EEXIST") {
         // Directory already exists, ignore
@@ -353,7 +411,7 @@ export default class DirectoryObject extends FS {
     if(!(await this.exists))
       throw Sass.new(`No such resource '${this.url.href}'`)
 
-    return await fs.rmdir(this.path)
+    return await rmdir(this.path)
   }
 
   /**
@@ -379,5 +437,28 @@ export default class DirectoryObject extends FS {
     const directory = new DirectoryObject(resolved)
 
     return await directory.exists
+  }
+
+  /**
+   * Creates a new DirectoryObject by merging this directory's path with a new
+   * path.
+   *
+   * Uses overlapping path segment detection to intelligently combine paths.
+   * Preserves the temporary flag from the current directory.
+   *
+   * @param {string} newPath - The path to merge with this directory's path.
+   * @returns {DirectoryObject} A new DirectoryObject with the merged path.
+   * @example
+   * const dir = new DirectoryObject("/projects/git/toolkit")
+   * const subDir = dir.to("toolkit/src/lib")
+   * console.log(subDir.path) // "/projects/git/toolkit/src/lib"
+   */
+  to(newPath) {
+    Valid.type(newPath, "String")
+
+    const thisPath = this.path
+    const merged = FS.mergeOverlappingPaths(thisPath, newPath)
+
+    return new this(merged, this.temporary)
   }
 }
