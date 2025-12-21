@@ -13,12 +13,14 @@
  * @property {Promise<boolean>} exists - Whether the directory exists (async)
  */
 export default class DirectoryObject extends FS {
+    [x: number]: () => object;
     /**
      * Constructs a DirectoryObject instance.
      *
-     * @param {string} directory - The directory path
+     * @param {string? | DirectoryObject?} directory - The directory path or DirectoryObject
+     * @param {boolean} [temporary] - Whether this is a temporary directory.
      */
-    constructor(directory: string);
+    constructor(directory?: any, temporary?: boolean);
     /**
      * Returns a JSON representation of the DirectoryObject.
      *
@@ -82,6 +84,29 @@ export default class DirectoryObject extends FS {
      * console.log(dir.trail) // ['', 'path', 'to', 'directory']
      */
     get trail(): Array<string>;
+    /**
+     * Returns whether this directory is marked as temporary.
+     *
+     * @returns {boolean} True if this is a temporary directory, false otherwise
+     */
+    get temporary(): boolean;
+    /**
+     * Recursively removes a temporary directory and all its contents.
+     *
+     * This method will delete all files and subdirectories within this directory,
+     * then delete the directory itself. It only works on directories explicitly
+     * marked as temporary for safety.
+     *
+     * @async
+     * @returns {Promise<void>}
+     * @throws {Sass} If the directory is not marked as temporary
+     * @throws {Sass} If the directory deletion fails
+     * @example
+     * const tempDir = await FS.tempDirectory("my-temp")
+     * // ... use the directory ...
+     * await tempDir.remove() // Recursively deletes everything
+     */
+    remove(): Promise<void>;
     /**
      * Returns false. Because this is a directory.
      *
@@ -165,15 +190,22 @@ export default class DirectoryObject extends FS {
      */
     hasDirectory(dirname: string): Promise<boolean>;
     /**
-     * Custom inspect method for Node.js console.
+     * Creates a new DirectoryObject by merging this directory's path with a new
+     * path.
      *
-     * @returns {object} JSON representation of this object.
+     * Uses overlapping path segment detection to intelligently combine paths.
+     * Preserves the temporary flag from the current directory.
+     *
+     * @param {string} newPath - The path to merge with this directory's path.
+     * @returns {DirectoryObject} A new DirectoryObject with the merged path.
+     * @example
+     * const dir = new DirectoryObject("/projects/git/toolkit")
+     * const subDir = dir.to("toolkit/src/lib")
+     * console.log(subDir.path) // "/projects/git/toolkit/src/lib"
      */
-    [util.inspect.custom](): object;
+    to(newPath: string): DirectoryObject;
     #private;
 }
 import FS from "./FS.js";
-import { URL } from "node:url";
 import FileObject from "./FileObject.js";
-import util from "node:util";
 //# sourceMappingURL=DirectoryObject.d.ts.map

@@ -43,6 +43,34 @@ describe("DirectoryObject", () => {
       assert.equal(dir2.supplied, ".")
     })
 
+    it("accepts DirectoryObject as input (polymorphic)", () => {
+      const original = new DirectoryObject("/home/user/test")
+      const clone = new DirectoryObject(original)
+
+      assert.ok(clone instanceof DirectoryObject)
+      assert.equal(clone.path, original.path)
+      assert.equal(clone.name, original.name)
+      assert.notEqual(clone, original) // Should be a new instance
+    })
+
+    it("preserves temporary flag when passed explicitly", () => {
+      const original = new DirectoryObject("/tmp/test", true)
+      const fromObject = new DirectoryObject(original, false)
+
+      // When passing a DirectoryObject, it extracts the path
+      // The second parameter should still control the temporary flag
+      assert.equal(fromObject.temporary, false)
+    })
+
+    it("accepts DirectoryObject and can override temporary flag", () => {
+      const regular = new DirectoryObject("/tmp/test", false)
+      const asTemp = new DirectoryObject(regular, true)
+
+      assert.equal(regular.temporary, false)
+      assert.equal(asTemp.temporary, true)
+      assert.equal(asTemp.path, regular.path)
+    })
+
     it("fixes slashes in paths", () => {
       const dir = new DirectoryObject("path\\\\with\\\\backslashes")
 
@@ -930,6 +958,185 @@ describe("DirectoryObject", () => {
       const exists = await dir.hasDirectory(path.join(testDir, "target"))
 
       assert.equal(exists, true)
+    })
+  })
+
+  describe("temporary getter", () => {
+    it("returns false for regular directories", () => {
+      const dir = new DirectoryObject(process.cwd())
+
+      assert.equal(dir.temporary, false)
+    })
+
+    it("returns true for temporary directories", async () => {
+      const {FS} = await import("../../src/index.js")
+      const tempDir = await FS.tempDirectory("test-temp-getter")
+
+      try {
+        assert.equal(tempDir.temporary, true)
+      } finally {
+        await tempDir.remove()
+      }
+    })
+
+    it("returns false when constructed without temporary flag", () => {
+      const dir = new DirectoryObject("/some/path")
+
+      assert.equal(dir.temporary, false)
+    })
+
+    it("returns true when constructed with temporary flag", () => {
+      const dir = new DirectoryObject("/some/path", true)
+
+      assert.equal(dir.temporary, true)
+    })
+
+    it("is a boolean value", () => {
+      const dir1 = new DirectoryObject(process.cwd())
+      const dir2 = new DirectoryObject(process.cwd(), true)
+
+      assert.equal(typeof dir1.temporary, "boolean")
+      assert.equal(typeof dir2.temporary, "boolean")
+    })
+  })
+
+  describe("remove() method", () => {
+    let tempDir
+    let FS
+
+    beforeEach(async () => {
+      const imports = await import("../../src/index.js")
+      FS = imports.FS
+      tempDir = await FS.tempDirectory("test-remove")
+    })
+
+    afterEach(async () => {
+      // Try to clean up if test failed
+      try {
+        if(tempDir && await tempDir.exists)
+          await tempDir.remove()
+      } catch(_) {
+        // Ignore cleanup errors
+      }
+    })
+
+    it("removes empty temporary directory", async () => {
+      assert.ok(await tempDir.exists)
+
+      await tempDir.remove()
+
+      assert.ok(!(await tempDir.exists))
+    })
+
+    it("removes temporary directory with files", async () => {
+      const {FileObject} = await import("../../src/index.js")
+      const file1 = new FileObject("test1.txt", tempDir)
+      const file2 = new FileObject("test2.txt", tempDir)
+
+      await file1.write("content1")
+      await file2.write("content2")
+
+      assert.ok(await file1.exists)
+      assert.ok(await file2.exists)
+
+      await tempDir.remove()
+
+      assert.ok(!(await tempDir.exists))
+      assert.ok(!(await file1.exists))
+      assert.ok(!(await file2.exists))
+    })
+
+    it("removes temporary directory with nested subdirectories", async () => {
+      const {FS} = await import("../../src/index.js")
+      const subDir1 = await FS.tempDirectory("sub1", tempDir)
+      const subDir2 = await FS.tempDirectory("sub2", tempDir)
+
+      assert.ok(await subDir1.exists)
+      assert.ok(await subDir2.exists)
+
+      await tempDir.remove()
+
+      assert.ok(!(await tempDir.exists))
+      assert.ok(!(await subDir1.exists))
+      assert.ok(!(await subDir2.exists))
+    })
+
+    it("removes deeply nested structure", async () => {
+      const {FS, FileObject} = await import("../../src/index.js")
+      const level1 = await FS.tempDirectory("level1", tempDir)
+      const level2 = await FS.tempDirectory("level2", level1)
+      const file = new FileObject("deep.txt", level2)
+
+      await file.write("deep content")
+
+      assert.ok(await file.exists)
+
+      await tempDir.remove()
+
+      assert.ok(!(await tempDir.exists))
+      assert.ok(!(await level1.exists))
+      assert.ok(!(await level2.exists))
+      assert.ok(!(await file.exists))
+    })
+
+    it("throws error for non-temporary directory", async () => {
+      const regularDir = new DirectoryObject(process.cwd())
+
+      await assert.rejects(
+        () => regularDir.remove(),
+        /This is not a temporary directory/
+      )
+    })
+
+    it("handles directory with mix of files and subdirectories", async () => {
+      const {FS, FileObject} = await import("../../src/index.js")
+      const subDir = await FS.tempDirectory("subdir", tempDir)
+      const file1 = new FileObject("root.txt", tempDir)
+      const file2 = new FileObject("nested.txt", subDir)
+
+      await file1.write("root content")
+      await file2.write("nested content")
+
+      assert.ok(await file1.exists)
+      assert.ok(await file2.exists)
+      assert.ok(await subDir.exists)
+
+      await tempDir.remove()
+
+      assert.ok(!(await tempDir.exists))
+      assert.ok(!(await subDir.exists))
+      assert.ok(!(await file1.exists))
+      assert.ok(!(await file2.exists))
+    })
+
+    it("removes directory recursively in correct order", async () => {
+      const {FS, FileObject} = await import("../../src/index.js")
+
+      // Create a structure
+      const child = await FS.tempDirectory("child", tempDir)
+      const file = new FileObject("test.txt", child)
+      await file.write("content")
+
+      await tempDir.remove()
+
+      // Directory should be deleted successfully
+      assert.ok(!(await tempDir.exists))
+    })
+
+    it("cleans up all resources before final deletion", async () => {
+      const {FileObject} = await import("../../src/index.js")
+      const file = new FileObject("test.txt", tempDir)
+      await file.write("content")
+
+      await tempDir.remove()
+
+      // Verify the directory no longer exists
+      assert.ok(!(await tempDir.exists))
+
+      // Verify we can create a new temp directory with same name pattern
+      const newTemp = await FS.tempDirectory("test-remove")
+      assert.ok(await newTemp.exists)
+      await newTemp.remove()
     })
   })
 })

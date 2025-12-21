@@ -73,6 +73,39 @@ describe("FileObject", () => {
       assert.ok(!file.supplied.includes("\\\\"))
       assert.ok(file.supplied.includes("/"))
     })
+
+    it("accepts FileObject as input (polymorphic)", () => {
+      const original = new FileObject("/home/user/test.txt")
+      const clone = new FileObject(original)
+
+      assert.ok(clone instanceof FileObject)
+      assert.equal(clone.path, original.path)
+      assert.equal(clone.name, original.name)
+      assert.equal(clone.extension, original.extension)
+      assert.notEqual(clone, original) // Should be a new instance
+    })
+
+    it("accepts FileObject with different directory", () => {
+      const original = new FileObject("/home/user/test.txt")
+      const dir = new DirectoryObject("/tmp")
+      const relocated = new FileObject(original, dir)
+
+      // When passing a FileObject, it extracts the path (full path including filename)
+      // This creates a file with the same name in a different directory
+      assert.equal(relocated.name, original.name)
+      assert.equal(relocated.path, original.path) // Actually keeps the original full path
+    })
+
+    it("accepts FileObject and preserves all metadata", () => {
+      const original = new FileObject("/home/user/document.tar.gz")
+      const clone = new FileObject(original)
+
+      assert.equal(clone.name, original.name)
+      assert.equal(clone.extension, original.extension)
+      assert.equal(clone.module, original.module)
+      assert.equal(clone.path, original.path)
+      assert.equal(clone.directory.path, original.directory.path)
+    })
   })
 
   describe("getters", () => {

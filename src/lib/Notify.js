@@ -6,6 +6,8 @@
 
 import {EventEmitter} from "node:events"
 
+import Valid from "./Valid.js"
+
 /**
  * @typedef {object} NotifyEventOptions
  * @property {boolean} [once] - Whether the listener should be invoked only once.
@@ -31,6 +33,9 @@ export default new class Notify {
    * @returns {void}
    */
   emit(type, payload=undefined) {
+    Valid.type(type, "String")
+    Valid.assert(type.length > 0, "Event type cannot be an empty string.")
+
     this.#emitter.emit(type, payload)
   }
 
@@ -43,6 +48,9 @@ export default new class Notify {
    * @returns {unknown} The payload after listeners have processed it.
    */
   request(type, payload={}) {
+    Valid.type(type, "String")
+    Valid.assert(type.length > 0, "Event type cannot be an empty string.")
+
     this.#emitter.emit(type, payload)
 
     return payload
@@ -58,11 +66,9 @@ export default new class Notify {
    * @returns {() => void} Dispose function to unregister the handler.
    */
   on(type, handler, emitter=this.#emitter, options=undefined) {
-    if(!(typeof type === "string" && type))
-      throw new Error("No event 'type' specified to listen for.")
-
-    if(typeof handler !== "function")
-      throw new Error("No handler function specified.")
+    Valid.type(type, "String")
+    Valid.assert(type.length > 0, "Event type cannot be an empty string.")
+    Valid.type(handler, "Function")
 
     if(options?.once) {
       emitter.once(type, handler, options)

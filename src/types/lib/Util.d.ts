@@ -73,5 +73,4 @@ export default class Util extends BrowserUtil {
     static asyncEmitQuack(emitter: object, event: string, ...args: unknown[]): Promise<void>;
 }
 import { Util as BrowserUtil } from "../browser/index.js";
-import { EventEmitter } from "node:events";
 //# sourceMappingURL=Util.d.ts.map

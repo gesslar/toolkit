@@ -8,10 +8,13 @@
 import {globby} from "globby"
 import path from "node:path"
 import url from "node:url"
+import fs from "node:fs/promises"
+import os from "node:os"
 
 import Collection from "../browser/lib/Collection.js"
 import Sass from "./Sass.js"
 import Valid from "./Valid.js"
+import DirectoryObject from "./DirectoryObject.js"
 
 /** @typedef {import("./FileObject.js").default} FileObject */
 /** @typedef {import("./DirectoryObject.js").default} DirectoryObject */
@@ -33,6 +36,7 @@ export default class FS {
   /**
    * Fix slashes in a path
    *
+   * @static
    * @param {string} pathName - The path to fix
    * @returns {string} The fixed path
    */
@@ -43,6 +47,7 @@ export default class FS {
   /**
    * Convert a path to a URI
    *
+   * @static
    * @param {string} pathName - The path to convert
    * @returns {string} The URI
    */
@@ -59,6 +64,7 @@ export default class FS {
   /**
    * Convert a URI to a path
    *
+   * @static
    * @param {string} pathName - The URI to convert
    * @returns {string} The path
    */
@@ -73,6 +79,7 @@ export default class FS {
   /**
    * Retrieve all files matching a specific glob pattern.
    *
+   * @static
    * @param {string|Array<string>} glob - The glob pattern(s) to search.
    * @returns {Promise<Array<FileObject>>} A promise that resolves to an array of file objects
    * @throws {Sass} If the input is not a string or array of strings.
@@ -117,6 +124,7 @@ export default class FS {
    * If the target is outside the source (i.e., the relative path starts with ".."),
    * returns the absolute path to the target instead.
    *
+   * @static
    * @param {FileObject|DirectoryObject} from - The source file or directory object
    * @param {FileObject|DirectoryObject} to - The target file or directory object
    * @returns {string} The relative path from `from` to `to`, or the absolute path if not reachable
@@ -136,6 +144,7 @@ export default class FS {
   /**
    * Merge two paths by finding overlapping segments and combining them efficiently
    *
+   * @static
    * @param {string} path1 - The first path
    * @param {string} path2 - The second path to merge with the first
    * @param {string} [sep] - The path separator to use (defaults to system separator)
@@ -172,6 +181,7 @@ export default class FS {
    * Resolve a path relative to another path using various strategies
    * Handles absolute paths, relative navigation, and overlap-based merging
    *
+   * @static
    * @param {string} fromPath - The base path to resolve from
    * @param {string} toPath - The target path to resolve
    * @returns {string} The resolved path
@@ -206,5 +216,89 @@ export default class FS {
     // Strategy 3: Try overlap-based merging, which will default to a basic
     // join if no overlap
     return FS.mergeOverlappingPaths(from, normalizedTo)
+  }
+
+  /**
+   * Creates a new temporary directory and wraps it in a DirectoryObject.
+   *
+   * When called without a parent, creates a new temporary directory in the OS
+   * temp folder with a unique name. When called with a parent DirectoryObject,
+   * creates a subdirectory within that parent.
+   *
+   * The parent directory (if provided) must:
+   * - Be marked as temporary
+   * - Actually exist on the filesystem
+   * - Have lineage tracing back to the OS temp directory
+   *
+   * These validations ensure that only legitimately temporary directories can
+   * be created and later removed with the remove() method.
+   *
+   * @static
+   * @async
+   * @param {string} name - The base name for the temporary directory. When creating a root temp directory, a random suffix will be appended for uniqueness.
+   * @param {DirectoryObject|null} [parent] - Optional parent DirectoryObject to create this directory within. Must be a temporary directory itself.
+   * @returns {Promise<DirectoryObject>} A DirectoryObject representing the created temporary directory, with the temporary flag set to true.
+   * @throws {Sass} If name is not a string
+   * @throws {Sass} If parent is provided but is not a DirectoryObject
+   * @throws {Sass} If parent is not marked as temporary
+   * @throws {Sass} If parent does not exist
+   * @throws {Sass} If parent's lineage does not trace back to the OS temp directory
+   * @example
+   * // Create a standalone temporary directory
+   * const tempDir = await FS.tempDirectory("my-temp")
+   * console.log(tempDir.temporary) // true
+   * console.log(tempDir.path) // /tmp/my-temp-abc123 (on Unix)
+   *
+   * @example
+   * // Create nested temporary directories
+   * const parent = await FS.tempDirectory("parent")
+   * const child = await FS.tempDirectory("child", parent)
+   * console.log(child.path.startsWith(parent.path)) // true
+   * await parent.remove() // Removes both parent and child
+   */
+  static async tempDirectory(name, parent=null) {
+    Valid.type(name, "String")
+    Valid.type(parent, "Null|DirectoryObject")
+
+    const temp = os.tmpdir()
+
+    if(parent) {
+      Valid.assert(parent.temporary, "Parent must be a temporary DirectoryObject.")
+      Valid.assert(await parent.exists, "Parent must exist.")
+
+      let found = false
+      for(const p of parent.walkUp) {
+        if(p.path === temp) {
+          found = true
+          break
+        }
+      }
+
+      Valid.assert(found, "The lineage of this directory must be the OS temp directory.")
+
+      // Security: Reject absolute paths, path traversal, and path separators
+      Valid.assert(
+        !path.isAbsolute(name),
+        "Temporary directory name must not be an absolute path."
+      )
+      Valid.assert(
+        !name.includes("/") && !name.includes("\\") && !name.includes(path.sep),
+        "Temporary directory name must not contain path separators."
+      )
+      Valid.assert(
+        name.length > 0,
+        "Temporary directory name must not be empty."
+      )
+
+      const dir = new DirectoryObject(path.join(parent.path, name), true)
+      await dir.assureExists()
+
+      return dir
+    }
+
+    const prefix = name.endsWith("-") ? name : `${name}-`
+    const dir = await fs.mkdtemp(path.join(temp, prefix))
+
+    return new DirectoryObject(dir, true)
   }
 }

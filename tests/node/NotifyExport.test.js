@@ -127,28 +127,28 @@ describe("Notify (Node.js)", () => {
     it("throws when type is missing", () => {
       assert.throws(
         () => Notify.on("", () => {}),
-        /No event 'type' specified/
+        /Event type cannot be an empty string/
       )
     })
 
     it("throws when type is not a string", () => {
       assert.throws(
         () => Notify.on(123, () => {}),
-        /No event 'type' specified/
+        /Invalid type.*Expected String/
       )
     })
 
     it("throws when handler is missing", () => {
       assert.throws(
         () => Notify.on("test", null),
-        /No handler function specified/
+        /Invalid type.*Expected Function/
       )
     })
 
     it("throws when handler is not a function", () => {
       assert.throws(
         () => Notify.on("test", "not-a-function"),
-        /No handler function specified/
+        /Invalid type.*Expected Function/
       )
     })
   })
