@@ -13,8 +13,10 @@ export {default as Util} from "./lib/Util.js"
 
 // Node-specific exports
 export {default as Cache} from "./lib/Cache.js"
+export {default as CappedDirectoryObject} from "./lib/CappedDirectoryObject.js"
 export {default as Contract} from "./lib/Contract.js"
 export {default as DirectoryObject} from "./lib/DirectoryObject.js"
+export {default as TempDirectoryObject} from "./lib/TempDirectoryObject.js"
 export {default as FileObject} from "./lib/FileObject.js"
 export {default as FS} from "./lib/FS.js"
 export {default as Glog} from "./lib/Glog.js"

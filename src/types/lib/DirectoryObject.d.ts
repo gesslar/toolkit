@@ -102,7 +102,8 @@ export default class DirectoryObject extends FS {
      * @throws {Sass} If the directory is not marked as temporary
      * @throws {Sass} If the directory deletion fails
      * @example
-     * const tempDir = await FS.tempDirectory("my-temp")
+     * const tempDir = new TempDirectoryObject("my-temp")
+     * await tempDir.assureExists()
      * // ... use the directory ...
      * await tempDir.remove() // Recursively deletes everything
      */
@@ -190,20 +191,32 @@ export default class DirectoryObject extends FS {
      */
     hasDirectory(dirname: string): Promise<boolean>;
     /**
-     * Creates a new DirectoryObject by merging this directory's path with a new
-     * path.
+     * Creates a new DirectoryObject by extending this directory's path.
      *
      * Uses overlapping path segment detection to intelligently combine paths.
      * Preserves the temporary flag from the current directory.
      *
-     * @param {string} newPath - The path to merge with this directory's path.
-     * @returns {DirectoryObject} A new DirectoryObject with the merged path.
+     * @param {string} newPath - The path to append to this directory's path.
+     * @returns {DirectoryObject} A new DirectoryObject with the extended path.
      * @example
      * const dir = new DirectoryObject("/projects/git/toolkit")
-     * const subDir = dir.to("toolkit/src/lib")
+     * const subDir = dir.addDirectory("src/lib")
      * console.log(subDir.path) // "/projects/git/toolkit/src/lib"
      */
-    to(newPath: string): DirectoryObject;
+    addDirectory(newPath: string): DirectoryObject;
+    /**
+     * Creates a new FileObject by extending this directory's path.
+     *
+     * Uses overlapping path segment detection to intelligently combine paths.
+     *
+     * @param {string} filename - The filename to append to this directory's path.
+     * @returns {FileObject} A new FileObject with the extended path.
+     * @example
+     * const dir = new DirectoryObject("/projects/git/toolkit")
+     * const file = dir.addFile("package.json")
+     * console.log(file.path) // "/projects/git/toolkit/package.json"
+     */
+    addFile(filename: string): FileObject;
     #private;
 }
 import FS from "./FS.js";

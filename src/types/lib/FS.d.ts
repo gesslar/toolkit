@@ -71,47 +71,7 @@ export default class FS {
      * @returns {string} The resolved path
      */
     static resolvePath(fromPath: string, toPath: string): string;
-    /**
-     * Creates a new temporary directory and wraps it in a DirectoryObject.
-     *
-     * When called without a parent, creates a new temporary directory in the OS
-     * temp folder with a unique name. When called with a parent DirectoryObject,
-     * creates a subdirectory within that parent.
-     *
-     * The parent directory (if provided) must:
-     * - Be marked as temporary
-     * - Actually exist on the filesystem
-     * - Have lineage tracing back to the OS temp directory
-     *
-     * These validations ensure that only legitimately temporary directories can
-     * be created and later removed with the remove() method.
-     *
-     * @static
-     * @async
-     * @param {string} name - The base name for the temporary directory. When creating a root temp directory, a random suffix will be appended for uniqueness.
-     * @param {DirectoryObject|null} [parent] - Optional parent DirectoryObject to create this directory within. Must be a temporary directory itself.
-     * @returns {Promise<DirectoryObject>} A DirectoryObject representing the created temporary directory, with the temporary flag set to true.
-     * @throws {Sass} If name is not a string
-     * @throws {Sass} If parent is provided but is not a DirectoryObject
-     * @throws {Sass} If parent is not marked as temporary
-     * @throws {Sass} If parent does not exist
-     * @throws {Sass} If parent's lineage does not trace back to the OS temp directory
-     * @example
-     * // Create a standalone temporary directory
-     * const tempDir = await FS.tempDirectory("my-temp")
-     * console.log(tempDir.temporary) // true
-     * console.log(tempDir.path) // /tmp/my-temp-abc123 (on Unix)
-     *
-     * @example
-     * // Create nested temporary directories
-     * const parent = await FS.tempDirectory("parent")
-     * const child = await FS.tempDirectory("child", parent)
-     * console.log(child.path.startsWith(parent.path)) // true
-     * await parent.remove() // Removes both parent and child
-     */
-    static tempDirectory(name: string, parent?: DirectoryObject | null): Promise<DirectoryObject>;
 }
 export type FileObject = import("./FileObject.js").default;
 export type DirectoryObject = import("./DirectoryObject.js").default;
-import DirectoryObject from "./DirectoryObject.js";
 //# sourceMappingURL=FS.d.ts.map

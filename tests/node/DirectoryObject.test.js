@@ -969,8 +969,9 @@ describe("DirectoryObject", () => {
     })
 
     it("returns true for temporary directories", async () => {
-      const {FS} = await import("../../src/index.js")
-      const tempDir = await FS.tempDirectory("test-temp-getter")
+      const {TempDirectoryObject} = await import("../../src/index.js")
+      const tempDir = new TempDirectoryObject("test-temp-getter")
+      await tempDir.assureExists()
 
       try {
         assert.equal(tempDir.temporary, true)
@@ -1002,12 +1003,13 @@ describe("DirectoryObject", () => {
 
   describe("remove() method", () => {
     let tempDir
-    let FS
+    let TempDirectoryObject
 
     beforeEach(async () => {
       const imports = await import("../../src/index.js")
-      FS = imports.FS
-      tempDir = await FS.tempDirectory("test-remove")
+      TempDirectoryObject = imports.TempDirectoryObject
+      tempDir = new TempDirectoryObject("test-remove")
+      await tempDir.assureExists()
     })
 
     afterEach(async () => {
@@ -1047,9 +1049,10 @@ describe("DirectoryObject", () => {
     })
 
     it("removes temporary directory with nested subdirectories", async () => {
-      const {FS} = await import("../../src/index.js")
-      const subDir1 = await FS.tempDirectory("sub1", tempDir)
-      const subDir2 = await FS.tempDirectory("sub2", tempDir)
+      const subDir1 = new TempDirectoryObject("sub1", tempDir)
+      await subDir1.assureExists()
+      const subDir2 = new TempDirectoryObject("sub2", tempDir)
+      await subDir2.assureExists()
 
       assert.ok(await subDir1.exists)
       assert.ok(await subDir2.exists)
@@ -1062,9 +1065,11 @@ describe("DirectoryObject", () => {
     })
 
     it("removes deeply nested structure", async () => {
-      const {FS, FileObject} = await import("../../src/index.js")
-      const level1 = await FS.tempDirectory("level1", tempDir)
-      const level2 = await FS.tempDirectory("level2", level1)
+      const {FileObject} = await import("../../src/index.js")
+      const level1 = new TempDirectoryObject("level1", tempDir)
+      await level1.assureExists()
+      const level2 = new TempDirectoryObject("level2", level1)
+      await level2.assureExists()
       const file = new FileObject("deep.txt", level2)
 
       await file.write("deep content")
@@ -1089,8 +1094,9 @@ describe("DirectoryObject", () => {
     })
 
     it("handles directory with mix of files and subdirectories", async () => {
-      const {FS, FileObject} = await import("../../src/index.js")
-      const subDir = await FS.tempDirectory("subdir", tempDir)
+      const {FileObject} = await import("../../src/index.js")
+      const subDir = new TempDirectoryObject("subdir", tempDir)
+      await subDir.assureExists()
       const file1 = new FileObject("root.txt", tempDir)
       const file2 = new FileObject("nested.txt", subDir)
 
@@ -1110,10 +1116,11 @@ describe("DirectoryObject", () => {
     })
 
     it("removes directory recursively in correct order", async () => {
-      const {FS, FileObject} = await import("../../src/index.js")
+      const {FileObject} = await import("../../src/index.js")
 
       // Create a structure
-      const child = await FS.tempDirectory("child", tempDir)
+      const child = new TempDirectoryObject("child", tempDir)
+      await child.assureExists()
       const file = new FileObject("test.txt", child)
       await file.write("content")
 
@@ -1134,7 +1141,8 @@ describe("DirectoryObject", () => {
       assert.ok(!(await tempDir.exists))
 
       // Verify we can create a new temp directory with same name pattern
-      const newTemp = await FS.tempDirectory("test-remove")
+      const newTemp = new TempDirectoryObject("test-remove")
+      await newTemp.assureExists()
       assert.ok(await newTemp.exists)
       await newTemp.remove()
     })
