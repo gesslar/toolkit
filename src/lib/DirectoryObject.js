@@ -9,10 +9,10 @@ import path from "node:path"
 import {URL} from "node:url"
 import util from "node:util"
 
+import {Data, Valid} from "../browser/index.js"
 import FS from "./FS.js"
 import FileObject from "./FileObject.js"
 import Sass from "./Sass.js"
-import {Data, Valid} from "../browser/index.js"
 
 /**
  * DirectoryObject encapsulates metadata and operations for a directory,
@@ -64,10 +64,10 @@ export default class DirectoryObject extends FS {
   constructor(directory=null, temporary=false) {
     super()
 
-    Valid.type(directory, "String|DirectoryObject|Null")
+    Valid.type(directory, "String|TempDirectoryObject|DirectoryObject|Null")
 
     // If passed a DirectoryObject, extract its path
-    if(Data.isType(directory, "DirectoryObject"))
+    if(Data.isType(directory, "DirectoryObject") || Data.isType(directory, "TempDirectoryObject"))
       directory = directory.path
 
     const fixedDir = FS.fixSlashes(directory ?? ".")
@@ -231,7 +231,8 @@ export default class DirectoryObject extends FS {
    * @throws {Sass} If the directory is not marked as temporary
    * @throws {Sass} If the directory deletion fails
    * @example
-   * const tempDir = await FS.tempDirectory("my-temp")
+   * const tempDir = new TempDirectoryObject("my-temp")
+   * await tempDir.assureExists()
    * // ... use the directory ...
    * await tempDir.remove() // Recursively deletes everything
    */
@@ -440,25 +441,45 @@ export default class DirectoryObject extends FS {
   }
 
   /**
-   * Creates a new DirectoryObject by merging this directory's path with a new
-   * path.
+   * Creates a new DirectoryObject by extending this directory's path.
    *
    * Uses overlapping path segment detection to intelligently combine paths.
    * Preserves the temporary flag from the current directory.
    *
-   * @param {string} newPath - The path to merge with this directory's path.
-   * @returns {DirectoryObject} A new DirectoryObject with the merged path.
+   * @param {string} newPath - The path to append to this directory's path.
+   * @returns {DirectoryObject} A new DirectoryObject with the extended path.
    * @example
    * const dir = new DirectoryObject("/projects/git/toolkit")
-   * const subDir = dir.to("toolkit/src/lib")
+   * const subDir = dir.addDirectory("src/lib")
    * console.log(subDir.path) // "/projects/git/toolkit/src/lib"
    */
-  to(newPath) {
+  addDirectory(newPath) {
     Valid.type(newPath, "String")
 
     const thisPath = this.path
     const merged = FS.mergeOverlappingPaths(thisPath, newPath)
 
     return new this.constructor(merged, this.temporary)
+  }
+
+  /**
+   * Creates a new FileObject by extending this directory's path.
+   *
+   * Uses overlapping path segment detection to intelligently combine paths.
+   *
+   * @param {string} filename - The filename to append to this directory's path.
+   * @returns {FileObject} A new FileObject with the extended path.
+   * @example
+   * const dir = new DirectoryObject("/projects/git/toolkit")
+   * const file = dir.addFile("package.json")
+   * console.log(file.path) // "/projects/git/toolkit/package.json"
+   */
+  addFile(filename) {
+    Valid.type(filename, "String")
+
+    const thisPath = this.path
+    const merged = FS.mergeOverlappingPaths(thisPath, filename)
+
+    return new FileObject(merged)
   }
 }

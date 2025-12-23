@@ -98,6 +98,7 @@ export default class FileObject extends FS {
         case "String":
           return new DirectoryObject(directory)
         case "DirectoryObject":
+        case "TempDirectoryObject":
           return directory
         default:
           return new DirectoryObject(dir)
