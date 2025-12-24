@@ -525,7 +525,7 @@ export default class Collection {
   /**
    * Allocates an object from a source array and a spec array or function.
    *
-   * @param {unknown} source The source array
+   * @param {Array<unknown>} source The source array
    * @param {Array<unknown>|function(Array<unknown>): Promise<Array<unknown>>|Array<unknown>} spec The spec array or function
    * @returns {Promise<object>} The allocated object
    */
