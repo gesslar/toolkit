@@ -49,6 +49,8 @@ This repo is a library—every new module/class must be exported correctly.
 
 - **Keep exports map coherent**: default export pattern is `export {default as Foo} from "./lib/Foo.js"`. Make sure the class/file name matches the rest of the tree.
 
+- **Update README.md**: Add the new class to the appropriate table (Browser or Node.js) with an accurate description based on the class's JSDoc.
+
 ### **Step 3: Update Type Definitions**
 
 Type declarations are generated from the JSDoc in `src/**`:
@@ -70,7 +72,8 @@ After code changes:
 1. `npm run lint`
 2. `npm run types:build` (when exports or JSDoc change)
 3. `npm test` (runs both browser and node suites)
-4. For browser-safe additions, sanity check both `@gesslar/toolkit` and `@gesslar/toolkit/browser` imports resolve to the same implementation.
+4. Verify README.md lists the class with accurate description
+5. For browser-safe additions, sanity check both `@gesslar/toolkit` and `@gesslar/toolkit/browser` imports resolve to the same implementation.
 
 ### **Step 5: Tests (required for this repo)**
 

@@ -1,11 +1,6 @@
-# Gesslar's Toolkit of Amazing ✌🏻
+# Toolkit
 
-This package is intended to be a collection of useful utilities for any
-project's consumption. Not the kind that gives you bleeding, hacking coughs,
-but the kind that gives "yumyum."
-
-There are file and directory abstractions, uhmm, there's also some terminal
-things and validity checkers, lots of data functions.
+A collection of utilities for Node.js and browser environments, including file and directory abstractions, terminal utilities, validation helpers, and data manipulation functions.
 
 ## Included Classes
 
@@ -16,37 +11,39 @@ a Tauri app.
 
 | Name | Description |
 | ---- | ----------- |
-| Collection | Array, Map, etc methods |
-| Data | Primitive manipulation and identification |
-| Disposer | Participate in lifecycle mechanics |
-| HTML | HTML-related methods |
-| Notify | Wrapper around DOM event system |
-| Sass | The best Error class this side of Tatooine |
-| Tantrum | Sass's louder, shoutier AggregateError cousin |
-| TypeSpec | String-based type management |
-| Util | Porn |
-| Valid | Assert methods for validation |
+| Collection | Array, Map, Set, and other collection manipulation methods |
+| Data | Primitive manipulation and type identification |
+| Disposer | Lifecycle management for disposable resources |
+| HTML | HTML loading and sanitization utilities |
+| Notify | Event system wrapper for DOM events |
+| Sass | Custom Error class with enhanced features |
+| Tantrum | AggregateError implementation |
+| Type | String-based type management (exported as TypeSpec in browser) |
+| Util | General utility functions |
+| Valid | Validation and assertion methods |
 
 ### Node.js
 
-Everything included in the browser but more, and backendier.
+Includes all browser functionality plus Node.js-specific modules for file I/O, logging, and system operations.
 
 | Name | Description |
 | ---- | ----------- |
-| Cache | Cache management for use with file IO |
-| Contract | Contract management |
-| DirectoryObject | Wrapper around Node's fs for directories |
-| FileObject | Wrapper around Node's fs for directories |
-| FS | Base for DirectoryObject and FileObject, but with additional static methods |
-| Glog | The superior logging framework |
-| Notify | Wrapper around Node's event system |
-| Sass | The best Error class the other side of Tatooine |
-| Schemer | Schema management |
-| Tantrum | *crowd of wookiee roars* |
-| Term | Terminal based methods |
+| Cache | Cache management for file I/O operations |
+| CappedDirectoryObject | Directory operations constrained to a specific tree |
+| Contract | Contract management and validation |
+| DirectoryObject | File system wrapper for directory operations |
+| FileObject | File system wrapper for file operations |
+| FS | Base class for file system operations with static utilities |
+| Glog | Logging framework |
+| Notify | Event system wrapper for Node.js events |
+| Sass | Custom Error class with enhanced features |
+| Schemer | JSON schema validation and management |
+| Tantrum | AggregateError implementation |
+| TempDirectoryObject | Temporary directory management with automatic cleanup |
+| Term | Terminal formatting and output utilities |
 | Terms | Terms for use with Contract |
-| Util | Not porn, promise 🤞🏼 |
-| Valid | Assert methods for validation |
+| Util | General utility functions (Node-enhanced version) |
+| Valid | Validation and assertion methods |
 
 ## Installation
 
@@ -56,9 +53,7 @@ npm i @gesslar/toolkit
 
 ## Usage
 
-Toolkit is environment aware and knows whether it is being used in a web browser or in
-Node.js. It is not strictly necessary to specify whether you require the `node` or
-`browser` variant, but you may do so if you like to feel like a nice control daddy.
+Toolkit is environment aware and automatically detects whether it is being used in a web browser or in Node.js. You can optionally specify the `node` or `browser` variant explicitly.
 
 ### Browser-like
 
@@ -90,25 +85,11 @@ import {Data, FileObject, Cache} from "@gesslar/toolkit"
 ```
 
 ```javascript
-import {Data, Filebject} from "@gesslar/toolkit/node"
+import {Data, FileObject} from "@gesslar/toolkit/node"
 ```
 
 ```javascript
 import { Data, Collection, Util } from '@gesslar/toolkit/browser'
 ```
 
-The browser version includes: Data, Collection, Util, Type (TypeSpec), Valid,
-Sass, and Tantrum. Node-only modules (FileObject, Cache, FS, etc.) are not
-available in the browser version.
-
-Basically, if you want it, it is most definitely here, and working 100% and
-absolutely none of that is true. There are only a few classes here, but they're
-pretty. And if you bug-shame them, I will *come for you like* ...
-
-nah. Just don't be a dick, okay? Play nice, share, lick a veggie and gentlemen,
-spend fewer than 5 minutes washing your pits, chest, and downstairs and maybe
-give some time to the other parts. Like the parts that walk on things, sit
-on things. Some things that enjoy being sat upon do not enjoy being sat upon
-by gross sitter-upon-things.
-
-Also,
+The browser version includes: Collection, Data, Disposer, HTML, Notify, Sass, Tantrum, Type (TypeSpec), Util, and Valid. Node-only modules (Cache, CappedDirectoryObject, Contract, DirectoryObject, FileObject, FS, Glog, Schemer, TempDirectoryObject, Term, Terms) are not available in the browser version.
