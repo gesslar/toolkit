@@ -234,6 +234,59 @@ describe("DirectoryObject", () => {
       assert.equal(result.files.length, 0)
       assert.equal(result.directories.length, 0)
     })
+
+    it("filters files with pattern parameter", async () => {
+      // Create multiple files with different extensions
+      await fs.writeFile(path.join(testDir, "test1.txt"), "content1")
+      await fs.writeFile(path.join(testDir, "test2.js"), "content2")
+      await fs.writeFile(path.join(testDir, "test3.txt"), "content3")
+
+      const result = await testDirObj.read("*.txt")
+
+      assert.ok(Array.isArray(result.files))
+      // beforeEach creates test.txt, plus test1.txt and test3.txt = 3 total
+      assert.equal(result.files.length, 3)
+      assert.ok(result.files.every(f => f.name.endsWith(".txt")))
+    })
+
+    it("filters directories with pattern parameter", async () => {
+      // Create multiple directories
+      await fs.mkdir(path.join(testDir, "dir1"))
+      await fs.mkdir(path.join(testDir, "dir2"))
+      await fs.mkdir(path.join(testDir, "other"))
+
+      const result = await testDirObj.read("dir*")
+
+      assert.ok(Array.isArray(result.directories))
+      assert.equal(result.directories.length, 2)
+      assert.ok(result.directories.every(d => d.name.startsWith("dir")))
+    })
+
+    it("returns all items when pattern is empty string", async () => {
+      // Should behave same as read() with no arguments
+      const result = await testDirObj.read("")
+
+      assert.ok(Array.isArray(result.files))
+      assert.ok(Array.isArray(result.directories))
+      assert.equal(result.files.length, 1)
+      assert.equal(result.directories.length, 1)
+    })
+
+    it("excludes items from subdirectories with pattern", async () => {
+      // Create nested structure
+      const nestedDir = path.join(testDir, "nested")
+      await fs.mkdir(nestedDir)
+      await fs.writeFile(path.join(nestedDir, "nested.txt"), "nested content")
+      await fs.writeFile(path.join(testDir, "root.txt"), "root content")
+
+      const result = await testDirObj.read("*.txt")
+
+      // Should only match root-level txt files, not nested ones
+      // beforeEach creates test.txt, plus root.txt = 2 total
+      assert.equal(result.files.length, 2)
+      const fileNames = result.files.map(f => f.name).sort()
+      assert.deepEqual(fileNames, ["root.txt", "test.txt"])
+    })
   })
 
   describe("assureExists method", () => {
@@ -998,6 +1051,118 @@ describe("DirectoryObject", () => {
 
       assert.equal(typeof dir1.temporary, "boolean")
       assert.equal(typeof dir2.temporary, "boolean")
+    })
+  })
+
+  describe("getDirectory() method", () => {
+    it("creates DirectoryObject by extending path", () => {
+      const dir = new DirectoryObject("/projects/git/toolkit")
+      const subDir = dir.getDirectory("src/lib")
+
+      assert.ok(subDir instanceof DirectoryObject)
+      assert.equal(subDir.path, path.join("/projects/git/toolkit", "src/lib"))
+    })
+
+    it("handles overlapping path segments", () => {
+      const dir = new DirectoryObject("/projects/git/toolkit")
+      const subDir = dir.getDirectory("toolkit/src")
+
+      // Should intelligently merge overlapping "toolkit" segment
+      assert.ok(subDir.path.includes("toolkit"))
+      assert.ok(subDir.path.includes("src"))
+    })
+
+    it("preserves temporary flag from parent", () => {
+      const tempDir = new DirectoryObject("/tmp/test", true)
+      const subDir = tempDir.getDirectory("child")
+
+      assert.equal(subDir.temporary, true)
+    })
+
+    it("returns new DirectoryObject instance", () => {
+      const dir = new DirectoryObject("/test")
+      const subDir = dir.getDirectory("child")
+
+      assert.notEqual(dir, subDir)
+      assert.ok(subDir instanceof DirectoryObject)
+    })
+
+    it("validates newPath parameter type", () => {
+      const dir = new DirectoryObject("/test")
+
+      assert.throws(
+        () => dir.getDirectory(123),
+        /type/i
+      )
+
+      assert.throws(
+        () => dir.getDirectory(null),
+        /type/i
+      )
+    })
+
+    it("uses constructor type for polymorphism", () => {
+      // This allows subclasses like TempDirectoryObject to return their own type
+      const dir = new DirectoryObject("/test", true)
+      const subDir = dir.getDirectory("child")
+
+      assert.equal(subDir.constructor, dir.constructor)
+    })
+  })
+
+  describe("getFile() method", () => {
+    it("creates FileObject by extending path", () => {
+      const dir = new DirectoryObject("/projects/git/toolkit")
+      const file = dir.getFile("package.json")
+
+      assert.equal(file.constructor.name, "FileObject")
+      assert.equal(file.path, path.join("/projects/git/toolkit", "package.json"))
+    })
+
+    it("handles nested file paths", () => {
+      const dir = new DirectoryObject("/projects/git/toolkit")
+      const file = dir.getFile("src/index.js")
+
+      assert.ok(file.path.includes("src"))
+      assert.ok(file.path.includes("index.js"))
+    })
+
+    it("handles overlapping path segments", () => {
+      const dir = new DirectoryObject("/projects/git/toolkit")
+      const file = dir.getFile("toolkit/package.json")
+
+      // Should intelligently merge overlapping "toolkit" segment
+      assert.ok(file.path.includes("toolkit"))
+      assert.ok(file.path.includes("package.json"))
+    })
+
+    it("returns new FileObject instance", () => {
+      const dir = new DirectoryObject("/test")
+      const file = dir.getFile("test.txt")
+
+      assert.equal(file.constructor.name, "FileObject")
+      assert.ok(file.path.endsWith("test.txt"))
+    })
+
+    it("validates filename parameter type", () => {
+      const dir = new DirectoryObject("/test")
+
+      assert.throws(
+        () => dir.getFile(123),
+        /type/i
+      )
+
+      assert.throws(
+        () => dir.getFile(null),
+        /type/i
+      )
+    })
+
+    it("works with files with complex names", () => {
+      const dir = new DirectoryObject("/test")
+      const file = dir.getFile("file with spaces & symbols!.json")
+
+      assert.ok(file.path.includes("file with spaces & symbols!.json"))
     })
   })
 

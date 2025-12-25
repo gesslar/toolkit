@@ -1,16 +1,50 @@
 /**
  * DirectoryObject encapsulates metadata and operations for a directory,
- * including path resolution and existence checks.
+ * providing immutable path resolution, existence checks, and content enumeration.
  *
- * @property {string} supplied - The supplied directory
- * @property {string} path - The resolved path
- * @property {URL} url - The directory URL
- * @property {string} name - The directory name
- * @property {string} module - The directory name without extension
- * @property {string} extension - The directory extension (usually empty)
- * @property {boolean} isFile - Always false
+ * Features:
+ * - Immutable metadata (path, name, URL) sealed on construction
+ * - Async existence checking and directory creation
+ * - Pattern-based content filtering with glob support
+ * - Path traversal via walkUp generator
+ * - Intelligent path merging for subdirectories and files
+ * - Support for temporary directory management
+ *
+ * @property {string} supplied - The original directory path as supplied to constructor
+ * @property {string} path - The absolute resolved directory path
+ * @property {URL} url - The directory as a file:// URL
+ * @property {string} name - The directory name (basename)
+ * @property {string} module - The directory name without extension (same as name for directories)
+ * @property {string} extension - The directory extension (typically empty string)
+ * @property {string} sep - Platform-specific path separator ('/' or '\\')
+ * @property {Array<string>} trail - Path segments split by separator
+ * @property {boolean} temporary - Whether this is marked as a temporary directory
+ * @property {boolean} isFile - Always false (this is a directory)
  * @property {boolean} isDirectory - Always true
- * @property {Promise<boolean>} exists - Whether the directory exists (async)
+ * @property {Promise<boolean>} exists - Whether the directory exists (async getter)
+ * @property {Generator<DirectoryObject>} walkUp - Generator yielding parent directories up to root
+ *
+ * @example
+ * // Basic usage
+ * const dir = new DirectoryObject("/projects/myapp")
+ * console.log(dir.path) // "/projects/myapp"
+ * console.log(await dir.exists) // true/false
+ *
+ * @example
+ * // Read directory contents
+ * const {files, directories} = await dir.read()
+ * const {files: jsFiles} = await dir.read("*.js")
+ *
+ * @example
+ * // Path traversal
+ * for(const parent of dir.walkUp) {
+ *   console.log(parent.path)
+ * }
+ *
+ * @example
+ * // Working with subdirectories and files
+ * const subDir = dir.getDirectory("src/lib")
+ * const file = dir.getFile("package.json")
  */
 export default class DirectoryObject extends FS {
     [x: number]: () => object;
@@ -121,11 +155,22 @@ export default class DirectoryObject extends FS {
      */
     get isDirectory(): boolean;
     /**
-     * Lists the contents of a directory.
+     * Lists the contents of a directory, optionally filtered by a glob pattern.
      *
-     * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} The files and directories in the directory.
+     * @async
+     * @param {string} [pat=""] - Optional glob pattern to filter results (e.g., "*.txt", "test-*")
+     * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} Object containing arrays of files and directories
+     * @example
+     * const dir = new DirectoryObject("./src")
+     * const {files, directories} = await dir.read()
+     * console.log(files) // All files in ./src
+     *
+     * @example
+     * // Filter for specific files
+     * const {files} = await dir.read("*.js")
+     * console.log(files) // Only .js files in ./src
      */
-    read(): Promise<{
+    read(pat?: string): Promise<{
         files: Array<FileObject>;
         directories: Array<DirectoryObject>;
     }>;
@@ -193,30 +238,46 @@ export default class DirectoryObject extends FS {
     /**
      * Creates a new DirectoryObject by extending this directory's path.
      *
-     * Uses overlapping path segment detection to intelligently combine paths.
-     * Preserves the temporary flag from the current directory.
+     * Uses intelligent path merging that detects overlapping segments to avoid
+     * duplication (e.g., "/projects/toolkit" + "toolkit/src" = "/projects/toolkit/src").
+     * The temporary flag is preserved from the parent directory.
      *
-     * @param {string} newPath - The path to append to this directory's path.
-     * @returns {DirectoryObject} A new DirectoryObject with the extended path.
+     * @param {string} newPath - The subdirectory path to append (can be nested like "src/lib")
+     * @returns {DirectoryObject} A new DirectoryObject instance with the combined path
+     * @throws {Sass} If newPath is not a string
      * @example
      * const dir = new DirectoryObject("/projects/git/toolkit")
-     * const subDir = dir.addDirectory("src/lib")
+     * const subDir = dir.getDirectory("src/lib")
      * console.log(subDir.path) // "/projects/git/toolkit/src/lib"
+     *
+     * @example
+     * // Handles overlapping segments intelligently
+     * const dir = new DirectoryObject("/projects/toolkit")
+     * const subDir = dir.getDirectory("toolkit/src")
+     * console.log(subDir.path) // "/projects/toolkit/src" (not /projects/toolkit/toolkit/src)
      */
-    addDirectory(newPath: string): DirectoryObject;
+    getDirectory(newPath: string): DirectoryObject;
     /**
      * Creates a new FileObject by extending this directory's path.
      *
-     * Uses overlapping path segment detection to intelligently combine paths.
+     * Uses intelligent path merging that detects overlapping segments to avoid
+     * duplication. The resulting FileObject can be used for reading, writing,
+     * and other file operations.
      *
-     * @param {string} filename - The filename to append to this directory's path.
-     * @returns {FileObject} A new FileObject with the extended path.
+     * @param {string} filename - The filename to append (can include subdirectories like "src/index.js")
+     * @returns {FileObject} A new FileObject instance with the combined path
+     * @throws {Sass} If filename is not a string
      * @example
      * const dir = new DirectoryObject("/projects/git/toolkit")
-     * const file = dir.addFile("package.json")
+     * const file = dir.getFile("package.json")
      * console.log(file.path) // "/projects/git/toolkit/package.json"
+     *
+     * @example
+     * // Can include nested paths
+     * const file = dir.getFile("src/index.js")
+     * const data = await file.read()
      */
-    addFile(filename: string): FileObject;
+    getFile(filename: string): FileObject;
     #private;
 }
 import FS from "./FS.js";
