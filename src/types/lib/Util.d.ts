@@ -76,7 +76,8 @@ export default class Util extends BrowserUtil {
      *
      * This method fetches the value of the specified environment variable and
      * attempts to parse it using JSON5. If the variable doesn't exist or is
-     * empty, the default value is returned. If parsing fails, an error is thrown.
+     * empty, the default value is returned. If parsing fails, an error is
+     * thrown.
      *
      * Example:
      *   // export MY_CONFIG='{"debug": true, timeout: 5000}'
