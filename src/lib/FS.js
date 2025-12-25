@@ -153,9 +153,8 @@ export default class FS {
     const to = path2.split(sep).filter(Boolean)
 
     // If they're the same, just return path1
-    if(to.length === from.length && from.every((f, i) => to[i] === f)) {
+    if(to.length === from.length && from.every((f, i) => to[i] === f))
       return path1
-    }
 
     const overlapIndex = from.findLastIndex(curr => curr === to.at(0))
 

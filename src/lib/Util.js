@@ -1,7 +1,10 @@
 import {createHash} from "node:crypto"
 import {EventEmitter} from "node:events"
-import Sass from "./Sass.js"
 import {Util as BrowserUtil} from "../browser/index.js"
+import Sass from "./Sass.js"
+import process from "node:process"
+import JSON5 from "json5"
+import Valid from "./Valid.js"
 
 /**
  * Utility class providing common helper functions for string manipulation,
@@ -148,6 +151,47 @@ export default class Util extends BrowserUtil {
 
       throw Sass.new(
         `Processing '${event}' event ${argsDesc}.`,
+        error
+      )
+    }
+  }
+
+  /**
+   * Retrieves an environment variable and parses it as JSON5.
+   *
+   * This method fetches the value of the specified environment variable and
+   * attempts to parse it using JSON5. If the variable doesn't exist or is
+   * empty, the default value is returned. If parsing fails, an error is
+   * thrown.
+   *
+   * Example:
+   *   // export MY_CONFIG='{"debug": true, timeout: 5000}'
+   *   Util.getEnv("MY_CONFIG", {debug: false})
+   *   → {debug: true, timeout: 5000}
+   *
+   * Edge cases:
+   *   - If the environment variable doesn't exist, returns the default value
+   *   - If the value is an empty string, returns the default value
+   *   - If JSON5 parsing fails, throws a Sass error with context
+   *
+   * @param {string} ev - Name of the environment variable to retrieve
+   * @param {unknown} [def=undefined] - Default value if variable doesn't exist or is empty
+   * @returns {unknown} Parsed JSON5 value or default
+   * @throws {Sass} If JSON5 parsing fails
+   */
+  static getEnv(ev, def=undefined) {
+    Valid.type(ev, "String")
+
+    const value = process.env[ev]
+
+    if(!value)
+      return def
+
+    try {
+      return JSON5.parse(value)
+    } catch(error) {
+      throw Sass.new(
+        `Failed to parse environment variable '${ev}' as JSON5`,
         error
       )
     }

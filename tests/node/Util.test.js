@@ -242,4 +242,119 @@ describe("Util (Node-specific features)", () => {
       }
     })
   })
+
+  describe("getEnv()", () => {
+    const originalEnv = process.env
+
+    it("parses valid JSON5 from environment variable", () => {
+      process.env.TEST_VAR = '{"debug": true, timeout: 5000}'
+      const result = Util.getEnv("TEST_VAR")
+
+      assert.deepEqual(result, {debug: true, timeout: 5000})
+      delete process.env.TEST_VAR
+    })
+
+    it("returns default value when variable doesn't exist", () => {
+      const defaultValue = {fallback: true}
+      const result = Util.getEnv("NONEXISTENT_VAR", defaultValue)
+
+      assert.deepEqual(result, defaultValue)
+    })
+
+    it("returns default value when variable is empty string", () => {
+      process.env.EMPTY_VAR = ""
+      const defaultValue = {empty: true}
+      const result = Util.getEnv("EMPTY_VAR", defaultValue)
+
+      assert.deepEqual(result, defaultValue)
+      delete process.env.EMPTY_VAR
+    })
+
+    it("returns undefined when no default provided and variable missing", () => {
+      const result = Util.getEnv("MISSING_VAR")
+
+      assert.equal(result, undefined)
+    })
+
+    it("handles JSON5 extensions (unquoted keys, trailing commas)", () => {
+      process.env.JSON5_VAR = '{name: "test", items: [1, 2, 3,]}'
+      const result = Util.getEnv("JSON5_VAR")
+
+      assert.deepEqual(result, {name: "test", items: [1, 2, 3]})
+      delete process.env.JSON5_VAR
+    })
+
+    it("parses simple values (strings, numbers, booleans)", () => {
+      process.env.STRING_VAR = '"hello"'
+      process.env.NUMBER_VAR = "42"
+      process.env.BOOL_VAR = "true"
+
+      assert.equal(Util.getEnv("STRING_VAR"), "hello")
+      assert.equal(Util.getEnv("NUMBER_VAR"), 42)
+      assert.equal(Util.getEnv("BOOL_VAR"), true)
+
+      delete process.env.STRING_VAR
+      delete process.env.NUMBER_VAR
+      delete process.env.BOOL_VAR
+    })
+
+    it("parses arrays", () => {
+      process.env.ARRAY_VAR = "[1, 2, 3]"
+      const result = Util.getEnv("ARRAY_VAR")
+
+      assert.deepEqual(result, [1, 2, 3])
+      delete process.env.ARRAY_VAR
+    })
+
+    it("throws Sass error on invalid JSON5", () => {
+      process.env.BAD_JSON = "{this is not valid json"
+
+      try {
+        Util.getEnv("BAD_JSON")
+        assert.fail("Should have thrown")
+      } catch(error) {
+        assert.ok(error instanceof Sass, "Error should be a Sass instance")
+        // The error is wrapped by Sass, so check for the JSON5 parsing error
+        assert.ok(error.message.includes("JSON5") || error.message.includes("parse"), `Unexpected error message: ${error.message}`)
+      }
+
+      delete process.env.BAD_JSON
+    })
+
+    it("throws on non-string variable name", () => {
+      assert.throws(
+        () => Util.getEnv(123),
+        error => error.message.includes("String")
+      )
+    })
+
+    it("handles null in JSON values", () => {
+      process.env.NULL_VAR = "null"
+
+      assert.equal(Util.getEnv("NULL_VAR"), null)
+
+      delete process.env.NULL_VAR
+    })
+
+    it("preserves nested objects", () => {
+      process.env.NESTED_VAR = '{"a": {"b": {"c": 123}}}'
+      const result = Util.getEnv("NESTED_VAR")
+
+      assert.deepEqual(result, {a: {b: {c: 123}}})
+      delete process.env.NESTED_VAR
+    })
+
+    it("handles complex JSON5 with comments", () => {
+      process.env.COMMENTED_VAR = `{
+        // This is a comment
+        debug: true,
+        /* Block comment */
+        port: 3000
+      }`
+      const result = Util.getEnv("COMMENTED_VAR")
+
+      assert.deepEqual(result, {debug: true, port: 3000})
+      delete process.env.COMMENTED_VAR
+    })
+  })
 })
