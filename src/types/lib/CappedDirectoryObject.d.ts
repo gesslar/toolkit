@@ -50,10 +50,10 @@ export default class CappedDirectoryObject extends DirectoryObject {
      * @throws {Sass} If the path contains traversal (..)
      * @example
      * const capped = new TempDirectoryObject("myapp")
-     * const subDir = capped.addDirectory("data")
+     * const subDir = capped.getDirectory("data")
      * console.log(subDir.path) // "/tmp/myapp-ABC123/data"
      */
-    addDirectory(newPath: string): CappedDirectoryObject;
+    getDirectory(newPath: string): CappedDirectoryObject;
     #private;
 }
 import DirectoryObject from "./DirectoryObject.js";

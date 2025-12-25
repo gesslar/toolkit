@@ -169,10 +169,10 @@ export default class CappedDirectoryObject extends DirectoryObject {
    * @throws {Sass} If the path contains traversal (..)
    * @example
    * const capped = new TempDirectoryObject("myapp")
-   * const subDir = capped.addDirectory("data")
+   * const subDir = capped.getDirectory("data")
    * console.log(subDir.path) // "/tmp/myapp-ABC123/data"
    */
-  addDirectory(newPath) {
+  getDirectory(newPath) {
     Valid.type(newPath, "String")
 
     // Prevent absolute paths
@@ -203,10 +203,10 @@ export default class CappedDirectoryObject extends DirectoryObject {
    * @throws {Sass} If the path contains traversal (..)
    * @example
    * const capped = new TempDirectoryObject("myapp")
-   * const file = capped.addFile("config.json")
+   * const file = capped.getFile("config.json")
    * console.log(file.path) // "/tmp/myapp-ABC123/config.json"
    */
-  addFile(filename) {
+  getFile(filename) {
     Valid.type(filename, "String")
 
     // Prevent absolute paths

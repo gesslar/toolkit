@@ -109,12 +109,12 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
    * @throws {Sass} If the path contains traversal (..)
    * @example
    * const temp = new TempDirectoryObject("myapp")
-   * const subDir = temp.addDirectory("data")
+   * const subDir = temp.getDirectory("data")
    * console.log(subDir.path) // "/tmp/myapp-ABC123/data"
    */
-  addDirectory(newPath) {
-    // Delegate to base class addDirectory() which will call TempDirectoryObject constructor
-    return super.addDirectory(newPath)
+  getDirectory(newPath) {
+    // Delegate to base class getDirectory() which will call TempDirectoryObject constructor
+    return super.getDirectory(newPath)
   }
 
   /**
@@ -129,12 +129,12 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
    * @throws {Sass} If the path contains traversal (..)
    * @example
    * const temp = new TempDirectoryObject("myapp")
-   * const file = temp.addFile("config.json")
+   * const file = temp.getFile("config.json")
    * console.log(file.path) // "/tmp/myapp-ABC123/config.json"
    */
-  addFile(filename) {
-    // Delegate to base class addFile() which handles security checks
-    return super.addFile(filename)
+  getFile(filename) {
+    // Delegate to base class getFile() which handles security checks
+    return super.getFile(filename)
   }
 
   /**

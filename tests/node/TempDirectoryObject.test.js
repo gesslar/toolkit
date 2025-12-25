@@ -92,12 +92,12 @@ describe("TempDirectoryObject", () => {
     })
   })
 
-  describe("addDirectory()", () => {
+  describe("getDirectory()", () => {
     it("creates child TempDirectoryObject", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
-      const child = temp.addDirectory("subdir")
+      const child = temp.getDirectory("subdir")
 
       assert.ok(child instanceof TempDirectoryObject)
       assert.equal(child.temporary, true)
@@ -110,7 +110,7 @@ describe("TempDirectoryObject", () => {
       tempDirs.push(temp)
 
       assert.throws(
-        () => temp.addDirectory("../../../etc/passwd"),
+        () => temp.getDirectory("../../../etc/passwd"),
         Sass,
       )
     })
@@ -120,7 +120,7 @@ describe("TempDirectoryObject", () => {
       tempDirs.push(temp)
 
       assert.throws(
-        () => temp.addDirectory("/home/user/documents"),
+        () => temp.getDirectory("/home/user/documents"),
         Sass,
       )
     })
@@ -129,9 +129,9 @@ describe("TempDirectoryObject", () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
-      const level1 = temp.addDirectory("level1")
-      const level2 = level1.addDirectory("level2")
-      const level3 = level2.addDirectory("level3")
+      const level1 = temp.getDirectory("level1")
+      const level2 = level1.getDirectory("level2")
+      const level3 = level2.getDirectory("level3")
 
       assert.ok(level3 instanceof TempDirectoryObject)
       assert.ok(level3.path.includes("level1"))
@@ -143,12 +143,12 @@ describe("TempDirectoryObject", () => {
       assert.equal(await level3.exists, true)
     })
 
-    it("rejects paths with separators in addDirectory()", async () => {
+    it("rejects paths with separators in getDirectory()", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
       assert.throws(
-        () => temp.addDirectory("data/cache"),
+        () => temp.getDirectory("data/cache"),
         /path separators/,
       )
     })
@@ -172,7 +172,7 @@ describe("TempDirectoryObject", () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
-      const child = temp.addDirectory("child")
+      const child = temp.getDirectory("child")
 
       // Create a file in the child directory
       const {FileObject} = await import("../../src/index.js")
@@ -193,7 +193,7 @@ describe("TempDirectoryObject", () => {
       const temp = new TempDirectoryObject("test-read")
       tempDirs.push(temp)
 
-      const subDir = temp.addDirectory("subdir")
+      const subDir = temp.getDirectory("subdir")
 
       const {directories} = await temp.read()
 

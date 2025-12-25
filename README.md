@@ -31,7 +31,7 @@ Includes all browser functionality plus Node.js-specific modules for file I/O, l
 | Cache | Cache management for file I/O operations |
 | CappedDirectoryObject | Directory operations constrained to a specific tree |
 | Contract | Contract management and validation |
-| DirectoryObject | File system wrapper for directory operations |
+| DirectoryObject | Directory metadata and operations including path resolution, existence checks, and traversal |
 | FileObject | File system wrapper for file operations |
 | FS | Base class for file system operations with static utilities |
 | Glog | Logging framework |
