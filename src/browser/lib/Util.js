@@ -1,4 +1,4 @@
-import Sass from "./Sass.js"
+import Tantrum from "./Tantrum.js"
 import Valid from "./Valid.js"
 import Collection from "./Collection.js"
 
@@ -137,10 +137,10 @@ export default class Util {
    *
    * @param {string} [_message] - Optional error message. Defaults to "GIGO"
    * @param {Array<object>} rejected - Array of rejected results.
-   * @throws {Error} Throws a Sass error with rejection reasons.
+   * @throws {Error} Throws a Tantrum error with rejection reasons.
    */
   static throwRejected(_message="GIGO", rejected) {
-    throw Sass.new(this.rejectedReasons(rejected))
+    throw Tantrum.new(this.rejectedReasons(rejected))
   }
 
   /**
