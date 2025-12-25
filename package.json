@@ -35,7 +35,7 @@
     "prepublishOnly": "npm run types:build",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "submit": "npm publish --access public",
+    "submit": "npm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
     "update": "npx npm-check-updates -u && npm install",
     "test": "node --test tests/**/*.test.js",
     "pr": "gt submit --publish --restack --ai"
