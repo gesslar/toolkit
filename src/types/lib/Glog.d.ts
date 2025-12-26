@@ -5,6 +5,17 @@ export namespace loggerColours {
     let error: string;
     let reset: string;
 }
+export namespace logSymbols {
+    let debug_1: string;
+    export { debug_1 as debug };
+    let info_1: string;
+    export { info_1 as info };
+    let warn_1: string;
+    export { warn_1 as warn };
+    let error_1: string;
+    export { error_1 as error };
+    export let success: string;
+}
 declare const _default: typeof Glog;
 export default _default;
 declare class Glog {
@@ -13,6 +24,7 @@ declare class Glog {
     static colors: any;
     static stackTrace: boolean;
     static name: string;
+    static tagsAsStrings: boolean;
     static setLogPrefix(prefix: any): typeof Glog;
     static setLogLevel(level: any): typeof Glog;
     static withName(name: any): typeof Glog;
@@ -24,6 +36,7 @@ declare class Glog {
         reset: string;
     }): typeof Glog;
     static withStackTrace(enabled?: boolean): typeof Glog;
+    static withTagsAsStrings(enabled?: boolean): typeof Glog;
     static create(options?: {}): Glog;
     static execute(...args: any[]): void;
     /**
@@ -40,6 +53,35 @@ declare class Glog {
      * @param {...unknown} args - Additional arguments to log
      */
     static success(message: string, ...args: unknown[]): void;
+    /**
+     * Static group method - start a console group for indented output
+     *
+     * @param {...unknown} args - Optional group label
+     */
+    static group(...args: unknown[]): void;
+    /**
+     * Static groupEnd method - end the current console group
+     */
+    static groupEnd(): void;
+    /**
+     * Static groupDebug - start a debug-tagged group
+     *
+     * @param {string} message - Group label
+     * @param {number} [level=1] - Debug level
+     */
+    static groupDebug(message: string, level?: number): void;
+    /**
+     * Static groupInfo - start an info-tagged group
+     *
+     * @param {string} message - Group label
+     */
+    static groupInfo(message: string): void;
+    /**
+     * Static groupSuccess - start a success-tagged group
+     *
+     * @param {string} message - Group label
+     */
+    static groupSuccess(message: string): void;
     /**
      * Static table method
      *
@@ -63,6 +105,12 @@ declare class Glog {
      * @returns {Glog} The Glog class for chaining.
      */
     static setAlias(alias: string, colorCode: string): Glog;
+    /**
+     * Static raw logger that outputs without name/tag formatting
+     *
+     * @returns {object} Raw logger interface
+     */
+    static get raw(): object;
     constructor(options?: {});
     setOptions(options: any): this;
     withName(name: any): this;
@@ -76,6 +124,8 @@ declare class Glog {
         reset: string;
     }): this;
     withStackTrace(enabled?: boolean): this;
+    withTagsAsStrings(enabled?: boolean): this;
+    noDisplayName(): this;
     get name(): string;
     get debugLevel(): number;
     get options(): {
@@ -118,6 +168,35 @@ declare class Glog {
      */
     success(message: string, ...args: unknown[]): void;
     /**
+     * Start a console group for indented output
+     *
+     * @param {...unknown} args - Optional group label
+     */
+    group(...args: unknown[]): void;
+    /**
+     * End the current console group
+     */
+    groupEnd(): void;
+    /**
+     * Start a debug-tagged group
+     *
+     * @param {string} message - Group label
+     * @param {number} [level=1] - Debug level
+     */
+    groupDebug(message: string, level?: number): void;
+    /**
+     * Start an info-tagged group
+     *
+     * @param {string} message - Group label
+     */
+    groupInfo(message: string): void;
+    /**
+     * Start a success-tagged group
+     *
+     * @param {string} message - Group label
+     */
+    groupSuccess(message: string): void;
+    /**
      * Display tabular data as a table
      *
      * @param {object | Array} data - Object or array to display
@@ -138,6 +217,12 @@ declare class Glog {
      * @returns {import('@gesslar/colours')} The colours template function from \@gesslar/colours
      */
     get colours(): typeof import("@gesslar/colours");
+    /**
+     * Get a raw logger that outputs without name/tag formatting
+     *
+     * @returns {object} Raw logger interface
+     */
+    get raw(): object;
     #private;
 }
 //# sourceMappingURL=Glog.d.ts.map

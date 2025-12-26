@@ -33,6 +33,15 @@ export const loggerColours = {
   reset: "{/}",      // Reset
 }
 
+// Symbol alternatives for tags
+export const logSymbols = {
+  debug: "?",
+  info: "i",
+  warn: "!",
+  error: "✗",
+  success: "✓"
+}
+
 // Set up convenient aliases for common log colors
 c.alias.set("debug", "{F033}")
 c.alias.set("info", "{F036}")
@@ -50,6 +59,7 @@ class Glog {
   static colors = null
   static stackTrace = false
   static name = ""
+  static tagsAsStrings = false
 
   // Instance properties (for configured loggers)
   #logLevel = 0
@@ -57,6 +67,8 @@ class Glog {
   #colors = null
   #stackTrace = false
   #name = ""
+  #tagsAsStrings = false
+  #displayName = true
   #vscodeError = null
   #vscodeWarn = null
   #vscodeInfo = null
@@ -87,6 +99,8 @@ class Glog {
     this.#logPrefix = options.prefix ?? this.#logPrefix
     this.#colors = options.colors ?? this.#colors
     this.#stackTrace = options.stackTrace ?? this.#stackTrace
+    this.#tagsAsStrings = options.tagsAsStrings ?? this.#tagsAsStrings
+    this.#displayName = options.displayName ?? this.#displayName
 
     return this
   }
@@ -119,6 +133,12 @@ class Glog {
 
   static withStackTrace(enabled = true) {
     this.stackTrace = enabled
+
+    return this
+  }
+
+  static withTagsAsStrings(enabled = false) {
+    this.tagsAsStrings = enabled
 
     return this
   }
@@ -159,6 +179,18 @@ class Glog {
     return this
   }
 
+  withTagsAsStrings(enabled = false) {
+    this.#tagsAsStrings = enabled
+
+    return this
+  }
+
+  noDisplayName() {
+    this.#displayName = false
+
+    return this
+  }
+
   // === UTILITY METHODS ===
 
   get name() {
@@ -182,19 +214,28 @@ class Glog {
   #compose(level, message, debugLevel = 0) {
     const colors = this.#colors || Glog.colors || loggerColours
     const name = this.#name || Glog.name || "Log"
-    const tag = Util.capitalize(level)
+    const useStrings = this.#tagsAsStrings || Glog.tagsAsStrings
+    const showName = this.#displayName
+    const tag = useStrings ? Util.capitalize(level) : logSymbols[level]
+    const namePrefix = showName ? `[${name}] ` : ""
 
     if(!colors) {
-      return `[${name}] ${tag}: ${message}`
+      return useStrings
+        ? `${namePrefix}${tag}: ${message}`
+        : `${namePrefix}${tag} ${message}`
     }
 
     if(level === "debug") {
       const colorCode = colors[level][debugLevel] || colors[level][0]
 
-      return c`[${name}] ${colorCode}${tag}{/}: ${message}`
+      return useStrings
+        ? c`${namePrefix}${colorCode}${tag}{/}: ${message}`
+        : c`${namePrefix}${colorCode}${tag}{/} ${message}`
     }
 
-    return c`[${name}] ${colors[level]}${tag}{/}: ${message}`
+    return useStrings
+      ? c`${namePrefix}${colors[level]}${tag}{/}: ${message}`
+      : c`${namePrefix}${colors[level]}${tag}{/} ${message}`
   }
 
   // Stack trace functionality - simplified for now
@@ -342,7 +383,16 @@ class Glog {
    * @param {...unknown} args - Additional arguments
    */
   success(message, ...args) {
-    Term.log(c`[${this.#name || Glog.name || "Log"}] {success}Success{/}: ${message}`, ...args)
+    const name = this.#name || Glog.name || "Log"
+    const useStrings = this.#tagsAsStrings || Glog.tagsAsStrings
+    const showName = this.#displayName
+    const tag = useStrings ? "Success" : logSymbols.success
+    const namePrefix = showName ? `[${name}] ` : ""
+    const formatted = useStrings
+      ? c`${namePrefix}{success}${tag}{/}: ${message}`
+      : c`${namePrefix}{success}${tag}{/} ${message}`
+
+    Term.log(formatted, ...args)
   }
 
   /**
@@ -352,7 +402,143 @@ class Glog {
    * @param {...unknown} args - Additional arguments to log
    */
   static success(message, ...args) {
-    Term.log(c`[${this.name || "Log"}] {success}Success{/}: ${message}`, ...args)
+    const name = this.name || "Log"
+    const useStrings = this.tagsAsStrings
+    const tag = useStrings ? "Success" : logSymbols.success
+    const formatted = useStrings
+      ? c`[${name}] {success}${tag}{/}: ${message}`
+      : c`[${name}] {success}${tag}{/} ${message}`
+
+    Term.log(formatted, ...args)
+  }
+
+  /**
+   * Static group method - start a console group for indented output
+   *
+   * @param {...unknown} args - Optional group label
+   */
+  static group(...args) {
+    const name = this.name || "Log"
+    const label = args.length > 0 ? ` ${args.join(" ")}` : ""
+
+    Term.group(`[${name}]${label}`)
+  }
+
+  /**
+   * Static groupEnd method - end the current console group
+   */
+  static groupEnd() {
+    Term.groupEnd()
+  }
+
+  /**
+   * Static groupDebug - start a debug-tagged group
+   *
+   * @param {string} message - Group label
+   * @param {number} [level=1] - Debug level
+   */
+  static groupDebug(message, level = 1) {
+    const colors = this.colors || loggerColours
+    const name = this.name || "Log"
+    const useStrings = this.tagsAsStrings
+    const tag = useStrings ? "Debug" : logSymbols.debug
+    const colorCode = colors.debug[level] || colors.debug[0]
+    const label = useStrings
+      ? c`[${name}] ${colorCode}${tag}{/}: ${message}`
+      : c`[${name}] ${colorCode}${tag}{/} ${message}`
+
+    Term.group(label)
+  }
+
+  /**
+   * Static groupInfo - start an info-tagged group
+   *
+   * @param {string} message - Group label
+   */
+  static groupInfo(message) {
+    const colors = this.colors || loggerColours
+    const name = this.name || "Log"
+    const useStrings = this.tagsAsStrings
+    const tag = useStrings ? "Info" : logSymbols.info
+    const label = useStrings
+      ? c`[${name}] ${colors.info}${tag}{/}: ${message}`
+      : c`[${name}] ${colors.info}${tag}{/} ${message}`
+
+    Term.group(label)
+  }
+
+  /**
+   * Static groupSuccess - start a success-tagged group
+   *
+   * @param {string} message - Group label
+   */
+  static groupSuccess(message) {
+    const name = this.name || "Log"
+    const useStrings = this.tagsAsStrings
+    const tag = useStrings ? "Success" : logSymbols.success
+    const label = useStrings
+      ? c`[${name}] {success}${tag}{/}: ${message}`
+      : c`[${name}] {success}${tag}{/} ${message}`
+
+    Term.group(label)
+  }
+
+  /**
+   * Start a console group for indented output
+   *
+   * @param {...unknown} args - Optional group label
+   */
+  group(...args) {
+    const name = this.#name || Glog.name || "Log"
+    const showName = this.#displayName
+    const label = args.length > 0 ? ` ${args.join(" ")}` : ""
+    const output = showName ? `[${name}]${label}` : label.trim()
+
+    Term.group(output)
+  }
+
+  /**
+   * End the current console group
+   */
+  groupEnd() {
+    Term.groupEnd()
+  }
+
+  /**
+   * Start a debug-tagged group
+   *
+   * @param {string} message - Group label
+   * @param {number} [level=1] - Debug level
+   */
+  groupDebug(message, level = 1) {
+    Term.group(this.#compose("debug", message, level))
+  }
+
+  /**
+   * Start an info-tagged group
+   *
+   * @param {string} message - Group label
+   */
+  groupInfo(message) {
+    Term.group(this.#compose("info", message))
+  }
+
+  /**
+   * Start a success-tagged group
+   *
+   * @param {string} message - Group label
+   */
+  groupSuccess(message) {
+    const name = this.#name || Glog.name || "Log"
+    const useStrings = this.#tagsAsStrings || Glog.tagsAsStrings
+    const showName = this.#displayName
+    const tag = useStrings ? "Success" : logSymbols.success
+    const namePrefix = showName ? `[${name}] ` : ""
+    const label = useStrings
+      ? c`${namePrefix}{success}${tag}{/}: ${message}`
+      : c`${namePrefix}{success}${tag}{/} ${message}`
+
+    Term.group(label)
   }
 
   /**
@@ -433,6 +619,44 @@ class Glog {
    */
   get colours() {
     return c
+  }
+
+  /**
+   * Get a raw logger that outputs without name/tag formatting
+   *
+   * @returns {object} Raw logger interface
+   */
+  get raw() {
+    return {
+      debug: (message, ...args) => Term.debug(message, ...args),
+      info: (message, ...args) => Term.info(message, ...args),
+      warn: (message, ...args) => Term.warn(message, ...args),
+      error: (message, ...args) => Term.error(message, ...args),
+      log: (...args) => Term.log(...args),
+      success: (message, ...args) => Term.log(message, ...args),
+      table: (data, options) => Term.table(data, options || {}),
+      group: (...args) => Term.group(...args),
+      groupEnd: () => Term.groupEnd()
+    }
+  }
+
+  /**
+   * Static raw logger that outputs without name/tag formatting
+   *
+   * @returns {object} Raw logger interface
+   */
+  static get raw() {
+    return {
+      debug: (message, ...args) => Term.debug(message, ...args),
+      info: (message, ...args) => Term.info(message, ...args),
+      warn: (message, ...args) => Term.warn(message, ...args),
+      error: (message, ...args) => Term.error(message, ...args),
+      log: (...args) => Term.log(...args),
+      success: (message, ...args) => Term.log(message, ...args),
+      table: (data, options) => Term.table(data, options || {}),
+      group: (...args) => Term.group(...args),
+      groupEnd: () => Term.groupEnd()
+    }
   }
 }
 
