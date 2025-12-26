@@ -158,6 +158,75 @@ export default class CappedDirectoryObject extends DirectoryObject {
   }
 
   /**
+   * Returns the parent directory of this capped directory.
+   * Returns null only if this directory is at the cap (the "root" of the capped tree).
+   *
+   * Note: The returned parent is a plain DirectoryObject (not capped).
+   * Use getDirectory() for creating capped subdirectories.
+   *
+   * @returns {DirectoryObject|null} Parent directory or null if at cap root
+   * @example
+   * const capped = new TempDirectoryObject("myapp")
+   * const subdir = capped.getDirectory("data")
+   * console.log(subdir.parent.path) // Returns parent DirectoryObject
+   * console.log(capped.parent) // null (at cap root)
+   */
+  get parent() {
+    const capResolved = path.resolve(this.#cap)
+
+    // If we're at the cap, return null (cap is the "root")
+    if(this.path === capResolved) {
+      return null
+    }
+
+    // Otherwise return the parent (plain DirectoryObject, not capped)
+    return super.parent
+  }
+
+  /**
+   * Generator that walks up the directory tree, stopping at the cap.
+   * Yields parent directories from current up to (and including) the cap root.
+   *
+   * @returns {Generator<DirectoryObject>} Generator yielding parent DirectoryObject instances
+   * @example
+   * const capped = new TempDirectoryObject("myapp")
+   * const deep = capped.getDirectory("data").getDirectory("files")
+   * for(const parent of deep.walkUp) {
+   *   console.log(parent.path)
+   *   // .../myapp-ABC123/data/files
+   *   // .../myapp-ABC123/data
+   *   // .../myapp-ABC123 (stops at cap)
+   * }
+   */
+  *#walkUpCapped() {
+    const capResolved = path.resolve(this.#cap)
+
+    // Use super.walkUp but stop when we would go beyond the cap
+    for(const dir of super.walkUp) {
+      // Don't yield anything beyond the cap
+      if(!dir.path.startsWith(capResolved)) {
+        break
+      }
+
+      yield dir
+
+      // Stop after yielding the cap
+      if(dir.path === capResolved) {
+        break
+      }
+    }
+  }
+
+  /**
+   * Returns a generator that walks up to the cap.
+   *
+   * @returns {Generator<DirectoryObject>} Generator yielding parent directories
+   */
+  get walkUp() {
+    return this.#walkUpCapped()
+  }
+
+  /**
    * Creates a new CappedDirectoryObject by extending this directory's path.
    *
    * Validates that the resulting path remains within the cap directory tree.

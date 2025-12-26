@@ -121,6 +121,46 @@ describe("DirectoryObject", () => {
     })
   })
 
+  describe("parent property", () => {
+    it("returns DirectoryObject for non-root directory", () => {
+      const dir = new DirectoryObject("/home/user/projects")
+      const parent = dir.parent
+
+      assert.ok(parent instanceof DirectoryObject)
+      assert.equal(parent.path, "/home/user")
+    })
+
+    it("returns null for root directory", () => {
+      const root = new DirectoryObject("/")
+      const parent = root.parent
+
+      assert.equal(parent, null)
+    })
+
+    it("parent path is correct for nested directories", () => {
+      const dir = new DirectoryObject("/a/b/c/d")
+
+      assert.equal(dir.parent.path, "/a/b/c")
+      assert.equal(dir.parent.parent.path, "/a/b")
+      assert.equal(dir.parent.parent.parent.path, "/a")
+    })
+
+    it("caches parent on subsequent accesses", () => {
+      const dir = new DirectoryObject("/home/user")
+      const parent1 = dir.parent
+      const parent2 = dir.parent
+
+      assert.strictEqual(parent1, parent2)
+    })
+
+    it("preserves temporary flag in parent", () => {
+      const dir = new DirectoryObject("/tmp/test/sub", true)
+      const parent = dir.parent
+
+      assert.equal(parent.temporary, true)
+    })
+  })
+
   describe("string representations", () => {
     it("toString returns formatted string", () => {
       const dir = new DirectoryObject("/test/path")
@@ -145,6 +185,7 @@ describe("DirectoryObject", () => {
       assert.ok("extension" in json)
       assert.ok("isFile" in json)
       assert.ok("isDirectory" in json)
+      assert.ok("parent" in json)
 
       assert.equal(json.isFile, false)
       assert.equal(json.isDirectory, true)

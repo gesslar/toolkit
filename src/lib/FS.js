@@ -129,7 +129,7 @@ export default class FS {
   static relativeOrAbsolutePath(from, to) {
     const fromBasePath = from.isDirectory
       ? from.path
-      : from.directory?.path ?? path.dirname(from.path)
+      : from.parent?.path ?? path.dirname(from.path)
 
     const relative = path.relative(fromBasePath, to.path)
 

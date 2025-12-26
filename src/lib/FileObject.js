@@ -29,7 +29,7 @@ import Valid from "./Valid.js"
  * @property {string} extension - The file extension
  * @property {boolean} isFile - Always true for files
  * @property {boolean} isDirectory - Always false for files
- * @property {DirectoryObject} directory - The parent directory object
+ * @property {DirectoryObject} parent - The parent directory object
  * @property {Promise<boolean>} exists - Whether the file exists (async)
  */
 
@@ -58,7 +58,7 @@ export default class FileObject extends FS {
    * @property {string|null} extension - The file extension
    * @property {boolean} isFile - Always true
    * @property {boolean} isDirectory - Always false
-   * @property {DirectoryObject|null} directory - The parent directory object
+   * @property {DirectoryObject|null} parent - The parent directory object
    */
   #meta = Object.seal({
     supplied: null,
@@ -69,16 +69,16 @@ export default class FileObject extends FS {
     extension: null,
     isFile: true,
     isDirectory: false,
-    directory: null,
+    parent: null,
   })
 
   /**
    * Constructs a FileObject instance.
    *
    * @param {string | FileObject} fileName - The file path or FileObject
-   * @param {DirectoryObject|string|null} [directory] - The parent directory (object or string)
+   * @param {DirectoryObject|string|null} [parent] - The parent directory (object or string)
    */
-  constructor(fileName, directory=null) {
+  constructor(fileName, parent=null) {
     super()
 
     // If passed a FileObject, extract its path
@@ -93,19 +93,19 @@ export default class FileObject extends FS {
 
     const {dir,base,ext} = this.#deconstructFilenameToParts(fixedFile)
 
-    const directoryObject = (() => {
-      switch(Data.typeOf(directory)) {
+    const parentObject = (() => {
+      switch(Data.typeOf(parent)) {
         case "String":
-          return new DirectoryObject(directory)
+          return new DirectoryObject(parent)
         case "DirectoryObject":
         case "TempDirectoryObject":
-          return directory
+          return parent
         default:
           return new DirectoryObject(dir)
       }
     })()
 
-    const final = FS.resolvePath(directoryObject.path ?? ".", fixedFile)
+    const final = FS.resolvePath(parentObject.path ?? ".", fixedFile)
 
     const resolved = final
     const url = new URL(FS.pathToUri(resolved))
@@ -116,7 +116,7 @@ export default class FileObject extends FS {
     this.#meta.name = base
     this.#meta.extension = ext
     this.#meta.module = path.basename(this.supplied, this.extension)
-    this.#meta.directory = directoryObject
+    this.#meta.parent = parentObject
 
     Object.freeze(this.#meta)
   }
@@ -145,7 +145,7 @@ export default class FileObject extends FS {
       extension: this.extension,
       isFile: this.isFile,
       isDirectory: this.isDirectory,
-      directory: this.directory ? this.directory.path : null
+      parent: this.parent ? this.parent.path : null
     }
   }
 
@@ -253,8 +253,8 @@ export default class FileObject extends FS {
    *
    * @returns {DirectoryObject} The parent directory object
    */
-  get directory() {
-    return this.#meta.directory
+  get parent() {
+    return this.#meta.parent
   }
 
   /**
@@ -411,11 +411,11 @@ export default class FileObject extends FS {
     if(!this.url)
       throw Sass.new("No URL in file")
 
-    if(await this.directory.exists)
+    if(await this.parent.exists)
       await fs.writeFile(this.url, content, encoding)
 
     else
-      throw Sass.new(`Invalid directory, ${this.directory.url.href}`)
+      throw Sass.new(`Invalid directory, ${this.parent.url.href}`)
   }
 
   /**
@@ -438,8 +438,8 @@ export default class FileObject extends FS {
     if(!this.url)
       throw Sass.new("No URL in file")
 
-    const exists = await this.directory.exists
-    Valid.assert(exists, `Invalid directory, ${this.directory.url.href}`)
+    const exists = await this.parent.exists
+    Valid.assert(exists, `Invalid directory, ${this.parent.url.href}`)
 
     Valid.assert(Data.isBinary(data), "Data must be binary (ArrayBuffer, TypedArray, Blob, or Buffer)")
 

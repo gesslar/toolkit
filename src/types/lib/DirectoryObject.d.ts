@@ -21,6 +21,7 @@
  * @property {boolean} temporary - Whether this is marked as a temporary directory
  * @property {boolean} isFile - Always false (this is a directory)
  * @property {boolean} isDirectory - Always true
+ * @property {DirectoryObject|null} parent - The parent directory (null if root)
  * @property {Promise<boolean>} exists - Whether the directory exists (async getter)
  * @property {Generator<DirectoryObject>} walkUp - Generator yielding parent directories up to root
  *
@@ -124,6 +125,20 @@ export default class DirectoryObject extends FS {
      * @returns {boolean} True if this is a temporary directory, false otherwise
      */
     get temporary(): boolean;
+    /**
+     * Returns the parent directory of this directory.
+     * Returns null if this directory is the root directory.
+     * Computed lazily on first access and cached.
+     *
+     * @returns {DirectoryObject|null} The parent directory or null if root
+     * @example
+     * const dir = new DirectoryObject('/path/to/directory')
+     * console.log(dir.parent.path) // '/path/to'
+     *
+     * const root = new DirectoryObject('/')
+     * console.log(root.parent) // null
+     */
+    get parent(): DirectoryObject | null;
     /**
      * Recursively removes a temporary directory and all its contents.
      *
