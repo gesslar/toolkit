@@ -393,7 +393,7 @@ export default class DirectoryObject extends FS {
 
     const files = found
       .filter(dirent => dirent.isFile())
-      .map(dirent => new FileObject(path.join(this.path, dirent.name)))
+      .map(dirent => new FileObject(dirent.name, this))
 
     const directories = found
       .filter(dirent => dirent.isDirectory())
@@ -588,9 +588,8 @@ export default class DirectoryObject extends FS {
   getFile(filename) {
     Valid.type(filename, "String")
 
-    const thisPath = this.path
-    const merged = FS.mergeOverlappingPaths(thisPath, filename)
-
-    return new FileObject(merged)
+    // Pass the filename and this directory as parent
+    // This ensures the FileObject maintains the correct parent reference
+    return new FileObject(filename, this)
   }
 }

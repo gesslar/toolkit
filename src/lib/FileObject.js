@@ -110,13 +110,22 @@ export default class FileObject extends FS {
     const resolved = final
     const url = new URL(FS.pathToUri(resolved))
 
+    // Compute the actual parent directory from the resolved path
+    const actualParentPath = path.dirname(resolved)
+
+    // If the file is directly in the provided parent directory, reuse that object
+    // Otherwise, create a DirectoryObject for the actual parent directory
+    const actualParent = parentObject && actualParentPath === parentObject.path
+      ? parentObject
+      : new DirectoryObject(actualParentPath)
+
     this.#meta.supplied = fixedFile
     this.#meta.path = resolved
     this.#meta.url = url
     this.#meta.name = base
     this.#meta.extension = ext
     this.#meta.module = path.basename(this.supplied, this.extension)
-    this.#meta.parent = parentObject
+    this.#meta.parent = actualParent
 
     Object.freeze(this.#meta)
   }
