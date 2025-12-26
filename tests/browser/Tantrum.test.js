@@ -7,19 +7,33 @@ import { Sass, Tantrum } from "@gesslar/toolkit/browser"
 
 // Helper for intercepting console output
 /**
- *
- * @param method
- * @param fn
+ * Captures console output for testing purposes
+ * @param {string|string[]} methods - Console method(s) to capture
+ * @param {() => void} fn - Function to execute while capturing
+ * @returns {string} Captured console output
  */
-function captureConsole(method, fn) {
-  const original = console[method]
+function captureConsole(methods, fn) {
+  const methodList = Array.isArray(methods) ? methods : [methods]
+  const originals = {}
   const calls = []
-  console[method] = (...args) => { calls.push(args.join(" ")) }
+
+  methodList.forEach(method => {
+    originals[method] = console[method]
+    console[method] = (...args) => {
+      if(args.length > 0)
+        calls.push(args.join(" "))
+
+    }
+  })
+
   try {
     fn()
   } finally {
-    console[method] = original
+    methodList.forEach(method => {
+      console[method] = originals[method]
+    })
   }
+
   return calls.join("\n")
 }
 
@@ -139,7 +153,7 @@ describe("Tantrum", () => {
       assert.equal(tantrum.errors.length, 3)
       assert.ok(tantrum.errors.every(err => err instanceof Sass))
 
-      const output = captureConsole("error", () => {
+      const output = captureConsole(["error", "group", "groupEnd"], () => {
         tantrum.report()
       })
 
@@ -160,12 +174,12 @@ describe("Tantrum", () => {
       assert.equal(tantrum.errors.length, 3)
       assert.equal(tantrum.message, "Someone ate all my Runts!")
 
-      const output = captureConsole("error", () => {
+      const output = captureConsole(["error", "group", "groupEnd"], () => {
         tantrum.report()
       })
 
       assert.match(output, /Someone ate all my Runts!/)
-      assert.match(output, /\(3 errors\)/)
+      assert.match(output, /x3/)
       assert.match(output, /Runts box is empty/)
     })
 
@@ -181,7 +195,7 @@ describe("Tantrum", () => {
         assert.equal(error.errors.length, 2)
 
         // Should be able to report
-        const output = captureConsole("error", () => {
+        const output = captureConsole(["error", "group", "groupEnd"], () => {
           error.report()
         })
         assert.match(output, /Batch processing failed/)

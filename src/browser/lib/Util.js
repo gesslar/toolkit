@@ -139,8 +139,8 @@ export default class Util {
    * @param {Array<object>} rejected - Array of rejected results.
    * @throws {Error} Throws a Tantrum error with rejection reasons.
    */
-  static throwRejected(_message="GIGO", rejected) {
-    throw Tantrum.new(this.rejectedReasons(rejected))
+  static throwRejected(message="GIGO", rejected) {
+    throw Tantrum.new(message, this.rejectedReasons(rejected))
   }
 
   /**

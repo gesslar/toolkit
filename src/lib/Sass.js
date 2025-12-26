@@ -24,9 +24,13 @@ export default class Sass extends BrowserSass {
    * Optionally includes detailed stack trace information.
    *
    * @param {boolean} [nerdMode] - Whether to include detailed stack trace
+   * @param {boolean} [isNested] - Whether this is a nested error report
    */
-  report(nerdMode=false) {
-    Term.error(
+  report(nerdMode=false, isNested=false) {
+    if(isNested)
+      Term.error()
+
+    Term.group(
       `${Term.terminalBracket(["error", "Something Went Wrong"])}\n` +
       this.trace.join("\n")
     )
@@ -34,16 +38,33 @@ export default class Sass extends BrowserSass {
     if(nerdMode) {
       Term.error(
         "\n" +
-        `${Term.terminalBracket(["error", "Nerd Vittles"])}\n` +
+        `${Term.terminalBracket(["error", "Nerd Victuals"])}\n` +
         this.#fullBodyMassage(this.stack)
       )
-
-      this.cause?.stack && Term.error(
-        "\n" +
-        `${Term.terminalBracket(["error", "Rethrown From"])}\n` +
-        this.#fullBodyMassage(this.cause?.stack)
-      )
     }
+
+    if(this.cause) {
+      if(typeof this.cause.report === "function") {
+        if(nerdMode) {
+          Term.error(
+            "\n" +
+            `${Term.terminalBracket(["error", "Caused By"])}`
+          )
+        }
+
+        this.cause.report(nerdMode, true)
+      } else if(nerdMode && this.cause.stack) {
+        Term.error()
+        Term.group()
+        Term.error(
+          `${Term.terminalBracket(["error", "Rethrown From"])}\n` +
+          this.#fullBodyMassage(this.cause.stack)
+        )
+        Term.groupEnd()
+      }
+    }
+
+    Term.groupEnd()
   }
 
   /**

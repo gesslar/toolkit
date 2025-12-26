@@ -81,7 +81,7 @@ export default class Util {
      *
      * @param {string} [_message] - Optional error message. Defaults to "GIGO"
      * @param {Array<object>} rejected - Array of rejected results.
-     * @throws {Error} Throws a Sass error with rejection reasons.
+     * @throws {Error} Throws a Tantrum error with rejection reasons.
      */
     static throwRejected(_message?: string, rejected: Array<object>): void;
     /**
