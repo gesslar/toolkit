@@ -1,5 +1,7 @@
 import console from "node:console"
 import process from "node:process"
+import {Console} from "node:console"
+import {Writable} from "node:stream"
 
 import Sass from "./Sass.js"
 
@@ -63,6 +65,75 @@ export default class Term {
    */
   static groupEnd() {
     console.groupEnd()
+  }
+
+  /**
+   * Display tabular data as a table.
+   *
+   * @param {object | Array} tabularData - Object or array to display.
+   * @param {object} [options] - Table options.
+   * @param {Array<string>} [options.properties] - Optional column properties to display.
+   * @param {boolean} [options.showHeader=false] - Whether to show the header row with column names.
+   * @param {boolean} [options.quotedStrings=false] - Whether to show quotes around strings.
+   */
+  static table(tabularData, options = {}) {
+    const {properties, showHeader = false, quotedStrings = false} = options
+
+    if(showHeader && quotedStrings) {
+      // Simple case: use default console.table
+      console.table(tabularData, properties)
+
+      return
+    }
+
+    // Capture console.table output
+    let output = ""
+    const stream = new Writable({
+      write(chunk, encoding, callback) {
+        output += chunk.toString()
+        callback()
+      }
+    })
+
+    // Make stream appear as a TTY to preserve colors
+    stream.isTTY = true
+    stream.columns = process.stdout.columns
+    stream.rows = process.stdout.rows
+    stream.getColorDepth = () => process.stdout.getColorDepth?.() ?? 8
+
+    const tempConsole = new Console(stream)
+
+    tempConsole.table(tabularData, properties)
+
+    // Process output
+    let processed = output
+
+    // Remove quotes if requested
+    if(!quotedStrings) {
+      // Replace 'string' with string + 2 spaces to maintain alignment
+      // Use a more precise regex to avoid matching color codes
+      processed = processed.replace(/'([^']*)'/g, (match, content) => {
+        // Add 2 spaces to compensate for removed quotes
+        return content + "  "
+      })
+    }
+
+    // Remove header row and separator line
+    const lines = processed.split("\n")
+
+    if(lines.length > 3 && !showHeader) {
+      // Remove the header row (line 1) and separator (line 2)
+      // Keep: top border (line 0), data rows (line 3+)
+      const modified = [lines[0], ...lines.slice(3)]
+
+      process.stdout.write(modified.join("\n"))
+    } else if(showHeader) {
+      // Keep header but remove quotes if requested
+      process.stdout.write(processed)
+    } else {
+      // Fallback: just output as-is if format unexpected
+      process.stdout.write(processed)
+    }
   }
 
   /**

@@ -41,6 +41,21 @@ declare class Glog {
      */
     static success(message: string, ...args: unknown[]): void;
     /**
+     * Static table method
+     *
+     * @param {object | Array} data - Object or array to display
+     * @param {string | object} [labelOrOptions] - Optional label (string) or options (object)
+     * @param {object} [options] - Optional options when label is provided
+     * @param {Array<string>} [options.properties] - Column properties to display
+     * @param {boolean} [options.showHeader=false] - Whether to show the header row
+     * @param {boolean} [options.quotedStrings=false] - Whether to show quotes around strings
+     */
+    static table(data: object | any[], labelOrOptions?: string | object, options?: {
+        properties?: Array<string>;
+        showHeader?: boolean;
+        quotedStrings?: boolean;
+    }): void;
+    /**
      * Set a color alias for convenient usage
      *
      * @param {string} alias - Alias name
@@ -102,6 +117,21 @@ declare class Glog {
      * @param {...unknown} args - Additional arguments
      */
     success(message: string, ...args: unknown[]): void;
+    /**
+     * Display tabular data as a table
+     *
+     * @param {object | Array} data - Object or array to display
+     * @param {string | object} [labelOrOptions] - Optional label (string) or options (object)
+     * @param {object} [options] - Optional options when label is provided
+     * @param {Array<string>} [options.properties] - Column properties to display
+     * @param {boolean} [options.showHeader=false] - Whether to show the header row
+     * @param {boolean} [options.quotedStrings=false] - Whether to show quotes around strings
+     */
+    table(data: object | any[], labelOrOptions?: string | object, options?: {
+        properties?: Array<string>;
+        showHeader?: boolean;
+        quotedStrings?: boolean;
+    }): void;
     /**
      * Get access to the colours template function for instance usage
      *

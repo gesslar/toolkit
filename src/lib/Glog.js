@@ -356,6 +356,64 @@ class Glog {
   }
 
   /**
+   * Display tabular data as a table
+   *
+   * @param {object | Array} data - Object or array to display
+   * @param {string | object} [labelOrOptions] - Optional label (string) or options (object)
+   * @param {object} [options] - Optional options when label is provided
+   * @param {Array<string>} [options.properties] - Column properties to display
+   * @param {boolean} [options.showHeader=false] - Whether to show the header row
+   * @param {boolean} [options.quotedStrings=false] - Whether to show quotes around strings
+   */
+  table(data, labelOrOptions, options) {
+    let label
+    let tableOptions = {}
+
+    // Parse polymorphic parameters
+    if(typeof labelOrOptions === "string") {
+      label = labelOrOptions
+      tableOptions = options || {}
+    } else if(typeof labelOrOptions === "object" && labelOrOptions !== null) {
+      tableOptions = labelOrOptions
+    }
+
+    if(label) {
+      Term.log(c`[${this.#name || Glog.name || "Log"}] {info}Table{/}: ${label}`)
+    }
+
+    Term.table(data, tableOptions)
+  }
+
+  /**
+   * Static table method
+   *
+   * @param {object | Array} data - Object or array to display
+   * @param {string | object} [labelOrOptions] - Optional label (string) or options (object)
+   * @param {object} [options] - Optional options when label is provided
+   * @param {Array<string>} [options.properties] - Column properties to display
+   * @param {boolean} [options.showHeader=false] - Whether to show the header row
+   * @param {boolean} [options.quotedStrings=false] - Whether to show quotes around strings
+   */
+  static table(data, labelOrOptions, options) {
+    let label
+    let tableOptions = {}
+
+    // Parse polymorphic parameters
+    if(typeof labelOrOptions === "string") {
+      label = labelOrOptions
+      tableOptions = options || {}
+    } else if(typeof labelOrOptions === "object" && labelOrOptions !== null) {
+      tableOptions = labelOrOptions
+    }
+
+    if(label) {
+      Term.log(c`[${this.name || "Log"}] {info}Table{/}: ${label}`)
+    }
+
+    Term.table(data, tableOptions)
+  }
+
+  /**
    * Set a color alias for convenient usage
    *
    * @param {string} alias - Alias name
