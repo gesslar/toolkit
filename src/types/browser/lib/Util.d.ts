@@ -83,7 +83,7 @@ export default class Util {
      * @param {Array<object>} rejected - Array of rejected results.
      * @throws {Error} Throws a Tantrum error with rejection reasons.
      */
-    static throwRejected(_message?: string, rejected: Array<object>): void;
+    static throwRejected(message: string, rejected: Array<object>): void;
     /**
      * Filters and returns all fulfilled results from a settled promise array.
      *

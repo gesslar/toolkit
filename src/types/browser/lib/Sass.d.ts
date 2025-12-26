@@ -54,8 +54,9 @@ export default class Sass extends Error {
      * Optionally includes detailed stack trace information.
      *
      * @param {boolean} [nerdMode] - Whether to include detailed stack trace
+     * @param {boolean} [isNested] - Whether this is a nested error report
      */
-    report(nerdMode?: boolean): void;
+    report(nerdMode?: boolean, isNested?: boolean): void;
     #private;
 }
 import Tantrum from "./Tantrum.js";

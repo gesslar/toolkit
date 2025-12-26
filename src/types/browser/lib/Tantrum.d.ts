@@ -43,8 +43,9 @@ export default class Tantrum extends AggregateError {
      * Reports all aggregated errors to the console with formatted output.
      *
      * @param {boolean} [nerdMode] - Whether to include detailed stack traces
+     * @param {boolean} [isNested] - Whether this is a nested error report
      */
-    report(nerdMode?: boolean): void;
+    report(nerdMode?: boolean, isNested?: boolean): void;
     #private;
 }
 import Sass from "./Sass.js";

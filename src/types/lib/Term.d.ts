@@ -30,6 +30,16 @@ export default class Term {
      */
     static debug(...arg?: unknown[]): void;
     /**
+     * Start a console group for indented output.
+     *
+     * @param {...unknown} [arg] - Optional group label.
+     */
+    static group(...arg?: unknown[]): void;
+    /**
+     * End the current console group.
+     */
+    static groupEnd(): void;
+    /**
      * Emit a status line to the terminal.
      *
      * Accepts either a plain string or an array of message segments (see
