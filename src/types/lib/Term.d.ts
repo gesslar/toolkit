@@ -40,6 +40,20 @@ export default class Term {
      */
     static groupEnd(): void;
     /**
+     * Display tabular data as a table.
+     *
+     * @param {object | Array} tabularData - Object or array to display.
+     * @param {object} [options] - Table options.
+     * @param {Array<string>} [options.properties] - Optional column properties to display.
+     * @param {boolean} [options.showHeader=false] - Whether to show the header row with column names.
+     * @param {boolean} [options.quotedStrings=false] - Whether to show quotes around strings.
+     */
+    static table(tabularData: object | any[], options?: {
+        properties?: Array<string>;
+        showHeader?: boolean;
+        quotedStrings?: boolean;
+    }): void;
+    /**
      * Emit a status line to the terminal.
      *
      * Accepts either a plain string or an array of message segments (see
