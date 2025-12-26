@@ -6,19 +6,32 @@ import Sass from "../../src/lib/Sass.js"
 // Helpers for intercepting console output
 /**
  * Captures console output for testing purposes
- * @param {string} method - Console method to capture (e.g., 'error', 'log')
+ * @param {string|string[]} methods - Console method(s) to capture (e.g., 'error', 'log', or ['error', 'group', 'groupEnd'])
  * @param {() => void} fn - Function to execute while capturing
  * @returns {string} Captured console output
  */
-function captureConsole(method, fn) {
-  const original = console[method]
+function captureConsole(methods, fn) {
+  const methodList = Array.isArray(methods) ? methods : [methods]
+  const originals = {}
   const calls = []
-  console[method] = (...args) => { calls.push(args.join(" ")) }
+
+  methodList.forEach(method => {
+    originals[method] = console[method]
+    console[method] = (...args) => {
+      if(args.length > 0)
+        calls.push(args.join(" "))
+
+    }
+  })
+
   try {
     fn()
   } finally {
-    console[method] = original
+    methodList.forEach(method => {
+      console[method] = originals[method]
+    })
   }
+
   return calls.join("\n")
 }
 
@@ -80,7 +93,7 @@ describe("Sass", () => {
   it("report prints trace and optional nerd stack", () => {
     const err = new Sass("Kaboom").addTrace("Context")
 
-    const output = captureConsole("error", () => {
+    const output = captureConsole(["error", "group", "groupEnd"], () => {
       err.report(false)
     })
 
@@ -94,12 +107,12 @@ describe("Sass", () => {
     const cause = new Error("root cause")
     const err = Sass.new("top", cause)
 
-    const output = captureConsole("error", () => {
+    const output = captureConsole(["error", "group", "groupEnd"], () => {
       err.report(true)
     })
 
     assert.match(output, /\[Something Went Wrong\]/)
-    assert.match(output, /\[Nerd Vittles\]/)
+    assert.match(output, /\[Nerd Victuals\]/)
     assert.match(output, /\[Rethrown From\]/)
   })
 

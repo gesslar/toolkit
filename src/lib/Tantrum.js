@@ -26,20 +26,24 @@ export default class Tantrum extends BrowserTantrum {
    * Reports all aggregated errors to the terminal with formatted output.
    *
    * @param {boolean} [nerdMode] - Whether to include detailed stack traces
+   * @param {boolean} [isNested] - Whether this is a nested error report
    */
-  report(nerdMode = false) {
-    Term.error(
-      `${Term.terminalBracket(["error", "Tantrum Incoming"])} (${this.errors.length} errors)\n` +
+  report(nerdMode = false, isNested = false) {
+    if(isNested)
+      Term.error()
+
+    Term.group(
+      `${Term.terminalBracket(["error", "Tantrum Incoming"])} x${this.errors.length}\n` +
       this.message
     )
 
-    if(this.trace)
+    if(this.trace.length > 0)
       Term.error(this.trace.join("\n"))
 
-    Term.error()
-
     this.errors.forEach(error => {
-      error.report(nerdMode)
+      error.report(nerdMode, true)
     })
+
+    Term.groupEnd()
   }
 }

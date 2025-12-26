@@ -50,6 +50,22 @@ export default class Term {
   }
 
   /**
+   * Start a console group for indented output.
+   *
+   * @param {...unknown} [arg] - Optional group label.
+   */
+  static group(...arg) {
+    console.group(...arg)
+  }
+
+  /**
+   * End the current console group.
+   */
+  static groupEnd() {
+    console.groupEnd()
+  }
+
+  /**
    * Emit a status line to the terminal.
    *
    * Accepts either a plain string or an array of message segments (see

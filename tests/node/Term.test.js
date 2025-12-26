@@ -184,6 +184,66 @@ describe("Term", () => {
     })
   })
 
+  describe("grouping methods", () => {
+    it("group forwards to console.group with arguments", () => {
+      const calls = captureConsole("group", () => {
+        Term.group("Test Group", 123)
+      })
+
+      assert.equal(calls.length, 1)
+      assert.deepEqual(calls[0], ["Test Group", 123])
+    })
+
+    it("group works with no arguments", () => {
+      const calls = captureConsole("group", () => {
+        Term.group()
+      })
+
+      assert.equal(calls.length, 1)
+      assert.deepEqual(calls[0], [])
+    })
+
+    it("groupEnd forwards to console.groupEnd", () => {
+      const calls = captureConsole("groupEnd", () => {
+        Term.groupEnd()
+      })
+
+      assert.equal(calls.length, 1)
+    })
+
+    it("supports nested groups", () => {
+      const groupCalls = []
+      const groupEndCalls = []
+      const errorCalls = []
+
+      const origGroup = console.group
+      const origGroupEnd = console.groupEnd
+      const origError = console.error
+
+      console.group = (...args) => groupCalls.push(args)
+      console.groupEnd = () => groupEndCalls.push(true)
+      console.error = (...args) => errorCalls.push(args)
+
+      try {
+        Term.group("Outer")
+        Term.error("Message 1")
+        Term.group("Inner")
+        Term.error("Message 2")
+        Term.groupEnd()
+        Term.error("Message 3")
+        Term.groupEnd()
+
+        assert.equal(groupCalls.length, 2)
+        assert.equal(groupEndCalls.length, 2)
+        assert.equal(errorCalls.length, 3)
+      } finally {
+        console.group = origGroup
+        console.groupEnd = origGroupEnd
+        console.error = origError
+      }
+    })
+  })
+
   describe("terminal control methods", () => {
     it("directWrite exists and returns a promise", async () => {
       assert.equal(typeof Term.directWrite, "function")

@@ -82,21 +82,25 @@ export default class Tantrum extends AggregateError {
    * Reports all aggregated errors to the console with formatted output.
    *
    * @param {boolean} [nerdMode] - Whether to include detailed stack traces
+   * @param {boolean} [isNested] - Whether this is a nested error report
    */
-  report(nerdMode = false) {
-    console.error(
-      `[error] Tantrum Incoming (${this.errors.length} errors)\n` +
+  report(nerdMode = false, isNested = false) {
+    if(isNested)
+      console.error()
+
+    console.group(
+      `[Tantrum Incoming] x${this.errors.length}\n` +
       this.message
     )
 
-    if(this.trace)
+    if(this.trace.length > 0)
       console.error(this.trace.join("\n"))
 
-    console.error()
-
     this.errors.forEach(error => {
-      error.report(nerdMode)
+      error.report(nerdMode, true)
     })
+
+    console.groupEnd()
   }
 
   /**

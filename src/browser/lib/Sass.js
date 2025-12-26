@@ -70,9 +70,13 @@ export default class Sass extends Error {
    * Optionally includes detailed stack trace information.
    *
    * @param {boolean} [nerdMode] - Whether to include detailed stack trace
+   * @param {boolean} [isNested] - Whether this is a nested error report
    */
-  report(nerdMode=false) {
-    console.error(
+  report(nerdMode=false, isNested=false) {
+    if(isNested)
+      console.error()
+
+    console.group(
       `[error] Something Went Wrong\n` +
       this.trace.join("\n")
     )
@@ -80,16 +84,33 @@ export default class Sass extends Error {
     if(nerdMode) {
       console.error(
         "\n" +
-        `[error] Nerd Vittles\n` +
+        `[error] Nerd Victuals\n` +
         this.#fullBodyMassage(this.stack)
       )
-
-      this.cause?.stack && console.error(
-        "\n" +
-        `[error] Rethrown From\n` +
-        this.#fullBodyMassage(this.cause?.stack)
-      )
     }
+
+    if(this.cause) {
+      if(typeof this.cause.report === "function") {
+        if(nerdMode) {
+          console.error(
+            "\n" +
+            `[error] Caused By`
+          )
+        }
+
+        this.cause.report(nerdMode, true)
+      } else if(nerdMode && this.cause.stack) {
+        console.error()
+        console.group()
+        console.error(
+          `[error] Rethrown From\n` +
+          this.#fullBodyMassage(this.cause.stack)
+        )
+        console.groupEnd()
+      }
+    }
+
+    console.groupEnd()
   }
 
   /**
@@ -138,7 +159,9 @@ export default class Sass extends Error {
       throw this.new("Sass.from must take an Error object.")
 
     const oldMessage = error.message
-    const newError = new this(oldMessage, {cause: error}).addTrace(message)
+    const newError = new this(
+      oldMessage, {cause: error}
+    ).addTrace(message)
 
     return newError
   }
