@@ -31,6 +31,26 @@ export default class FS {
   static fdType = fdType
 
   /**
+   * Compute the relative path from another file or directory to this instance.
+   *
+   * If the target is outside the source (i.e., the relative path starts with ".."),
+   * returns the absolute path to this instance instead.
+   *
+   * @param {FileObject|DirectoryObject} fileOrDirectoryObject - The source file or directory object
+   * @returns {string} The relative path from the source to this instance, or the absolute path if not reachable
+   * @throws {Sass} If the parameter is not a FileObject or DirectoryObject
+   */
+  relativeTo(fileOrDirectoryObject) {
+    Valid.assert(
+      typeof fileOrDirectoryObject?.path === "string",
+      "fileOrDirectoryObject must be a FileObject or DirectoryObject with a path property",
+      1
+    )
+
+    return FS.relativeOrAbsolutePath(fileOrDirectoryObject, this)
+  }
+
+  /**
    * Fix slashes in a path
    *
    * @static
