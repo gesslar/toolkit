@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import path from "node:path"
 import {afterEach,beforeEach,describe,it} from "node:test"
 
-import {FS,FileObject,Sass} from "../../src/index.js"
+import {DirectoryObject,FS,FileObject,Sass} from "../../src/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
 
 describe("FS", () => {
@@ -99,6 +99,61 @@ describe("FS", () => {
 
       const result = FS.relativeOrAbsolutePath(from, to)
       assert.equal(result, "/etc/config.txt")
+    })
+
+    it("relativeTo returns relative path for FileObject within scope", () => {
+      const from = new FileObject("/home/user/project/src/index.js")
+      const to = new FileObject("/home/user/project/src/utils/helper.js")
+
+      const result = to.relativeTo(from)
+
+      assert.equal(result, path.join("utils", "helper.js"))
+    })
+
+    it("relativeTo returns absolute path for FileObject outside scope", () => {
+      const from = new FileObject("/home/user/project/src/index.js")
+      const to = new FileObject("/home/user/project/lib/utils.js")
+
+      const result = to.relativeTo(from)
+
+      assert.equal(result, "/home/user/project/lib/utils.js")
+    })
+
+    it("relativeTo works with DirectoryObject instances", () => {
+      const from = new DirectoryObject("/home/user/project/src")
+      const to = new DirectoryObject("/home/user/project/src/utils")
+
+      const result = to.relativeTo(from)
+
+      assert.equal(result, "utils")
+    })
+
+    it("relativeTo throws Sass error for null parameter", () => {
+      const file = new FileObject("/home/user/file.js")
+
+      assert.throws(
+        () => file.relativeTo(null),
+        Sass
+      )
+    })
+
+    it("relativeTo throws Sass error for undefined parameter", () => {
+      const file = new FileObject("/home/user/file.js")
+
+      assert.throws(
+        () => file.relativeTo(undefined),
+        Sass
+      )
+    })
+
+    it("relativeTo throws Sass error for object without path property", () => {
+      const file = new FileObject("/home/user/file.js")
+      const invalidObj = {name: "not a file object"}
+
+      assert.throws(
+        () => file.relativeTo(invalidObj),
+        Sass
+      )
     })
 
     it("mergeOverlappingPaths combines paths with overlap", () => {
