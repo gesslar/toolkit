@@ -63,6 +63,7 @@ class Glog {
 
   constructor(options = {}) {
     this.setOptions(options)
+    this.constructor.name = "Glog"
 
     // VSCode integration if specified
     if(options.env === "extension") {
@@ -125,7 +126,7 @@ class Glog {
   // === FLUENT INSTANCE CREATION ===
 
   static create(options = {}) {
-    return new Glog(options)
+    return new this(options)
   }
 
   withName(name) {
