@@ -289,10 +289,9 @@ export default class CappedDirectoryObject extends DirectoryObject {
       throw Sass.new("Path traversal (..) is not allowed in capped directories")
     }
 
-    // Create the file path by joining this directory with the filename
-    const filePath = path.join(this.path, filename)
-
-    return new FileObject(filePath)
+    // Pass the filename and this directory as parent
+    // This ensures the FileObject maintains the correct parent reference
+    return new FileObject(filename, this)
   }
 
   /**
