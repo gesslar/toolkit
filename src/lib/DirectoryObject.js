@@ -37,6 +37,7 @@ import Sass from "./Sass.js"
  * @property {boolean} temporary - Whether this is marked as a temporary directory
  * @property {boolean} isFile - Always false (this is a directory)
  * @property {boolean} isDirectory - Always true
+ * @property {DirectoryObject|null} parent - The parent directory (null if root)
  * @property {Promise<boolean>} exists - Whether the directory exists (async getter)
  * @property {Generator<DirectoryObject>} walkUp - Generator yielding parent directories up to root
  *
@@ -88,6 +89,14 @@ export default class DirectoryObject extends FS {
     sep: null,
     temporary: null,
   })
+
+  /**
+   * Cached parent directory object
+   *
+   * @type {DirectoryObject|null|undefined}
+   * @private
+   */
+  #parent = undefined
 
   /**
    * Constructs a DirectoryObject instance.
@@ -147,7 +156,8 @@ export default class DirectoryObject extends FS {
       module: this.module,
       extension: this.extension,
       isFile: this.isFile,
-      isDirectory: this.isDirectory
+      isDirectory: this.isDirectory,
+      parent: this.parent ? this.parent.path : null
     }
   }
 
@@ -251,6 +261,37 @@ export default class DirectoryObject extends FS {
    */
   get temporary() {
     return this.#meta.temporary
+  }
+
+  /**
+   * Returns the parent directory of this directory.
+   * Returns null if this directory is the root directory.
+   * Computed lazily on first access and cached.
+   *
+   * @returns {DirectoryObject|null} The parent directory or null if root
+   * @example
+   * const dir = new DirectoryObject('/path/to/directory')
+   * console.log(dir.parent.path) // '/path/to'
+   *
+   * const root = new DirectoryObject('/')
+   * console.log(root.parent) // null
+   */
+  get parent() {
+    // Return cached value if available
+    if(this.#parent !== undefined) {
+      return this.#parent
+    }
+
+    // Compute parent directory (null if we're at root)
+    const parentPath = path.dirname(this.path)
+    const isRoot = parentPath === this.path
+
+    // Cache and return
+    this.#parent = isRoot
+      ? null
+      : new DirectoryObject(parentPath, this.temporary)
+
+    return this.#parent
   }
 
   /**

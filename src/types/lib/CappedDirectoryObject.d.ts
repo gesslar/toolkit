@@ -39,6 +39,12 @@ export default class CappedDirectoryObject extends DirectoryObject {
      */
     get capped(): boolean;
     /**
+     * Returns a generator that walks up to the cap.
+     *
+     * @returns {Generator<DirectoryObject>} Generator yielding parent directories
+     */
+    get walkUp(): Generator<DirectoryObject>;
+    /**
      * Creates a new CappedDirectoryObject by extending this directory's path.
      *
      * Validates that the resulting path remains within the cap directory tree.

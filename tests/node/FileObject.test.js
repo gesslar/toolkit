@@ -39,7 +39,7 @@ describe("FileObject", () => {
 
       assert.ok(file.path.includes("/home/user"))
       assert.equal(file.name, "test.txt")
-      assert.ok(file.directory instanceof DirectoryObject)
+      assert.ok(file.parent instanceof DirectoryObject)
     })
 
     it("creates FileObject with directory parameter as DirectoryObject", () => {
@@ -48,7 +48,7 @@ describe("FileObject", () => {
 
       assert.ok(file.path.includes("/home/user"))
       assert.equal(file.name, "test.txt")
-      assert.ok(file.directory instanceof DirectoryObject)
+      assert.ok(file.parent instanceof DirectoryObject)
     })
 
     it("handles file without extension", () => {
@@ -104,7 +104,7 @@ describe("FileObject", () => {
       assert.equal(clone.extension, original.extension)
       assert.equal(clone.module, original.module)
       assert.equal(clone.path, original.path)
-      assert.equal(clone.directory.path, original.directory.path)
+      assert.equal(clone.parent.path, original.parent.path)
     })
   })
 
@@ -149,9 +149,9 @@ describe("FileObject", () => {
       assert.equal(testFile.isDirectory, false)
     })
 
-    it("directory returns DirectoryObject", () => {
-      assert.ok(testFile.directory instanceof DirectoryObject)
-      assert.ok(testFile.directory.path.includes("myapp"))
+    it("parent returns DirectoryObject", () => {
+      assert.ok(testFile.parent instanceof DirectoryObject)
+      assert.ok(testFile.parent.path.includes("myapp"))
     })
   })
 
@@ -179,7 +179,7 @@ describe("FileObject", () => {
       assert.ok("extension" in json)
       assert.ok("isFile" in json)
       assert.ok("isDirectory" in json)
-      assert.ok("directory" in json)
+      assert.ok("parent" in json)
 
       assert.equal(json.isFile, true)
       assert.equal(json.isDirectory, false)
@@ -614,7 +614,7 @@ describe("FileObject", () => {
       const file = new FileObject(filePath)
 
       // Directory exists, should succeed
-      assert.equal(await file.directory.exists, true)
+      assert.equal(await file.parent.exists, true)
       await file.write("content")
 
       assert.equal(await file.exists, true)

@@ -10,7 +10,7 @@
  * @property {string} extension - The file extension
  * @property {boolean} isFile - Always true for files
  * @property {boolean} isDirectory - Always false for files
- * @property {DirectoryObject} directory - The parent directory object
+ * @property {DirectoryObject} parent - The parent directory object
  * @property {Promise<boolean>} exists - Whether the file exists (async)
  */
 export default class FileObject extends FS {
@@ -28,9 +28,9 @@ export default class FileObject extends FS {
      * Constructs a FileObject instance.
      *
      * @param {string | FileObject} fileName - The file path or FileObject
-     * @param {DirectoryObject|string|null} [directory] - The parent directory (object or string)
+     * @param {DirectoryObject|string|null} [parent] - The parent directory (object or string)
      */
-    constructor(fileName: string | FileObject, directory?: DirectoryObject | string | null);
+    constructor(fileName: string | FileObject, parent?: DirectoryObject | string | null);
     /**
      * Returns a JSON representation of the FileObject.
      *
@@ -106,7 +106,7 @@ export default class FileObject extends FS {
      *
      * @returns {DirectoryObject} The parent directory object
      */
-    get directory(): DirectoryObject;
+    get parent(): DirectoryObject;
     /**
      * Check if a file can be read. Returns true if the file can be read, false
      *

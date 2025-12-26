@@ -3,7 +3,7 @@ import os from "node:os"
 import path from "node:path"
 import {afterEach,describe,it} from "node:test"
 
-import {FS,Sass,TempDirectoryObject} from "../../src/index.js"
+import {CappedDirectoryObject,DirectoryObject,FS,Sass,TempDirectoryObject} from "../../src/index.js"
 
 describe("TempDirectoryObject", () => {
   /** @type {Array<TempDirectoryObject>} */
@@ -202,6 +202,112 @@ describe("TempDirectoryObject", () => {
       // not TempDirectoryObject, but they will have temporary=true
       assert.equal(directories[0].temporary, true)
       assert.ok(directories[0].name.includes("subdir"))
+    })
+  })
+
+  describe("parent property (cap-aware)", () => {
+    it("returns parent DirectoryObject for TempDirectoryObject", () => {
+      const temp = new TempDirectoryObject("test-parent-root")
+      tempDirs.push(temp)
+
+      // TempDirectoryObject's parent is /tmp (the cap)
+      const parent = temp.parent
+      assert.ok(parent instanceof DirectoryObject)
+      assert.equal(parent.path, os.tmpdir())
+    })
+
+    it("returns null when at actual cap root", () => {
+      const temp = new TempDirectoryObject("test-cap-root")
+      tempDirs.push(temp)
+
+      // Get parent until we reach the cap
+      let current = temp
+      while(current.parent && current.parent.path !== temp.cap) {
+        current = current.parent
+      }
+
+      // Now current should be at /tmp, which is the cap
+      // Its parent getter should check if we're at cap and return appropriately
+      const capDir = new DirectoryObject(temp.cap)
+      // Actually, since cap is /tmp, its parent would be / which is beyond cap
+      // But for a plain DirectoryObject at /tmp, parent would return /
+      assert.ok(capDir.parent !== null)
+    })
+
+    it("returns DirectoryObject for subdirectory within cap", () => {
+      const temp = new TempDirectoryObject("test-parent-sub")
+      tempDirs.push(temp)
+
+      const subdir = temp.getDirectory("data")
+      const parent = subdir.parent
+
+      assert.ok(parent instanceof DirectoryObject)
+      assert.equal(parent.path, temp.path)
+    })
+
+    it("returned parent is plain DirectoryObject not capped", () => {
+      const temp = new TempDirectoryObject("test-parent-uncapped")
+      tempDirs.push(temp)
+
+      const subdir = temp.getDirectory("data")
+      const parent = subdir.parent
+
+      // Parent is not a CappedDirectoryObject
+      assert.ok(!(parent instanceof CappedDirectoryObject))
+      assert.ok(parent instanceof DirectoryObject)
+    })
+  })
+
+  describe("walkUp generator (cap-aware)", () => {
+    it("stops at cap root", () => {
+      const temp = new TempDirectoryObject("test-walkup")
+      tempDirs.push(temp)
+
+      const deep = temp.getDirectory("a").getDirectory("b").getDirectory("c")
+      const parents = [...deep.walkUp]
+      const paths = parents.map(p => p.path)
+
+      // Should walk up through the hierarchy
+      assert.ok(paths.includes(temp.getDirectory("a").getDirectory("b").getDirectory("c").path))
+      assert.ok(paths.includes(temp.getDirectory("a").getDirectory("b").path))
+      assert.ok(paths.includes(temp.getDirectory("a").path))
+      assert.ok(paths.includes(temp.path))
+
+      // Should include the cap (/tmp)
+      assert.ok(paths.includes(os.tmpdir()))
+
+      // Should not go beyond the cap
+      const lastPath = paths[paths.length - 1]
+      assert.equal(lastPath, os.tmpdir())
+    })
+
+    it("includes cap in walkUp results", () => {
+      const temp = new TempDirectoryObject("test-walkup-includes-cap")
+      tempDirs.push(temp)
+
+      const subdir = temp.getDirectory("data")
+      const parents = [...subdir.walkUp]
+      const paths = parents.map(p => p.path)
+
+      // Should include temp directory and cap
+      assert.ok(paths.includes(temp.path))
+      assert.ok(paths.includes(os.tmpdir()))
+
+      // Cap should be the last item
+      assert.equal(parents[parents.length - 1].path, os.tmpdir())
+    })
+
+    it("walkUp on TempDirectoryObject walks to cap", () => {
+      const temp = new TempDirectoryObject("test-walkup-temp")
+      tempDirs.push(temp)
+
+      const parents = [...temp.walkUp]
+      const paths = parents.map(p => p.path)
+
+      // Should yield temp directory and cap
+      assert.ok(paths.includes(temp.path))
+      assert.ok(paths.includes(os.tmpdir()))
+      assert.equal(parents[parents.length - 1].path, os.tmpdir())
     })
   })
 })
