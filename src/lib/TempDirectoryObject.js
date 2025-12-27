@@ -6,6 +6,7 @@
 
 import fs from "node:fs"
 import os from "node:os"
+import path from "node:path"
 
 import CappedDirectoryObject from "./CappedDirectoryObject.js"
 import Sass from "./Sass.js"
@@ -57,22 +58,63 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
    * await parent.remove() // Removes both parent and child
    */
   constructor(name, parent=null) {
-    let finalName = name
+    let dirPath
+    let cappedParent = parent
 
-    // Only generate unique suffix if we have a name and no parent
-    if(name && !parent) {
-      const prefix = name.endsWith("-") ? name : `${name}-`
-      const uniqueSuffix =
-        Math.random()
-          .toString(36)
-          .substring(2, 8)
-          .toUpperCase()
-      finalName = `${prefix}${uniqueSuffix}`
+    if(!parent) {
+      // No parent: need to create a capped parent at tmpdir first
+      cappedParent = new CappedDirectoryObject(os.tmpdir(), null, true)
+
+      if(name) {
+        // Check if name is a simple name (no separators, not absolute)
+        const isSimpleName = !path.isAbsolute(name) &&
+                             !name.includes("/") &&
+                             !name.includes("\\") &&
+                             !name.includes(path.sep)
+
+        if(isSimpleName) {
+          // Simple name: add unique suffix
+          const prefix = name.endsWith("-") ? name : `${name}-`
+          const uniqueSuffix =
+            Math.random()
+              .toString(36)
+              .substring(2, 8)
+              .toUpperCase()
+          dirPath = `${prefix}${uniqueSuffix}`
+        } else {
+          // Complex path: use as-is, let CappedDirectoryObject handle coercion
+          dirPath = name
+        }
+      } else {
+        // No name: use tmpdir itself (no parent)
+        dirPath = os.tmpdir()
+        cappedParent = null
+      }
+    } else {
+      // With parent: validate it's a proper temp directory parent
+      if(!(parent instanceof CappedDirectoryObject)) {
+        throw Sass.new(
+          "Parent must be a CappedDirectoryObject or TempDirectoryObject."
+        )
+      }
+
+      // SECURITY: Ensure parent's cap is tmpdir (prevent escape to other caps)
+      const tmpdir = os.tmpdir()
+      if(parent.cap !== tmpdir) {
+        throw Sass.new(
+          `Parent must be capped to OS temp directory (${tmpdir}), ` +
+          `got cap: ${parent.cap}`
+        )
+      }
+
+      dirPath = name || ""
+      if(!dirPath) {
+        throw Sass.new("Name must not be empty when parent is provided.")
+      }
     }
 
-    // Call parent constructor with the cap set to OS temp directory
-    // Mark as temporary=true so remove() works
-    super(finalName, os.tmpdir(), parent, true)
+    // Call parent constructor with new signature
+    super(dirPath, cappedParent, true)
 
     // Temp-specific behavior: create directory immediately
     this.#createDirectory()
@@ -86,7 +128,8 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
    */
   #createDirectory() {
     try {
-      fs.mkdirSync(this.realPath)
+      // Use recursive: true to create parent directories as needed
+      fs.mkdirSync(this.realPath, {recursive: true})
     } catch(e) {
       // EEXIST is fine - directory already exists
       if(e.code !== "EEXIST") {

@@ -11,21 +11,32 @@ export default class CappedDirectoryObject extends DirectoryObject {
     /**
      * Constructs a CappedDirectoryObject instance.
      *
-     * This is an abstract base class - use subclasses like TempDirectoryObject
-     * that define specific caps.
+     * Without a parent, the path becomes both the directory location and the cap
+     * (virtual root). With a parent, the path is resolved relative to the parent's
+     * cap using virtual path semantics (absolute paths treated as cap-relative).
      *
-     * @param {string?} name - Base name for the directory (if empty/null, uses cap root)
-     * @param {string} cap - The root path that constrains this directory tree
+     * @param {string} dirPath - Directory path (becomes cap if no parent, else relative to parent's cap)
      * @param {CappedDirectoryObject?} [parent] - Optional parent capped directory
      * @param {boolean} [temporary=false] - Whether this is a temporary directory
-     * @throws {Sass} If name is absolute
-     * @throws {Sass} If name is empty (when parent is provided)
-     * @throws {Sass} If name contains path separators
-     * @throws {Sass} If parent is not a capped directory
-     * @throws {Sass} If parent's lineage does not trace back to the cap
+     * @throws {Sass} If path is empty
+     * @throws {Sass} If parent is provided but not a CappedDirectoryObject
      * @throws {Sass} If the resulting path would escape the cap
+     * @example
+     * // Create new capped directory
+     * const cache = new CappedDirectoryObject("/home/user/.cache")
+     * // path: /home/user/.cache, cap: /home/user/.cache
+     *
+     * @example
+     * // Create subdirectory with parent
+     * const data = new CappedDirectoryObject("data", cache)
+     * // path: /home/user/.cache/data, cap: /home/user/.cache
+     *
+     * @example
+     * // Virtual absolute path with parent
+     * const config = new CappedDirectoryObject("/etc/config", cache)
+     * // path: /home/user/.cache/etc/config, cap: /home/user/.cache
      */
-    constructor(name: string | null, cap: string, parent?: CappedDirectoryObject | null, temporary?: boolean);
+    constructor(dirPath: string, parent?: CappedDirectoryObject | null, temporary?: boolean);
     /**
      * Returns the cap path for this directory.
      *
