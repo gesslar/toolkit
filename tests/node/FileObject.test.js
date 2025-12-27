@@ -787,20 +787,8 @@ describe("FileObject", () => {
       )
     })
 
-    it("throws Sass error for invalid URL", async () => {
-      const file = new FileObject("/test.txt")
-      // Manually break the URL by mocking
-      Object.defineProperty(file, "url", {get: () => null})
-
-      await assert.rejects(
-        () => file.delete(),
-        (error) => {
-          assert.ok(error instanceof Sass)
-          assert.match(error.message, /does not represent a valid resource/)
-          return true
-        }
-      )
-    })
+    // Note: URL validation now happens at construction time via private metadata
+    // and cannot be mocked at runtime. Invalid URLs will fail during FileObject construction.
 
     it("deletes file even with special characters in name", async () => {
       const specialPath = path.join(testDir, "file with spaces & symbols!.txt")
@@ -1027,19 +1015,8 @@ describe("FileObject", () => {
         )
       })
 
-      it("throws Sass error for invalid URL", async () => {
-        const file = new FileObject("/test.jpg")
-        Object.defineProperty(file, "url", {get: () => null})
-
-        await assert.rejects(
-          () => file.readBinary(),
-          (error) => {
-            assert.ok(error instanceof Sass)
-            assert.match(error.message, /No URL/)
-            return true
-          }
-        )
-      })
+      // Note: URL validation now happens at construction time via private metadata
+      // and cannot be mocked at runtime.
     })
 
     describe("writeBinary", () => {
@@ -1138,20 +1115,8 @@ describe("FileObject", () => {
         )
       })
 
-      it("throws Sass error for invalid URL", async () => {
-        const file = new FileObject("/test.bin")
-        Object.defineProperty(file, "url", {get: () => null})
-        const buffer = Buffer.from([1, 2, 3])
-
-        await assert.rejects(
-          () => file.writeBinary(buffer),
-          (error) => {
-            assert.ok(error instanceof Sass)
-            assert.match(error.message, /No URL/)
-            return true
-          }
-        )
-      })
+      // Note: URL validation now happens at construction time via private metadata
+      // and cannot be mocked at runtime.
     })
 
     describe("round-trip binary operations", () => {

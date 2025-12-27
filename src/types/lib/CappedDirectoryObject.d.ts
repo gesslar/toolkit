@@ -76,6 +76,12 @@ export default class CappedDirectoryObject extends DirectoryObject {
      */
     get real(): DirectoryObject;
     /**
+     * Returns the URL with virtual path (cap-relative).
+     *
+     * @returns {URL} Virtual URL
+     */
+    get url(): URL;
+    /**
      * Returns a generator that walks up to the cap.
      *
      * @returns {Generator<DirectoryObject>} Generator yielding parent directories
