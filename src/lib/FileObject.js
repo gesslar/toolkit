@@ -96,6 +96,7 @@ export default class FileObject extends FS {
         case "String":
           return new DirectoryObject(parent)
         case "DirectoryObject":
+        case "CappedDirectoryObject":
         case "TempDirectoryObject":
           return parent
         default:
@@ -103,7 +104,9 @@ export default class FileObject extends FS {
       }
     })()
 
-    const final = FS.resolvePath(parentObject.path ?? ".", fixedFile)
+    // Use real path if parent is capped, otherwise use path
+    const parentPath = parentObject.realPath || parentObject.path
+    const final = FS.resolvePath(parentPath ?? ".", fixedFile)
 
     const resolved = final
     const url = new URL(FS.pathToUri(resolved))
@@ -113,7 +116,9 @@ export default class FileObject extends FS {
 
     // If the file is directly in the provided parent directory, reuse that object
     // Otherwise, create a DirectoryObject for the actual parent directory
-    const actualParent = parentObject && actualParentPath === parentObject.path
+    // Use real path for comparison if parent is capped
+    const parentRealPath = parentObject.realPath || parentObject.path
+    const actualParent = parentObject && actualParentPath === parentRealPath
       ? parentObject
       : new DirectoryObject(actualParentPath)
 
@@ -184,12 +189,28 @@ export default class FileObject extends FS {
   }
 
   /**
-   * Return the fully resolved absolute path to the file on disk.
+   * Returns the file path. If the parent is a capped directory, returns the
+   * virtual path relative to the cap. Otherwise returns the real filesystem path.
+   * Use `.real.path` to always get the actual filesystem path.
    *
-   * @returns {string} The fully resolved absolute file path
+   * @returns {string} The file path (virtual if parent is capped, real otherwise)
    */
   get path() {
-    return this.#meta.path
+    const realPath = this.#meta.path
+    const parent = this.#meta.parent
+
+    // If parent is capped, return virtual path
+    if(parent?.capped) {
+      const cap = parent.cap
+      const capResolved = path.resolve(cap)
+      const relative = path.relative(capResolved, realPath)
+
+      // Return with leading slash to indicate it's cap-relative
+      return "/" + relative.split(path.sep).join("/")
+    }
+
+    // Otherwise return real path
+    return realPath
   }
 
   /**
@@ -265,13 +286,33 @@ export default class FileObject extends FS {
   }
 
   /**
+   * Returns a plain FileObject representing the actual filesystem location.
+   * This provides an "escape hatch" when working with capped directories,
+   * allowing direct filesystem access when needed.
+   *
+   * @returns {FileObject} Uncapped file object at the real filesystem path
+   * @example
+   * const temp = new TempDirectoryObject("myapp")
+   * const file = temp.getFile("/config/app.json")
+   *
+   * // file.path shows virtual path
+   * console.log(file.path)       // "/config/app.json"
+   * // file.real.path shows actual filesystem path
+   * console.log(file.real.path)  // "/tmp/myapp-ABC123/config/app.json"
+   * file.real.parent.parent      // Can traverse outside the cap
+   */
+  get real() {
+    return new FileObject(this.#meta.path)
+  }
+
+  /**
    * Check if a file can be read. Returns true if the file can be read, false
    *
    * @returns {Promise<boolean>} Whether the file can be read
    */
   async canRead() {
     try {
-      await fs.access(this.path, fs.constants.R_OK)
+      await fs.access(this.#meta.path, fs.constants.R_OK)
 
       return true
     } catch(_) {
@@ -286,7 +327,7 @@ export default class FileObject extends FS {
    */
   async canWrite() {
     try {
-      await fs.access(this.path, fs.constants.W_OK)
+      await fs.access(this.#meta.path, fs.constants.W_OK)
 
       return true
     } catch(_) {
@@ -301,7 +342,7 @@ export default class FileObject extends FS {
    */
   async #fileExists() {
     try {
-      await fs.access(this.path, fs.constants.F_OK)
+      await fs.access(this.#meta.path, fs.constants.F_OK)
 
       return true
     } catch(_) {
@@ -316,7 +357,7 @@ export default class FileObject extends FS {
    */
   async size() {
     try {
-      const stat = await fs.stat(this.path)
+      const stat = await fs.stat(this.#meta.path)
 
       return stat.size
     } catch(_) {
@@ -332,7 +373,7 @@ export default class FileObject extends FS {
    */
   async modified() {
     try {
-      const stat = await fs.stat(this.path)
+      const stat = await fs.stat(this.#meta.path)
 
       return stat.mtime
     } catch(_) {

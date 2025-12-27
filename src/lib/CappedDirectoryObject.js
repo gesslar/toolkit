@@ -13,6 +13,7 @@ import path from "node:path"
 import {Data, Valid} from "../browser/index.js"
 import DirectoryObject from "./DirectoryObject.js"
 import FileObject from "./FileObject.js"
+import FS from "./FS.js"
 import Sass from "./Sass.js"
 
 /**
@@ -84,7 +85,8 @@ export default class CappedDirectoryObject extends DirectoryObject {
           "Parent must have the same cap as this directory.",
         )
 
-        const parentPath = parent.path
+        // Use real path for filesystem operations
+        const parentPath = parent.realPath || parent.path
 
         // Validate parent's lineage traces back to the cap
         let found = false
@@ -128,13 +130,13 @@ export default class CappedDirectoryObject extends DirectoryObject {
    */
   #validateCapPath() {
     const cap = this.#cap
-    const resolved = path.resolve(this.path)
+    const resolved = path.resolve(this.#realPath)
     const capResolved = path.resolve(cap)
 
     // Check if the resolved path starts with the cap directory
     if(!resolved.startsWith(capResolved)) {
       throw Sass.new(
-        `Path '${this.path}' is not within the cap directory '${cap}'`
+        `Path '${this.#realPath}' is not within the cap directory '${cap}'`
       )
     }
   }
@@ -158,6 +160,73 @@ export default class CappedDirectoryObject extends DirectoryObject {
   }
 
   /**
+   * Returns the real filesystem path (for internal and subclass use).
+   *
+   * @protected
+   * @returns {string} The actual filesystem path
+   */
+  get realPath() {
+    return super.path
+  }
+
+  /**
+   * Private alias for realPath (for use in private methods).
+   *
+   * @private
+   * @returns {string} The actual filesystem path
+   */
+  get #realPath() {
+    return this.realPath
+  }
+
+  /**
+   * Returns the virtual path relative to the cap.
+   * This is the default path representation in the capped environment.
+   * Use `.real.path` to access the actual filesystem path.
+   *
+   * @returns {string} Path relative to cap, or "/" if at cap root
+   * @example
+   * const temp = new TempDirectoryObject("myapp")
+   * const subdir = temp.getDirectory("data/cache")
+   * console.log(subdir.path)       // "/data/cache" (virtual, relative to cap)
+   * console.log(subdir.real.path)  // "/tmp/myapp-ABC123/data/cache" (actual filesystem)
+   */
+  get path() {
+    const capResolved = path.resolve(this.#cap)
+    const relative = path.relative(capResolved, this.#realPath)
+
+    // If at cap root or empty, return "/"
+    if(!relative || relative === ".") {
+      return "/"
+    }
+
+    // Return with leading slash to indicate it's cap-relative
+    return "/" + relative.split(path.sep).join("/")
+  }
+
+  /**
+   * Returns a plain DirectoryObject representing the actual filesystem location.
+   * This provides an "escape hatch" from the capped environment to interact
+   * with the real filesystem when needed.
+   *
+   * @returns {DirectoryObject} Uncapped directory object at the real filesystem path
+   * @example
+   * const temp = new TempDirectoryObject("myapp")
+   * const subdir = temp.getDirectory("data")
+   *
+   * // Work within the capped environment (virtual paths)
+   * console.log(subdir.path)        // "/data" (virtual)
+   * subdir.getFile("config.json")   // Stays within cap
+   *
+   * // Break out to real filesystem when needed
+   * console.log(subdir.real.path)   // "/tmp/myapp-ABC123/data" (real)
+   * subdir.real.parent              // Can traverse outside the cap
+   */
+  get real() {
+    return new DirectoryObject(this.#realPath)
+  }
+
+  /**
    * Returns the parent directory of this capped directory.
    * Returns null only if this directory is at the cap (the "root" of the capped tree).
    *
@@ -175,12 +244,17 @@ export default class CappedDirectoryObject extends DirectoryObject {
     const capResolved = path.resolve(this.#cap)
 
     // If we're at the cap, return null (cap is the "root")
-    if(this.path === capResolved) {
+    if(this.#realPath === capResolved) {
       return null
     }
 
-    // Otherwise return the parent (plain DirectoryObject, not capped)
-    return super.parent
+    // Otherwise return the parent using real path (plain DirectoryObject, not capped)
+    const parentPath = path.dirname(this.#realPath)
+    const isRoot = parentPath === this.#realPath
+
+    return isRoot
+      ? null
+      : new DirectoryObject(parentPath, this.temporary)
   }
 
   /**
@@ -201,19 +275,27 @@ export default class CappedDirectoryObject extends DirectoryObject {
   *#walkUpCapped() {
     const capResolved = path.resolve(this.#cap)
 
-    // Use super.walkUp but stop when we would go beyond the cap
-    for(const dir of super.walkUp) {
+    // Build trail from real path
+    const trail = this.#realPath.split(path.sep).filter(Boolean)
+    const curr = [...trail]
+
+    while(curr.length > 0) {
+      const joined = path.sep + curr.join(path.sep)
+
       // Don't yield anything beyond the cap
-      if(!dir.path.startsWith(capResolved)) {
+      if(!joined.startsWith(capResolved)) {
         break
       }
 
-      yield dir
+      // Yield plain DirectoryObject with real path
+      yield new DirectoryObject(joined, this.temporary)
 
       // Stop after yielding the cap
-      if(dir.path === capResolved) {
+      if(joined === capResolved) {
         break
       }
+
+      curr.pop()
     }
   }
 
@@ -229,69 +311,286 @@ export default class CappedDirectoryObject extends DirectoryObject {
   /**
    * Creates a new CappedDirectoryObject by extending this directory's path.
    *
-   * Validates that the resulting path remains within the cap directory tree.
+   * All paths are coerced to remain within the cap directory tree:
+   * - Absolute paths (e.g., "/foo") are treated as relative to the cap
+   * - Parent traversal ("..") is allowed but clamped at the cap boundary
+   * - The cap acts as the virtual root directory
    *
-   * @param {string} newPath - The path segment to append
-   * @returns {CappedDirectoryObject} A new CappedDirectoryObject with the extended path
-   * @throws {Sass} If the path would escape the cap directory
-   * @throws {Sass} If the path is absolute
-   * @throws {Sass} If the path contains traversal (..)
+   * @param {string} newPath - The path to resolve (can be absolute or contain ..)
+   * @returns {CappedDirectoryObject} A new CappedDirectoryObject with the coerced path
    * @example
    * const capped = new TempDirectoryObject("myapp")
    * const subDir = capped.getDirectory("data")
    * console.log(subDir.path) // "/tmp/myapp-ABC123/data"
+   *
+   * @example
+   * // Absolute paths are relative to cap
+   * const abs = capped.getDirectory("/foo/bar")
+   * console.log(abs.path) // "/tmp/myapp-ABC123/foo/bar"
+   *
+   * @example
+   * // Excessive .. traversal clamps to cap
+   * const up = capped.getDirectory("../../../etc/passwd")
+   * console.log(up.path) // "/tmp/myapp-ABC123" (clamped to cap)
    */
   getDirectory(newPath) {
     Valid.type(newPath, "String")
 
-    // Prevent absolute paths
+    // Fast path: if it's a simple name (no separators, not absolute, no ..)
+    // use the subclass constructor directly to preserve type
+    const isSimpleName = !path.isAbsolute(newPath) &&
+                         !newPath.includes("/") &&
+                         !newPath.includes("\\") &&
+                         !newPath.includes("..")
+
+    if(isSimpleName) {
+      // For CappedDirectoryObject, pass (name, cap, parent, temporary)
+      // For TempDirectoryObject subclass, it expects (name, parent) but will
+      // internally call super with the cap parameter
+      if(this.constructor === CappedDirectoryObject) {
+        return new CappedDirectoryObject(
+          newPath,
+          this.#cap,
+          this,
+          this.temporary
+        )
+      }
+
+      // For subclasses like TempDirectoryObject
+      return new this.constructor(newPath, this)
+    }
+
+    // Complex path - handle coercion
+    const capResolved = path.resolve(this.#cap)
+    let targetPath
+
+    // If absolute, treat as relative to cap (virtual root)
     if(path.isAbsolute(newPath)) {
-      throw Sass.new("Absolute paths are not allowed in capped directories")
+      // Strip leading slashes to make relative
+      const relative = newPath.replace(/^[/\\]+/, "")
+
+      // Join with cap (unless empty, which means cap root)
+      targetPath = relative ? path.join(capResolved, relative) : capResolved
+    } else {
+      // Relative path - resolve from current directory
+      targetPath = FS.resolvePath(this.#realPath, newPath)
     }
 
-    // Prevent path traversal attacks
-    const normalized = path.normalize(newPath)
-    if(normalized.includes("..")) {
-      throw Sass.new("Path traversal (..) is not allowed in capped directories")
+    // Resolve to absolute path (handles .. and .)
+    const resolved = path.resolve(targetPath)
+
+    // Coerce: if path escaped cap, clamp to cap boundary
+    const coerced = resolved.startsWith(capResolved)
+      ? resolved
+      : capResolved
+
+    // Compute path relative to cap for reconstruction
+    const relativeToCap = path.relative(capResolved, coerced)
+
+    // If we're at the cap root, return cap root directory
+    if(!relativeToCap || relativeToCap === ".") {
+      return this.#createCappedAtRoot()
     }
 
-    // Use the constructor of the current class (supports subclassing)
-    // Pass this as parent so the child inherits the same cap
-    return new this.constructor(newPath, this)
+    // Build directory by traversing segments from cap
+    return this.#buildDirectoryFromRelativePath(relativeToCap)
+  }
+
+  /**
+   * Creates a CappedDirectoryObject at the cap root.
+   * Can be overridden by subclasses that have different root semantics.
+   *
+   * @private
+   * @returns {CappedDirectoryObject} Directory object at cap root
+   */
+  #createCappedAtRoot() {
+    // Create a base CappedDirectoryObject at the cap path
+    // This works for direct usage of CappedDirectoryObject
+    // Subclasses may need to override if they have special semantics
+    return new CappedDirectoryObject(null, this.#cap, null, this.temporary)
+  }
+
+  /**
+   * Builds a directory by traversing path segments from cap.
+   *
+   * @private
+   * @param {string} relativePath - Path relative to cap
+   * @returns {CappedDirectoryObject} The directory at the final path
+   */
+  #buildDirectoryFromRelativePath(relativePath) {
+    const segments = relativePath.split(path.sep).filter(Boolean)
+
+    // Start at cap root
+    let current = this.#createCappedAtRoot()
+
+    // Traverse each segment, creating CappedDirectoryObject instances
+    // (not subclass instances, to avoid constructor signature issues)
+    for(const segment of segments) {
+      current = new CappedDirectoryObject(
+        segment,
+        this.#cap,
+        current,
+        this.temporary
+      )
+    }
+
+    return current
   }
 
   /**
    * Creates a new FileObject by extending this directory's path.
    *
-   * Validates that the resulting path remains within the cap directory tree.
+   * All paths are coerced to remain within the cap directory tree:
+   * - Absolute paths (e.g., "/config.json") are treated as relative to the cap
+   * - Parent traversal ("..") is allowed but clamped at the cap boundary
+   * - The cap acts as the virtual root directory
    *
-   * @param {string} filename - The filename to append
-   * @returns {FileObject} A new FileObject with the extended path
-   * @throws {Sass} If the path would escape the cap directory
-   * @throws {Sass} If the path is absolute
-   * @throws {Sass} If the path contains traversal (..)
+   * @param {string} filename - The filename to resolve (can be absolute or contain ..)
+   * @returns {FileObject} A new FileObject with the coerced path
    * @example
    * const capped = new TempDirectoryObject("myapp")
    * const file = capped.getFile("config.json")
    * console.log(file.path) // "/tmp/myapp-ABC123/config.json"
+   *
+   * @example
+   * // Absolute paths are relative to cap
+   * const abs = capped.getFile("/data/config.json")
+   * console.log(abs.path) // "/tmp/myapp-ABC123/data/config.json"
+   *
+   * @example
+   * // Excessive .. traversal clamps to cap
+   * const up = capped.getFile("../../../etc/passwd")
+   * console.log(up.path) // "/tmp/myapp-ABC123/passwd" (clamped to cap)
    */
   getFile(filename) {
     Valid.type(filename, "String")
 
-    // Prevent absolute paths
+    // Fast path: if it's a simple filename (no separators, not absolute, no ..)
+    // use this as the parent directly
+    const isSimpleName = !path.isAbsolute(filename) &&
+                         !filename.includes("/") &&
+                         !filename.includes("\\") &&
+                         !filename.includes("..")
+
+    if(isSimpleName) {
+      // Simple filename - create directly with this as parent
+      return new FileObject(filename, this)
+    }
+
+    // Complex path - handle coercion
+    const capResolved = path.resolve(this.#cap)
+    let targetPath
+
+    // If absolute, treat as relative to cap (virtual root)
     if(path.isAbsolute(filename)) {
-      throw Sass.new("Absolute paths are not allowed in capped directories")
+      // Strip leading slashes to make relative
+      const relative = filename.replace(/^[/\\]+/, "")
+
+      // Join with cap
+      targetPath = path.join(capResolved, relative)
+    } else {
+      // Relative path - resolve from current directory
+      targetPath = FS.resolvePath(this.#realPath, filename)
     }
 
-    // Prevent path traversal attacks
-    const normalized = path.normalize(filename)
-    if(normalized.includes("..")) {
-      throw Sass.new("Path traversal (..) is not allowed in capped directories")
+    // Resolve to absolute path (handles .. and .)
+    const resolved = path.resolve(targetPath)
+
+    // Coerce: if path escaped cap, clamp to cap boundary
+    const coerced = resolved.startsWith(capResolved)
+      ? resolved
+      : capResolved
+
+    // Extract directory and filename parts
+    let fileDir = path.dirname(coerced)
+    let fileBasename = path.basename(coerced)
+
+    // Special case: if coerced is exactly the cap (file tried to escape),
+    // the file should be placed at the cap root with just the filename
+    if(coerced === capResolved) {
+      // Extract just the filename from the original path
+      fileBasename = path.basename(resolved)
+      fileDir = capResolved
     }
 
-    // Pass the filename and this directory as parent
-    // This ensures the FileObject maintains the correct parent reference
-    return new FileObject(filename, this)
+    // Get or create the parent directory
+    const relativeToCap = path.relative(capResolved, fileDir)
+    const parentDir = !relativeToCap || relativeToCap === "."
+      ? this.#createCappedAtRoot()
+      : this.#buildDirectoryFromRelativePath(relativeToCap)
+
+    // Create FileObject with parent directory
+    return new FileObject(fileBasename, parentDir)
+  }
+
+  /**
+   * Override exists to use real filesystem path.
+   *
+   * @returns {Promise<boolean>} Whether the directory exists
+   */
+  get exists() {
+    return this.real.exists
+  }
+
+  /**
+   * Override read to use real filesystem path and return capped objects.
+   *
+   * @param {string} [pat=""] - Optional glob pattern
+   * @returns {Promise<{files: Array<FileObject>, directories: Array}>} Directory contents
+   */
+  async read(pat="") {
+    const {files, directories} = await this.real.read(pat)
+
+    // Convert plain DirectoryObjects to CappedDirectoryObjects with same cap
+    const cappedDirectories = directories.map(dir => {
+      const name = dir.name
+
+      return new this.constructor(name, this)
+    })
+
+    return {files, directories: cappedDirectories}
+  }
+
+  /**
+   * Override assureExists to use real filesystem path.
+   *
+   * @param {object} [options] - Options for mkdir
+   * @returns {Promise<void>}
+   */
+  async assureExists(options = {}) {
+    return await this.real.assureExists(options)
+  }
+
+  /**
+   * Override delete to use real filesystem path.
+   *
+   * @returns {Promise<void>}
+   */
+  async delete() {
+    return await this.real.delete()
+  }
+
+  /**
+   * Override remove to preserve temporary flag check.
+   *
+   * @returns {Promise<void>}
+   */
+  async remove() {
+    if(!this.temporary)
+      throw Sass.new("This is not a temporary directory.")
+
+    const {files, directories} = await this.read()
+
+    // Remove subdirectories recursively
+    for(const dir of directories)
+      await dir.remove()
+
+    // Remove files
+    for(const file of files)
+      await file.delete()
+
+    // Delete the now-empty directory
+    await this.delete()
   }
 
   /**
@@ -300,6 +599,6 @@ export default class CappedDirectoryObject extends DirectoryObject {
    * @returns {string} string representation of the CappedDirectoryObject
    */
   toString() {
-    return `[CappedDirectoryObject: ${this.path}]`
+    return `[CappedDirectoryObject: ${this.path} (real: ${this.#realPath})]`
   }
 }

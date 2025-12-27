@@ -50,9 +50,11 @@ export default class FileObject extends FS {
      */
     get supplied(): string;
     /**
-     * Return the fully resolved absolute path to the file on disk.
+     * Returns the file path. If the parent is a capped directory, returns the
+     * virtual path relative to the cap. Otherwise returns the real filesystem path.
+     * Use `.real.path` to always get the actual filesystem path.
      *
-     * @returns {string} The fully resolved absolute file path
+     * @returns {string} The file path (virtual if parent is capped, real otherwise)
      */
     get path(): string;
     /**
@@ -107,6 +109,23 @@ export default class FileObject extends FS {
      * @returns {DirectoryObject} The parent directory object
      */
     get parent(): DirectoryObject;
+    /**
+     * Returns a plain FileObject representing the actual filesystem location.
+     * This provides an "escape hatch" when working with capped directories,
+     * allowing direct filesystem access when needed.
+     *
+     * @returns {FileObject} Uncapped file object at the real filesystem path
+     * @example
+     * const temp = new TempDirectoryObject("myapp")
+     * const file = temp.getFile("/config/app.json")
+     *
+     * // file.path shows virtual path
+     * console.log(file.path)       // "/config/app.json"
+     * // file.real.path shows actual filesystem path
+     * console.log(file.real.path)  // "/tmp/myapp-ABC123/config/app.json"
+     * file.real.parent.parent      // Can traverse outside the cap
+     */
+    get real(): FileObject;
     /**
      * Check if a file can be read. Returns true if the file can be read, false
      *
