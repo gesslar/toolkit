@@ -16,6 +16,7 @@ a Tauri app.
 | Disposer | Lifecycle management for disposable resources |
 | HTML | HTML loading and sanitization utilities |
 | Notify | Event system wrapper for DOM events |
+| Promised | Promise utilities for settling, filtering, and extracting values from promise results |
 | Sass | Custom Error class with enhanced features |
 | Tantrum | AggregateError implementation |
 | Type | String-based type management (exported as TypeSpec in browser) |
@@ -93,3 +94,11 @@ import { Data, Collection, Util } from '@gesslar/toolkit/browser'
 ```
 
 The browser version includes: Collection, Data, Disposer, HTML, Notify, Sass, Tantrum, Type (TypeSpec), Util, and Valid. Node-only modules (Cache, CappedDirectoryObject, Contract, DirectoryObject, FileObject, FS, Glog, Schemer, TempDirectoryObject, Term, Terms) are not available in the browser version.
+
+## Post Partum
+
+If you made it this far, please understand that I have absolutely zero scruples when it comes to breaking changes. Primarily, the audience for this library is myself. Consequently, anything that relies on the contents of this library will dutifully crash and I'll have to refactor those things then. It's like leaving playing nicky nicky nine doors. But with myself. And there's a lazy bomb waiting for me. That I planted. For me. And the bomb just explodes poop.
+
+You're of course welcome to use my library! It's pretty robust. Uhhh, but maybe lock in the version until you see if something is gonna poop all over you. I make robots make my PR notifications and generally they're very good at firing off klaxons about my fetish for breaking changes, so you should be all right if you're paying attention. 🤷🏻
+
+Sincerely, Senator Yabba of the Dabba (Doo)

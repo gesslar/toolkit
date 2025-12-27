@@ -1,5 +1,6 @@
 export { default as Collection } from "./browser/lib/Collection.js";
 export { default as Data } from "./browser/lib/Data.js";
+export { default as Promised } from "./browser/lib/Promised.js";
 export { default as Type } from "./browser/lib/TypeSpec.js";
 export { default as Valid } from "./lib/Valid.js";
 export { default as Sass } from "./lib/Sass.js";
