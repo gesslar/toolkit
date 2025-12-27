@@ -214,11 +214,19 @@ export default class FileObject extends FS {
   }
 
   /**
-   * Returns the URL of the current file.
+   * Returns the URL of the current file. If the parent is a capped directory,
+   * returns a virtual URL relative to the cap. Otherwise returns the real URL.
    *
-   * @returns {URL} The file URL
+   * @returns {URL} The file URL (virtual if parent is capped, real otherwise)
    */
   get url() {
+    const parent = this.#meta.parent
+
+    // If parent is capped, return virtual URL
+    if(parent?.capped) {
+      return new URL(FS.pathToUri(this.path))
+    }
+
     return this.#meta.url
   }
 
@@ -408,7 +416,7 @@ export default class FileObject extends FS {
    * @returns {Promise<string>} The file contents
    */
   async read(encoding="utf8") {
-    const url = this.url
+    const url = this.#meta.url
 
     if(!url)
       throw Sass.new("No URL in file map")
@@ -432,7 +440,7 @@ export default class FileObject extends FS {
    * // Use the buffer (e.g., send in HTTP response, process image, etc.)
    */
   async readBinary() {
-    const url = this.url
+    const url = this.#meta.url
 
     if(!url)
       throw Sass.new("No URL in file map")
@@ -456,11 +464,11 @@ export default class FileObject extends FS {
    * await file.write(JSON.stringify({key: 'value'}))
    */
   async write(content, encoding="utf8") {
-    if(!this.url)
+    if(!this.#meta.url)
       throw Sass.new("No URL in file")
 
     if(await this.parent.exists)
-      await fs.writeFile(this.url, content, encoding)
+      await fs.writeFile(this.#meta.url, content, encoding)
 
     else
       throw Sass.new(`Invalid directory, ${this.parent.url.href}`)
@@ -483,7 +491,7 @@ export default class FileObject extends FS {
    * await file.writeBinary(buffer)
    */
   async writeBinary(data) {
-    if(!this.url)
+    if(!this.#meta.url)
       throw Sass.new("No URL in file")
 
     const exists = await this.parent.exists
@@ -496,7 +504,7 @@ export default class FileObject extends FS {
 
     // According to the internet, if it's already binary, I don't need
     // an encoding. 🤷
-    return await fs.writeFile(this.url, bufferData)
+    return await fs.writeFile(this.#meta.url, bufferData)
   }
 
   /**
@@ -547,7 +555,7 @@ export default class FileObject extends FS {
    * @returns {Promise<object>} The file contents as a module.
    */
   async import() {
-    const url = this.url
+    const url = this.#meta.url
 
     if(!url)
       throw Sass.new("No URL in file map")
@@ -569,7 +577,7 @@ export default class FileObject extends FS {
    * await file.delete()
    */
   async delete() {
-    const url = this.url
+    const url = this.#meta.url
 
     if(!url)
       throw Sass.new("This object does not represent a valid resource.")

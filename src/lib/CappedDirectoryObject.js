@@ -249,6 +249,40 @@ export default class CappedDirectoryObject extends DirectoryObject {
   }
 
   /**
+   * Returns the URL with virtual path (cap-relative).
+   *
+   * @returns {URL} Virtual URL
+   */
+  get url() {
+    return new URL(FS.pathToUri(this.path))
+  }
+
+  /**
+   * Returns JSON representation with virtual paths and .real escape hatch.
+   *
+   * @returns {object} JSON representation
+   */
+  toJSON() {
+    const capResolved = path.resolve(this.#cap)
+    const parentPath = this.#realPath === capResolved
+      ? null
+      : "/"
+
+    return {
+      supplied: this.supplied,
+      path: this.path,
+      url: this.url.toString(),
+      name: this.name,
+      module: this.module,
+      extension: this.extension,
+      isFile: this.isFile,
+      isDirectory: this.isDirectory,
+      parent: parentPath,
+      real: this.real.toJSON()
+    }
+  }
+
+  /**
    * Generator that walks up the directory tree, stopping at the cap.
    * Yields parent directories from current up to (and including) the cap root.
    *
@@ -522,7 +556,20 @@ export default class CappedDirectoryObject extends DirectoryObject {
       return new this.constructor(name, this)
     })
 
-    return {files, directories: cappedDirectories}
+    // Recreate FileObjects with capped parent so they return virtual paths
+    const cappedFiles = files.map(file => new FileObject(file.name, this))
+
+    return {files: cappedFiles, directories: cappedDirectories}
+  }
+
+  /**
+   * Override hasDirectory to use real filesystem path.
+   *
+   * @param {string} dirname - Directory name to check
+   * @returns {Promise<boolean>} True if directory exists
+   */
+  async hasDirectory(dirname) {
+    return await this.real.hasDirectory(dirname)
   }
 
   /**

@@ -58,9 +58,10 @@ export default class FileObject extends FS {
      */
     get path(): string;
     /**
-     * Returns the URL of the current file.
+     * Returns the URL of the current file. If the parent is a capped directory,
+     * returns a virtual URL relative to the cap. Otherwise returns the real URL.
      *
-     * @returns {URL} The file URL
+     * @returns {URL} The file URL (virtual if parent is capped, real otherwise)
      */
     get url(): URL;
     /**
