@@ -31,89 +31,80 @@ export default class CappedDirectoryObject extends DirectoryObject {
   /**
    * Constructs a CappedDirectoryObject instance.
    *
-   * This is an abstract base class - use subclasses like TempDirectoryObject
-   * that define specific caps.
+   * Without a parent, the path becomes both the directory location and the cap
+   * (virtual root). With a parent, the path is resolved relative to the parent's
+   * cap using virtual path semantics (absolute paths treated as cap-relative).
    *
-   * @param {string?} name - Base name for the directory (if empty/null, uses cap root)
-   * @param {string} cap - The root path that constrains this directory tree
+   * @param {string} dirPath - Directory path (becomes cap if no parent, else relative to parent's cap)
    * @param {CappedDirectoryObject?} [parent] - Optional parent capped directory
    * @param {boolean} [temporary=false] - Whether this is a temporary directory
-   * @throws {Sass} If name is absolute
-   * @throws {Sass} If name is empty (when parent is provided)
-   * @throws {Sass} If name contains path separators
-   * @throws {Sass} If parent is not a capped directory
-   * @throws {Sass} If parent's lineage does not trace back to the cap
+   * @throws {Sass} If path is empty
+   * @throws {Sass} If parent is provided but not a CappedDirectoryObject
    * @throws {Sass} If the resulting path would escape the cap
+   * @example
+   * // Create new capped directory
+   * const cache = new CappedDirectoryObject("/home/user/.cache")
+   * // path: /home/user/.cache, cap: /home/user/.cache
+   *
+   * @example
+   * // Create subdirectory with parent
+   * const data = new CappedDirectoryObject("data", cache)
+   * // path: /home/user/.cache/data, cap: /home/user/.cache
+   *
+   * @example
+   * // Virtual absolute path with parent
+   * const config = new CappedDirectoryObject("/etc/config", cache)
+   * // path: /home/user/.cache/etc/config, cap: /home/user/.cache
    */
-  constructor(name, cap, parent=null, temporary=false) {
-    Valid.type(cap, "String")
+  constructor(dirPath, parent=null, temporary=false) {
+    Valid.type(dirPath, "String")
+    Valid.assert(dirPath.length > 0, "Path must not be empty.")
 
     // Validate parent using instanceof since TypeSpec doesn't understand inheritance
     if(parent !== null && !(parent instanceof CappedDirectoryObject)) {
       throw Sass.new(`Parent must be null or a CappedDirectoryObject instance, got ${Data.typeOf(parent)}`)
     }
 
-    let dirPath
+    let cap
+    let resolvedPath
 
-    // Special case: empty name with no parent means use cap root
-    if(!name && !parent) {
-      dirPath = cap
+    if(!parent) {
+      // No parent: dirPath becomes both the directory and the cap
+      cap = path.resolve(dirPath)
+      resolvedPath = cap
     } else {
-      Valid.type(name, "String")
+      // With parent: inherit cap and resolve dirPath relative to it
+      cap = parent.#cap
 
-      // Security: Validate name before any processing
-      Valid.assert(
-        !path.isAbsolute(name),
-        "Capped directory name must not be an absolute path.",
-      )
-      Valid.assert(
-        name.length > 0,
-        "Capped directory name must not be empty.",
-      )
-      Valid.assert(
-        !name.includes("/") && !name.includes("\\") && !name.includes(path.sep),
-        "Capped directory name must not contain path separators.",
-      )
+      // Use real path for filesystem operations
+      const parentPath = parent.realPath || parent.path
+      const capResolved = path.resolve(cap)
 
-      if(parent) {
-        // Ensure parent is capped
-        Valid.assert(parent.capped, "Parent must be a capped DirectoryObject.")
+      let targetPath
 
-        // Ensure parent has same cap
-        Valid.assert(
-          parent.cap === cap,
-          "Parent must have the same cap as this directory.",
-        )
-
-        // Use real path for filesystem operations
-        const parentPath = parent.realPath || parent.path
-
-        // Validate parent's lineage traces back to the cap
-        let found = false
-        if(parent.trail) {
-          for(const p of parent.walkUp) {
-            if(p.path === cap) {
-              found = true
-              break
-            }
-          }
-        }
-
-        Valid.assert(
-          found,
-          `The lineage of this directory must trace back to the cap '${cap}'.`,
-        )
-
-        dirPath = path.join(parentPath, name)
+      // If absolute, treat as virtual path relative to cap (strip leading /)
+      if(path.isAbsolute(dirPath)) {
+        const relative = dirPath.replace(/^[/\\]+/, "")
+        targetPath = relative ? path.join(capResolved, relative) : capResolved
       } else {
-        // No parent - this is a root-level capped directory
-        dirPath = path.join(cap, name)
+        // Relative path - resolve from parent directory
+        targetPath = FS.resolvePath(parentPath, dirPath)
+      }
+
+      // Resolve to absolute path (handles .. and .)
+      const resolved = path.resolve(targetPath)
+
+      // Clamp to cap boundary - cannot escape above cap
+      if(!resolved.startsWith(capResolved)) {
+        // Path tried to escape - clamp to cap root
+        resolvedPath = capResolved
+      } else {
+        resolvedPath = resolved
       }
     }
 
     // Call parent constructor with the path
-    // Pass through the temporary flag (subclasses control this)
-    super(dirPath, temporary)
+    super(resolvedPath, temporary)
 
     // Store the cap AFTER calling super()
     this.#cap = cap
@@ -344,20 +335,8 @@ export default class CappedDirectoryObject extends DirectoryObject {
                          !newPath.includes("..")
 
     if(isSimpleName) {
-      // For CappedDirectoryObject, pass (name, cap, parent, temporary)
-      // For TempDirectoryObject subclass, it expects (name, parent) but will
-      // internally call super with the cap parameter
-      if(this.constructor === CappedDirectoryObject) {
-        return new CappedDirectoryObject(
-          newPath,
-          this.#cap,
-          this,
-          this.temporary
-        )
-      }
-
-      // For subclasses like TempDirectoryObject
-      return new this.constructor(newPath, this)
+      // Both CappedDirectoryObject and subclasses use same signature now
+      return new this.constructor(newPath, this, this.temporary)
     }
 
     // Complex path - handle coercion
@@ -407,7 +386,7 @@ export default class CappedDirectoryObject extends DirectoryObject {
     // Create a base CappedDirectoryObject at the cap path
     // This works for direct usage of CappedDirectoryObject
     // Subclasses may need to override if they have special semantics
-    return new CappedDirectoryObject(null, this.#cap, null, this.temporary)
+    return new CappedDirectoryObject(this.#cap, null, this.temporary)
   }
 
   /**
@@ -426,12 +405,7 @@ export default class CappedDirectoryObject extends DirectoryObject {
     // Traverse each segment, creating CappedDirectoryObject instances
     // (not subclass instances, to avoid constructor signature issues)
     for(const segment of segments) {
-      current = new CappedDirectoryObject(
-        segment,
-        this.#cap,
-        current,
-        this.temporary
-      )
+      current = new CappedDirectoryObject(segment, current, this.temporary)
     }
 
     return current

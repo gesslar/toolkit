@@ -45,28 +45,39 @@ describe("TempDirectoryObject", () => {
       assert.equal(await child.exists, true)
     })
 
-    it("throws error for absolute path in name", () => {
-      assert.throws(
-        () => new TempDirectoryObject("/home/user/documents"),
-        /absolute path/,
-      )
+    it("allows absolute paths (treated as virtual paths relative to tmpdir)", async () => {
+      const temp = new TempDirectoryObject("/home/user/documents")
+      tempDirs.push(temp)
+
+      // Should create /tmp/home/user/documents (virtual path /home/user/documents)
+      assert.ok(temp.real.path.includes("tmp"))
+      assert.ok(temp.real.path.includes("home"))
+      assert.ok(temp.real.path.includes("user"))
+      assert.ok(temp.real.path.includes("documents"))
+      assert.equal(await temp.exists, true)
     })
 
-    it("throws error for path separators", () => {
-      assert.throws(
-        () => new TempDirectoryObject("has/separator"),
-        /path separators/,
-      )
+    it("allows path separators to create nested structure", async () => {
+      const temp = new TempDirectoryObject("has/separator")
+      tempDirs.push(temp)
+
+      // Should create /tmp/has/separator
+      assert.ok(temp.real.path.includes("has"))
+      assert.ok(temp.real.path.includes("separator"))
+      assert.equal(await temp.exists, true)
     })
 
-    it("throws error for path separators even with parent", () => {
+    it("allows nested paths with parent", async () => {
       const parent = new TempDirectoryObject("parent")
       tempDirs.push(parent)
 
-      assert.throws(
-        () => new TempDirectoryObject("data/cache", parent),
-        /path separators/,
-      )
+      const child = new TempDirectoryObject("data/cache", parent)
+
+      // Should create parent/data/cache
+      assert.ok(child.real.path.includes("parent"))
+      assert.ok(child.real.path.includes("data"))
+      assert.ok(child.real.path.includes("cache"))
+      assert.equal(await child.exists, true)
     })
 
     it("generates unique paths for same name", async () => {
@@ -77,6 +88,15 @@ describe("TempDirectoryObject", () => {
       assert.notEqual(temp1.path, temp2.path)
       assert.ok(temp1.path.includes("test"))
       assert.ok(temp2.path.includes("test"))
+    })
+
+    it("rejects parent with non-tmpdir cap (security)", () => {
+      const badParent = new CappedDirectoryObject("/var/data")
+
+      assert.throws(
+        () => new TempDirectoryObject("child", badParent),
+        /must be capped to OS temp directory/i,
+      )
     })
   })
 
