@@ -105,24 +105,33 @@ describe("TempDirectoryObject", () => {
       assert.ok(child.path.includes("subdir"))
     })
 
-    it("prevents path traversal attacks", async () => {
+    it("coerces path traversal to cap boundary", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
-      assert.throws(
-        () => temp.getDirectory("../../../etc/passwd"),
-        Sass,
-      )
+      const child = temp.getDirectory("data").getDirectory("nested")
+      const escaped = child.getDirectory("../../../../../../../etc/passwd")
+
+      // Should clamp to cap (OS temp dir for TempDirectoryObject)
+      assert.equal(escaped.path, "/")  // Virtual path at cap root
+      assert.equal(escaped.real.path, os.tmpdir())  // Real filesystem path
     })
 
-    it("prevents absolute paths", async () => {
+    it("treats absolute paths as relative to cap", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
-      assert.throws(
-        () => temp.getDirectory("/home/user/documents"),
-        Sass,
-      )
+      const absPath = temp.getDirectory("/home/user/documents")
+
+      // path shows virtual (cap-relative)
+      assert.equal(absPath.path, "/home/user/documents")
+
+      // real.path shows actual filesystem location
+      assert.ok(absPath.real.path.startsWith(os.tmpdir()))
+      assert.ok(absPath.real.path.includes("home"))
+      assert.ok(absPath.real.path.includes("user"))
+      assert.ok(absPath.real.path.includes("documents"))
+      assert.equal(absPath.real.path, path.join(os.tmpdir(), "home", "user", "documents"))
     })
 
     it("allows explicit chaining for nested directories", async () => {
@@ -143,14 +152,86 @@ describe("TempDirectoryObject", () => {
       assert.equal(await level3.exists, true)
     })
 
-    it("rejects paths with separators in getDirectory()", async () => {
+    it("allows nested paths with separators in getDirectory()", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
-      assert.throws(
-        () => temp.getDirectory("data/cache"),
-        /path separators/,
-      )
+      const nested = temp.getDirectory("data/cache/images")
+
+      // Should create nested directory structure
+      assert.ok(nested.path.includes("data"))
+      assert.ok(nested.path.includes("cache"))
+      assert.ok(nested.path.includes("images"))
+      assert.equal(nested.path, path.join(temp.path, "data", "cache", "images"))
+    })
+
+    it("allows chaining getDirectory after coerced path", async () => {
+      const temp = new TempDirectoryObject("test-temp")
+      tempDirs.push(temp)
+
+      // First call uses coercion (has separator), returns CappedDirectoryObject
+      // Second call should still work even though parent is plain CappedDirectoryObject
+      const nested = temp.getDirectory("data/cache").getDirectory("leaf")
+
+      // Result is CappedDirectoryObject (not TempDirectoryObject) due to coercion
+      assert.ok(nested instanceof CappedDirectoryObject)
+      assert.ok(nested.path.includes("data"))
+      assert.ok(nested.path.includes("cache"))
+      assert.ok(nested.path.includes("leaf"))
+      // CappedDirectoryObject doesn't auto-create directories, so just verify path
+      assert.equal(nested.cap, temp.cap)
+    })
+  })
+
+  describe("getFile()", () => {
+    it("creates FileObject with absolute path relative to cap", async () => {
+      const temp = new TempDirectoryObject("test-temp")
+      tempDirs.push(temp)
+
+      const {FileObject} = await import("../../src/index.js")
+      const file = temp.getFile("/config/settings.json")
+
+      // path shows virtual (cap-relative)
+      assert.ok(file instanceof FileObject)
+      assert.equal(file.path, "/config/settings.json")
+
+      // real.path shows actual filesystem location
+      assert.ok(file.real.path.startsWith(os.tmpdir()))
+      assert.ok(file.real.path.includes("config"))
+      assert.equal(file.real.path, path.join(os.tmpdir(), "config", "settings.json"))
+    })
+
+    it("coerces file path traversal to cap boundary", async () => {
+      const temp = new TempDirectoryObject("test-temp")
+      tempDirs.push(temp)
+
+      const {FileObject} = await import("../../src/index.js")
+      const child = temp.getDirectory("data").getDirectory("nested")
+      const file = child.getFile("../../../../../../../etc/passwd")
+
+      // path shows virtual (clamped to cap root)
+      assert.ok(file instanceof FileObject)
+      assert.equal(file.path, "/passwd")
+
+      // real.path shows actual filesystem location
+      assert.ok(file.real.path.startsWith(os.tmpdir()))
+      assert.equal(file.real.path, path.join(os.tmpdir(), "passwd"))
+    })
+
+    it("handles nested file paths with separators", async () => {
+      const temp = new TempDirectoryObject("test-temp")
+      tempDirs.push(temp)
+
+      const {FileObject} = await import("../../src/index.js")
+      const file = temp.getFile("data/logs/app.log")
+
+      // Should create nested path structure
+      assert.ok(file instanceof FileObject)
+      assert.ok(file.path.includes("data"))
+      assert.ok(file.path.includes("logs"))
+      // path is now virtual, real.path is actual filesystem
+      assert.equal(file.path, `/${temp.name}/data/logs/app.log`)
+      assert.equal(file.real.path, path.join(temp.real.path, "data", "logs", "app.log"))
     })
   })
 
@@ -242,7 +323,7 @@ describe("TempDirectoryObject", () => {
       const parent = subdir.parent
 
       assert.ok(parent instanceof DirectoryObject)
-      assert.equal(parent.path, temp.path)
+      assert.equal(parent.path, temp.real.path)  // Parent returns real path
     })
 
     it("returned parent is plain DirectoryObject not capped", () => {
@@ -267,11 +348,11 @@ describe("TempDirectoryObject", () => {
       const parents = [...deep.walkUp]
       const paths = parents.map(p => p.path)
 
-      // Should walk up through the hierarchy
-      assert.ok(paths.includes(temp.getDirectory("a").getDirectory("b").getDirectory("c").path))
-      assert.ok(paths.includes(temp.getDirectory("a").getDirectory("b").path))
-      assert.ok(paths.includes(temp.getDirectory("a").path))
-      assert.ok(paths.includes(temp.path))
+      // Should walk up through the hierarchy (using real paths since walkUp returns DirectoryObjects)
+      assert.ok(paths.includes(temp.getDirectory("a").getDirectory("b").getDirectory("c").real.path))
+      assert.ok(paths.includes(temp.getDirectory("a").getDirectory("b").real.path))
+      assert.ok(paths.includes(temp.getDirectory("a").real.path))
+      assert.ok(paths.includes(temp.real.path))
 
       // Should include the cap (/tmp)
       assert.ok(paths.includes(os.tmpdir()))
@@ -289,8 +370,8 @@ describe("TempDirectoryObject", () => {
       const parents = [...subdir.walkUp]
       const paths = parents.map(p => p.path)
 
-      // Should include temp directory and cap
-      assert.ok(paths.includes(temp.path))
+      // Should include temp directory and cap (using real paths)
+      assert.ok(paths.includes(temp.real.path))
       assert.ok(paths.includes(os.tmpdir()))
 
       // Cap should be the last item
@@ -304,8 +385,8 @@ describe("TempDirectoryObject", () => {
       const parents = [...temp.walkUp]
       const paths = parents.map(p => p.path)
 
-      // Should yield temp directory and cap
-      assert.ok(paths.includes(temp.path))
+      // Should yield temp directory and cap (using real paths)
+      assert.ok(paths.includes(temp.real.path))
       assert.ok(paths.includes(os.tmpdir()))
       assert.equal(parents[parents.length - 1].path, os.tmpdir())
     })

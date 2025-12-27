@@ -86,12 +86,12 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
    */
   #createDirectory() {
     try {
-      fs.mkdirSync(this.path)
+      fs.mkdirSync(this.realPath)
     } catch(e) {
       // EEXIST is fine - directory already exists
       if(e.code !== "EEXIST") {
         throw Sass.new(
-          `Unable to create temporary directory '${this.path}': ${e.message}`
+          `Unable to create temporary directory '${this.realPath}': ${e.message}`
         )
       }
     }
