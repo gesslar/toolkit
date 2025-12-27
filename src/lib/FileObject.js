@@ -85,12 +85,10 @@ export default class FileObject extends FS {
     if(Data.isType(fileName, "FileObject"))
       fileName = fileName.path
 
-    if(!fileName || typeof fileName !== "string" || fileName.length === 0) {
+    if(!fileName || typeof fileName !== "string" || fileName.length === 0)
       throw Sass.new("fileName must be a non-empty string")
-    }
 
     const fixedFile = FS.fixSlashes(fileName)
-
     const {dir,base,ext} = this.#deconstructFilenameToParts(fixedFile)
 
     const parentObject = (() => {

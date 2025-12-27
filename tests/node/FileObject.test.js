@@ -155,6 +155,111 @@ describe("FileObject", () => {
     })
   })
 
+  describe("parent property resolution", () => {
+    it("reuses provided DirectoryObject when file is directly in that directory", () => {
+      const dir = new DirectoryObject("/home/user/projects")
+      const file = new FileObject("test.js", dir)
+
+      // Parent should be the same object instance
+      assert.strictEqual(file.parent, dir)
+    })
+
+    it("creates new DirectoryObject when resolved path differs from provided parent", () => {
+      const dir = new DirectoryObject("/home/user/projects")
+      const file = new FileObject("../other/test.js", dir)
+
+      // Parent should not be the same object, since file resolves to different directory
+      assert.notStrictEqual(file.parent, dir)
+      assert.ok(file.parent instanceof DirectoryObject)
+    })
+
+    it("creates new DirectoryObject when file path includes subdirectories", () => {
+      const dir = new DirectoryObject("/home/user/projects")
+      const file = new FileObject("subdir/nested/test.js", dir)
+
+      // Parent should be the nested directory, not the original parent
+      assert.notStrictEqual(file.parent, dir)
+      assert.ok(file.parent.path.includes("nested"))
+    })
+
+    it("correctly resolves parent for absolute paths regardless of parent parameter", () => {
+      const dir = new DirectoryObject("/tmp")
+      const file = new FileObject("/home/user/projects/test.js", dir)
+
+      // Parent should be /home/user/projects, not /tmp
+      assert.ok(file.parent.path.endsWith("projects"))
+      assert.ok(!file.parent.path.includes("tmp"))
+    })
+
+    it("parent matches path.dirname of resolved path", () => {
+      const file = new FileObject("src/lib/utils/helper.js")
+
+      assert.equal(file.parent.path, path.dirname(file.path))
+    })
+
+    it("reuses parent object for simple relative file in parent directory", () => {
+      const parentDir = new DirectoryObject(process.cwd())
+      const file = new FileObject("test.js", parentDir)
+
+      // If file resolves to cwd/test.js, parent should be reused
+      if(file.path === path.join(process.cwd(), "test.js")) {
+        assert.strictEqual(file.parent, parentDir)
+      }
+    })
+
+    it("creates correct parent for file with dot-relative path", () => {
+      const dir = new DirectoryObject("/home/user/projects")
+      const file = new FileObject("./test.js", dir)
+
+      // Should resolve to /home/user/projects/test.js with parent being dir
+      assert.strictEqual(file.parent, dir)
+    })
+
+    it("creates correct parent for file with complex relative path", () => {
+      const dir = new DirectoryObject("/home/user/projects/src")
+      const file = new FileObject("../../other/test.js", dir)
+
+      // Should resolve to /home/user/other/test.js
+      const expectedParent = path.dirname(path.resolve(dir.path, "../../other/test.js"))
+      assert.equal(file.parent.path, expectedParent)
+    })
+
+    it("parent is always a DirectoryObject instance", () => {
+      const testCases = [
+        new FileObject("/home/user/test.js"),
+        new FileObject("test.js", "/home/user"),
+        new FileObject("../test.js", new DirectoryObject("/home/user/projects")),
+        new FileObject("./nested/test.js")
+      ]
+
+      testCases.forEach(file => {
+        assert.ok(file.parent instanceof DirectoryObject,
+          `Parent should be DirectoryObject for path: ${file.path}`)
+      })
+    })
+
+    it("parent path is always the directory containing the file", () => {
+      const file = new FileObject("/home/user/projects/src/lib/test.js")
+
+      assert.equal(file.parent.path, "/home/user/projects/src/lib")
+      assert.equal(path.join(file.parent.path, file.name), file.path)
+    })
+
+    it("handles root directory files correctly", () => {
+      const file = new FileObject("/test.js")
+
+      assert.ok(file.parent instanceof DirectoryObject)
+      assert.equal(file.parent.path, "/")
+    })
+
+    it("creates new parent when string parent doesn't match actual parent", () => {
+      const file = new FileObject("nested/test.js", "/tmp")
+      const expectedParent = path.dirname(path.resolve("/tmp", "nested/test.js"))
+
+      assert.equal(file.parent.path, expectedParent)
+    })
+  })
+
   describe("string representations", () => {
     it("toString returns formatted string", () => {
       const file = new FileObject("/test/path/file.txt")

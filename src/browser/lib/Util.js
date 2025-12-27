@@ -1,4 +1,3 @@
-import Tantrum from "./Tantrum.js"
 import Valid from "./Valid.js"
 import Collection from "./Collection.js"
 
@@ -78,103 +77,6 @@ export default class Util {
     const rightPadding = totalPadding - leftPadding
 
     return `${" ".repeat(leftPadding)}${work}${" ".repeat(rightPadding)}`
-  }
-
-  /**
-   * Asynchronously awaits all promises in parallel.
-   * Wrapper around Promise.all for consistency with other utility methods.
-   *
-   * @param {Array<Promise<unknown>>} promises - Array of promises to await
-   * @returns {Promise<Array<unknown>>} Results of all promises
-   */
-  static async awaitAll(promises) {
-    return await Promise.all(promises)
-  }
-
-  /**
-   * Settles all promises (both fulfilled and rejected) in parallel.
-   * Wrapper around Promise.allSettled for consistency with other utility methods.
-   *
-   * @param {Array<Promise<unknown>>} promises - Array of promises to settle
-   * @returns {Promise<Array<object>>} Results of all settled promises with status and value/reason
-   */
-  static async settleAll(promises) {
-    return await Promise.allSettled(promises)
-  }
-
-  /**
-   * Checks if any result in the settled promise array is rejected.
-   *
-   * @param {Array<object>} result - Array of settled promise results.
-   * @returns {boolean} True if any result is rejected, false otherwise.
-   */
-  static anyRejected(result) {
-    return result.some(r => r.status === "rejected")
-  }
-
-  /**
-   * Filters and returns all rejected results from a settled promise array.
-   *
-   * @param {Array<object>} result - Array of settled promise results.
-   * @returns {Array<object>} Array of rejected results.
-   */
-  static settledAndRejected(result) {
-    return result.filter(r => r.status === "rejected")
-  }
-
-  /**
-   * Extracts the rejection reasons from an array of rejected promise results.
-   *
-   * @param {Array<object>} rejected - Array of rejected results.
-   * @returns {Array<unknown>} Array of rejection reasons.
-   */
-  static rejectedReasons(rejected) {
-    return rejected.map(r => r.reason)
-  }
-
-  /**
-   * Throws a Sass error containing all rejection reasons from settled promises.
-   *
-   * @param {string} [_message] - Optional error message. Defaults to "GIGO"
-   * @param {Array<object>} rejected - Array of rejected results.
-   * @throws {Error} Throws a Tantrum error with rejection reasons.
-   */
-  static throwRejected(message="GIGO", settled) {
-    throw Tantrum.new(
-      message,
-      this.rejectedReasons(this.settledAndRejected(settled))
-    )
-  }
-
-  /**
-   * Filters and returns all fulfilled results from a settled promise array.
-   *
-   * @param {Array<object>} result - Array of settled promise results.
-   * @returns {Array<object>} Array of fulfilled results.
-   */
-  static settledAndFulfilled(result) {
-    return result.filter(r => r.status === "fulfilled")
-  }
-
-  /**
-   * Extracts the values from all fulfilled results in a settled promise array.
-   *
-   * @param {Array<object>} result - Array of settled promise results.
-   * @returns {Array<unknown>} Array of fulfilled values.
-   */
-  static fulfilledValues(result) {
-    return this.settledAndFulfilled(result).map(r => r.value)
-  }
-
-  /**
-   * Returns the first promise to resolve or reject from an array of promises.
-   * Wrapper around Promise.race for consistency with other utility methods.
-   *
-   * @param {Array<Promise<unknown>>} promises - Array of promises to race
-   * @returns {Promise<unknown>} Result of the first settled promise
-   */
-  static async race(promises) {
-    return await Promise.race(promises)
   }
 
   /**

@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "2.7.1",
+  "version": "2.8.0",
   "description": "A collection of utilities for Node.js and browser environments.",
   "main": "./src/index.js",
   "type": "module",
