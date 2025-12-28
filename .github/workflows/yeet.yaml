@@ -25,4 +25,4 @@ jobs:
 
       - name: Ship it
         run: |
-          npm publish --access public --//registry.npmjs.org/:_authToken=\"${TOKEN}\"
+          npm publish --access public --//registry.npmjs.org/: _authToken=${TOKEN}
