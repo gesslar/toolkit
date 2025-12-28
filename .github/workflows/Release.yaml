@@ -9,9 +9,7 @@ on:
 
 jobs:
   WaitForQuality:
-    runs-on: self-hosted
-    container:
-      image: ubuntu:latest
+    runs-on: ubuntu-latest
 
     if: ${{ github.event.pull_request.merged == true }}
     steps:
@@ -25,9 +23,7 @@ jobs:
 
   CreateTag:
     needs: WaitForQuality
-    runs-on: self-hosted
-    container:
-      image: ubuntu:latest
+    runs-on: ubuntu-latest
 
     permissions:
       contents: write
@@ -85,9 +81,7 @@ jobs:
   PrepareGitHubRelease:
     needs: CreateTag
     if: ${{ needs.CreateTag.outputs.new_tag != '🙅🏻‍♂️' }}
-    runs-on: self-hosted
-    container:
-      image: ubuntu:latest
+    runs-on: ubuntu-latest
 
     permissions:
       contents: write
@@ -135,9 +129,7 @@ jobs:
 
   PublishToNPM:
     needs: WaitForQuality
-    runs-on: self-hosted
-    container:
-      image: ubuntu:latest
+    runs-on: ubuntu-latest
 
     permissions:
       contents: write
