@@ -11,6 +11,8 @@ on:
 jobs:
   Lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     strategy:
       matrix:
@@ -34,6 +36,8 @@ jobs:
 
   Test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     strategy:
       matrix:
