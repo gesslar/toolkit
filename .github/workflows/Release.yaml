@@ -10,6 +10,9 @@ on:
 jobs:
   WaitForQuality:
     runs-on: self-hosted
+    container:
+      image: ubuntu:latest
+
     if: ${{ github.event.pull_request.merged == true }}
     steps:
       - name: Wait for Quality workflow to complete
@@ -22,7 +25,10 @@ jobs:
 
   CreateTag:
     needs: WaitForQuality
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    container:
+      image: ubuntu:latest
+
     permissions:
       contents: write
     env:
@@ -79,7 +85,10 @@ jobs:
   PrepareGitHubRelease:
     needs: CreateTag
     if: ${{ needs.CreateTag.outputs.new_tag != '🙅🏻‍♂️' }}
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    container:
+      image: ubuntu:latest
+
     permissions:
       contents: write
     env:
@@ -126,7 +135,10 @@ jobs:
 
   PublishToNPM:
     needs: WaitForQuality
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    container:
+      image: ubuntu:latest
+
     permissions:
       contents: write
     env:

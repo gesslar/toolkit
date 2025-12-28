@@ -11,6 +11,9 @@ on:
 jobs:
   Lint:
     runs-on: self-hosted
+    container:
+      image: ubuntu:latest
+
     permissions:
       contents: read
 
@@ -36,6 +39,9 @@ jobs:
 
   Test:
     runs-on: self-hosted
+    container:
+      image: ubuntu:latest
+
     permissions:
       contents: read
 
