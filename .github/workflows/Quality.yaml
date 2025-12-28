@@ -9,7 +9,30 @@ on:
     - cron: "20 14 * * 1"
 
 jobs:
+  ConfigureWorkflow:
+    runs-on: ubuntu-latest
+    outputs:
+      perform_testing: ${{ steps.cfg.outputs.perform_testing }}
+      perform_linting: ${{ steps.cfg.outputs.perform_linting }}
+    steps:
+      - id: cfg
+        run: |+
+          ### LINTING #########################################################
+          #
+          # If we need to perform linting, set the value to 'yes'. Any other
+          # value will skip linting.
+
+          echo "perform_linting=yes" >> "$GITHUB_OUTPUT"
+
+          ### TESTING #########################################################
+          #
+          # If we need to perform testing, set the value to 'yes'. Any other
+          # value will skip testing.
+
+          echo "perform_testing=yes" >> "$GITHUB_OUTPUT"
+
   Lint:
+    needs: ConfigureWorkflow
     runs-on: ubuntu-latest
 
     permissions:
@@ -21,21 +44,26 @@ jobs:
 
     steps:
       - name: Check out repository
+        if: ${{ needs.ConfigureWorkflow.outputs.perform_linting == 'yes' }}
         uses: actions/checkout@v6
 
       - name: Using Node v${{ matrix.node-version }}
+        if: ${{ needs.ConfigureWorkflow.outputs.perform_linting == 'yes' }}
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
 
       - name: Install dependencies
+        if: ${{ needs.ConfigureWorkflow.outputs.perform_linting == 'yes' }}
         run: npm ci
 
       - name: Perform lint check
+        if: ${{ needs.ConfigureWorkflow.outputs.perform_linting == 'yes' }}
         run: npm run lint
 
   Test:
+    needs: ConfigureWorkflow
     runs-on: ubuntu-latest
 
     permissions:
@@ -47,18 +75,22 @@ jobs:
 
     steps:
       - name: Check out repository
+        if: ${{ needs.ConfigureWorkflow.outputs.perform_testing == 'yes' }}
         uses: actions/checkout@v6
 
       - name: Using Node v${{ matrix.node-version }}
+        if: ${{ needs.ConfigureWorkflow.outputs.perform_testing == 'yes' }}
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
 
       - name: Install dependencies
+        if: ${{ needs.ConfigureWorkflow.outputs.perform_testing == 'yes' }}
         run: npm ci
 
       - name: Definitely don't cheat on tests
+        if: ${{ needs.ConfigureWorkflow.outputs.perform_testing == 'yes' }}
         run: npm test
 
   Analyze:
