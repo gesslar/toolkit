@@ -20,7 +20,7 @@ export default class TypeSpec {
    * Creates a new TypeSpec instance.
    *
    * @param {string} string - The type specification string (e.g., "string|number", "object[]")
-   * @param {object} options - Additional parsing options
+   * @param {unknown} options - Additional parsing options
    */
   constructor(string, options) {
     this.#specs = []
@@ -48,7 +48,7 @@ export default class TypeSpec {
   /**
    * Returns a JSON representation of the TypeSpec.
    *
-   * @returns {object} Object containing specs, length, and string representation
+   * @returns {unknown} Object containing specs, length, and string representation
    */
   toJSON() {
     // Serialize as a string representation or as raw data
@@ -134,12 +134,12 @@ export default class TypeSpec {
    * Handles array types, union types, and empty value validation.
    *
    * @param {unknown} value - The value to test against the type specifications
-   * @param {object} options - Validation options
+   * @param {unknown} options - Validation options
    * @param {boolean} options.allowEmpty - Whether empty values are allowed
    * @returns {boolean} True if the value matches any type specification
    */
   matches(value, options) {
-    return this.match(value,options).length > 0
+    return this.match(value, options).length > 0
   }
 
   match(value, options) {
@@ -167,7 +167,16 @@ export default class TypeSpec {
         if(valueType === allowedType)
           return allowEmpty || !empty
 
-        return false
+        if(valueType === "Null" || valueType === "Undefined")
+          return false
+
+        if(allowedType === "Object" && Data.isPlainObject(value))
+          return true
+
+        // We already don't match directly, let's check their breeding.
+        const lineage = this.#getTypeLineage(value)
+
+        return lineage.includes(allowedType)
       }
 
       // Handle array values
@@ -200,11 +209,11 @@ export default class TypeSpec {
    *
    * @private
    * @param {string} string - The type specification string to parse
-   * @param {object} options - Parsing options
+   * @param {unknown} options - Parsing options
    * @param {string} options.delimiter - The delimiter for union types
-   * @throws {TypeError} If the type specification is invalid
+   * @throws {Sass} If the type specification is invalid
    */
-  #parse(string, options) {
+  #parse(string, options={delimiter: "|"}) {
     const delimiter = options?.delimiter ?? "|"
     const parts = string.split(delimiter)
 
@@ -224,5 +233,23 @@ export default class TypeSpec {
         array: typeMatches[2] === "[]",
       }
     })
+  }
+
+  #getTypeLineage(value) {
+    const lineage = [Object.getPrototypeOf(value)]
+    const names = [lineage.at(-1).constructor.name]
+
+    for(;;) {
+      const prototype = Object.getPrototypeOf(lineage.at(-1))
+      const name = prototype?.constructor.name
+
+      if(!prototype || !name || name === "Object")
+        break
+
+      lineage.push(prototype)
+      names.push(prototype.constructor.name)
+    }
+
+    return names
   }
 }

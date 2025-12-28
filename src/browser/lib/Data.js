@@ -188,7 +188,7 @@ export default class Data {
     const type = typeof value
 
     if(type === "object")
-      return value.constructor.name
+      return value.constructor?.name ?? "Object"
 
     const [first, ...rest] = Array.from(type)
 

@@ -60,8 +60,8 @@ export default class CappedDirectoryObject extends DirectoryObject {
     Valid.type(dirPath, "String")
     Valid.assert(dirPath.length > 0, "Path must not be empty.")
 
-    // Validate parent using instanceof since TypeSpec doesn't understand inheritance
-    if(parent !== null && !(parent instanceof CappedDirectoryObject)) {
+    // Validate parent using inheritance-aware type checking
+    if(parent !== null && !Data.isType(parent, "CappedDirectoryObject")) {
       throw Sass.new(`Parent must be null or a CappedDirectoryObject instance, got ${Data.typeOf(parent)}`)
     }
 

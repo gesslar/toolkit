@@ -9,6 +9,7 @@ import os from "node:os"
 import path from "node:path"
 
 import CappedDirectoryObject from "./CappedDirectoryObject.js"
+import Data from "../browser/lib/Data.js"
 import Sass from "./Sass.js"
 
 /**
@@ -92,7 +93,7 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
       }
     } else {
       // With parent: validate it's a proper temp directory parent
-      if(!(parent instanceof CappedDirectoryObject)) {
+      if(!Data.isType(parent, "CappedDirectoryObject")) {
         throw Sass.new(
           "Parent must be a CappedDirectoryObject or TempDirectoryObject."
         )
