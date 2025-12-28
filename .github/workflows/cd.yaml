@@ -1,0 +1,125 @@
+name: Generate New Tag if Needed and Release
+
+on:
+  workflow_run:
+    workflows: ["GiddyUp"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  tag_version:
+    runs-on: ubuntu-latest
+    env:
+      GIT_USER_NAME: "github-actions"
+      GIT_USER_EMAIL: "github-actions@github.com"
+    outputs:
+      new_tag: ${{ steps.check_tag.outputs.new_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Git Variables
+        run: |
+          echo "GIT_USER_NAME=${GIT_USER_NAME}" >> $GITHUB_ENV
+          echo "GIT_USER_EMAIL=${GIT_USER_EMAIL}" >> $GITHUB_ENV
+          git config user.name "${GIT_USER_NAME}"
+          git config user.email "${GIT_USER_EMAIL}"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Read version from package.json
+        id: get_version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Check for existing tag and create if it does not exist
+        id: check_tag
+        run: |
+          TAG_EXISTS=$(git tag -l "v${CURRENT_VERSION}")
+          echo "Value of TAG_EXISTS: $TAG_EXISTS"
+
+          if [ -z "$TAG_EXISTS" ]; then
+            echo "Tag does not exist for version v${CURRENT_VERSION}. Creating tag."
+            git tag "v${CURRENT_VERSION}"
+            git push origin "v${CURRENT_VERSION}"
+            echo "new_tag=v${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+          else
+            echo "Tag already exists for version v${CURRENT_VERSION}. Skipping tag creation."
+            echo "new_tag=🙅🏻‍♂️" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+  compile_and_release:
+    needs: tag_version
+    if: ${{ needs.tag_version.outputs.new_tag != '🙅🏻‍♂️' }}
+    runs-on: ubuntu-latest
+    env:
+      NEW_TAG: ${{ needs.tag_version.outputs.new_tag }}
+      GIT_USER_NAME: "github-actions"
+      GIT_USER_EMAIL: "github-actions@github.com"
+    steps:
+      - name: Setup New Tag
+        run: |
+          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Git Variables
+        run: |
+          echo "GIT_USER_NAME=${GIT_USER_NAME}" >> $GITHUB_ENV
+          echo "GIT_USER_EMAIL=${GIT_USER_EMAIL}" >> $GITHUB_ENV
+          git config user.name "${GIT_USER_NAME}"
+          git config user.email "${GIT_USER_EMAIL}"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Safely delete old dist/index.js
+        run: |
+          if [ -f dist/index.js ]; then
+            git rm -f dist/index.js || echo "Could not remove dist/index.js"
+            git commit -m "Remove old dist/index.js" || echo "Nothing to commit for removal"
+            git push origin main || echo "Nothing to push for removal"
+          else
+            echo "dist/index.js does not exist, skipping removal"
+          fi
+
+      - name: Build action using NCC
+        run: npm run build
+
+      - name: Commit dist/index.js
+        run: |
+          git add dist/index.js
+          git commit -m "Update dist/index.js for ${NEW_TAG}"
+          git push origin main
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.NEW_TAG }}
+          release_name: Release ${{ env.NEW_TAG }}
+          body_path: ./README.md
+          draft: false
+          prerelease: false
