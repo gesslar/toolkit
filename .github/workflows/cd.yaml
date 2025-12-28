@@ -93,24 +93,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Safely delete old dist/index.js
+      - name: Build artefact
         run: |
-          if [ -f dist/index.js ]; then
-            git rm -f dist/index.js || echo "Could not remove dist/index.js"
-            git commit -m "Remove old dist/index.js" || echo "Nothing to commit for removal"
-            git push origin main || echo "Nothing to push for removal"
-          else
-            echo "dist/index.js does not exist, skipping removal"
-          fi
-
-      - name: Build action using NCC
-        run: npm run build
-
-      - name: Commit dist/index.js
-        run: |
-          git add dist/index.js
-          git commit -m "Update dist/index.js for ${NEW_TAG}"
-          git push origin main
+          ARTEFACT=$(npm pack 2>/dev/null | tail -1)
+          echo "ARTEFACT=${ARTEFACT}" >> $GITHUB_ENV
 
       - name: Create Release
         id: create_release
@@ -123,3 +109,5 @@ jobs:
           body_path: ./README.md
           draft: false
           prerelease: false
+          artifacts: "${ARTEFACT}"
+          generateReleaseNotes: true
