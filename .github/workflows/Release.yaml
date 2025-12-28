@@ -1,16 +1,32 @@
-name: Generate New Tag if Needed and Release
+name: Release
 
 on:
-  workflow_run:
-    workflows: ["GiddyUp"]
+  pull_request:
     types:
-      - completed
+      - closed
     branches:
       - main
 
 jobs:
-  tag_version:
+  WaitForQuality:
     runs-on: ubuntu-latest
+
+    if: ${{ github.event.pull_request.merged == true }}
+    steps:
+      - name: Wait for Quality workflow to complete
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.ref }}
+          running-workflow-name: "CodeQL, Linting, Testing"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+
+  CreateTag:
+    needs: WaitForQuality
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
     env:
       GIT_USER_NAME: "github-actions"
       GIT_USER_EMAIL: "github-actions@github.com"
@@ -62,12 +78,15 @@ jobs:
             exit 0
           fi
 
-  compile_and_release:
-    needs: tag_version
-    if: ${{ needs.tag_version.outputs.new_tag != '🙅🏻‍♂️' }}
+  PrepareGitHubRelease:
+    needs: CreateTag
+    if: ${{ needs.CreateTag.outputs.new_tag != '🙅🏻‍♂️' }}
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
     env:
-      NEW_TAG: ${{ needs.tag_version.outputs.new_tag }}
+      NEW_TAG: ${{ needs.CreateTag.outputs.new_tag }}
       GIT_USER_NAME: "github-actions"
       GIT_USER_EMAIL: "github-actions@github.com"
     steps:
@@ -88,38 +107,44 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
 
-      - name: Safely delete old dist/index.js
+      - name: Build artefact
         run: |
-          if [ -f dist/index.js ]; then
-            git rm -f dist/index.js || echo "Could not remove dist/index.js"
-            git commit -m "Remove old dist/index.js" || echo "Nothing to commit for removal"
-            git push origin main || echo "Nothing to push for removal"
-          else
-            echo "dist/index.js does not exist, skipping removal"
-          fi
-
-      - name: Build action using NCC
-        run: npm run build
-
-      - name: Commit dist/index.js
-        run: |
-          git add dist/index.js
-          git commit -m "Update dist/index.js for ${NEW_TAG}"
-          git push origin main
+          ARTEFACT=$(npm pack 2>/dev/null | tail -1)
+          echo "ARTEFACT=${ARTEFACT}" >> $GITHUB_ENV
 
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ env.NEW_TAG }}
-          release_name: Release ${{ env.NEW_TAG }}
-          body_path: ./README.md
+          tag: ${{ env.NEW_TAG }}
+          name: Release ${{ env.NEW_TAG }}
           draft: false
           prerelease: false
+          artifacts: ${{ env.ARTEFACT }}
+          generateReleaseNotes: true
+
+  PublishToNPM:
+    needs: WaitForQuality
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+    env:
+      TOKEN: ${{ secrets.NPM_GITHUB_CD_ACCESS_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Ship it
+        run: |
+          npm publish --access public --//registry.npmjs.org/:_authToken=${TOKEN}
