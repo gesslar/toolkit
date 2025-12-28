@@ -10,6 +10,8 @@ on:
 jobs:
   CreateTag:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       GIT_USER_NAME: "github-actions"
       GIT_USER_EMAIL: "github-actions@github.com"
@@ -65,6 +67,8 @@ jobs:
     needs: tag_version
     if: ${{ needs.tag_version.outputs.new_tag != '🙅🏻‍♂️' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       NEW_TAG: ${{ needs.tag_version.outputs.new_tag }}
       GIT_USER_NAME: "github-actions"
@@ -113,6 +117,8 @@ jobs:
 
   PublishToNPM:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       TOKEN: ${{ secrets.NPM_GITHUB_CD_ACCESS_TOKEN }}
 
