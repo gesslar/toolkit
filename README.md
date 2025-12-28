@@ -1,5 +1,7 @@
 # Toolkit
 
+[![CodeQL, Linting, Testing](https://github.com/gesslar/toolkit/actions/workflows/Quality.yaml/badge.svg)](https://github.com/gesslar/toolkit/actions/workflows/Quality.yaml)
+
 A collection of utilities for Node.js and browser environments, including file and directory abstractions, terminal utilities, validation helpers, and data manipulation functions.
 
 ## Included Classes

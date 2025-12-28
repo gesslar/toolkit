@@ -10,9 +10,7 @@ on:
 
 jobs:
   Lint:
-    runs-on: self-hosted
-    container:
-      image: ubuntu:latest
+    runs-on: ubuntu-latest
 
     permissions:
       contents: read
@@ -38,9 +36,7 @@ jobs:
         run: npm run lint
 
   Test:
-    runs-on: self-hosted
-    container:
-      image: ubuntu:latest
+    runs-on: ubuntu-latest
 
     permissions:
       contents: read
@@ -67,6 +63,7 @@ jobs:
 
   Analyze:
     name: Analyze (${{ matrix.language }})
+    needs: ["Lint", "Test"]
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'self-hosted' }}
     permissions:
       # required for all workflows
