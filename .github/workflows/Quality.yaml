@@ -15,7 +15,8 @@ jobs:
       perform_testing: ${{ steps.cfg.outputs.perform_testing }}
       perform_linting: ${{ steps.cfg.outputs.perform_linting }}
     steps:
-      - id: cfg
+      - name: Configure workflow
+        id: cfg
         run: |+
           ### LINTING #########################################################
           #

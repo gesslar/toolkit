@@ -13,7 +13,8 @@ jobs:
     outputs:
       quality_check: ${{ steps.cfg.outputs.quality_check }}
     steps:
-      - id: cfg
+      - name: Configure workflow
+        id: cfg
         run: |+
           # If we need to wait for a workflow to have completed before
           # we get here, name the workflow here so that it is checked
