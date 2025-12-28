@@ -102,17 +102,13 @@ jobs:
           echo "ARTEFACT=${ARTEFACT}" >> $GITHUB_ENV
 
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ env.NEW_TAG }}
-          release_name: Release ${{ env.NEW_TAG }}
-          body_path: ./README.md
+          tag: ${{ env.NEW_TAG }}
+          name: Release ${{ env.NEW_TAG }}
           draft: false
           prerelease: false
-          artifacts: "${ARTEFACT}"
+          artifacts: ${{ env.ARTEFACT }}
           generateReleaseNotes: true
 
   PublishToNPM:
