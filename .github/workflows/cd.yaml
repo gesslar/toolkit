@@ -2,7 +2,7 @@ name: Generate New Tag if Needed and Release
 
 on:
   workflow_run:
-    workflows: ["GiddyUp"]
+    workflows: ["CodeQL"]
     types:
       - completed
     branches:
