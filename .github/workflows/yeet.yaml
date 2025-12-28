@@ -11,7 +11,8 @@ on:
 jobs:
   yeetasaurusrex:
     runs-on: ubuntu-latest
-    env: TOKEN=${{ secrets.NPM_GITHUB_CD_ACCESS_TOKEN }}
+    env:
+      TOKEN: ${{ secrets.NPM_GITHUB_CD_ACCESS_TOKEN }}
 
     steps:
       - name: Checkout code
