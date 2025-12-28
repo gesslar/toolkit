@@ -13,7 +13,6 @@ jobs:
     runs-on: self-hosted
     container:
       image: ubuntu:latest
-      options: --user 1000:1000
 
     permissions:
       contents: read
@@ -42,7 +41,6 @@ jobs:
     runs-on: self-hosted
     container:
       image: ubuntu:latest
-      options: --user 1000:1000
 
     permissions:
       contents: read
