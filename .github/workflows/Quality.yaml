@@ -63,6 +63,7 @@ jobs:
 
   Analyze:
     name: Analyze (${{ matrix.language }})
+    needs: ["Lint", "Test"]
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'self-hosted' }}
     permissions:
       # required for all workflows
