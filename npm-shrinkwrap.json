@@ -1,12 +1,12 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "2.11.25",
+  "version": "2.11.26",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@gesslar/toolkit",
-      "version": "2.11.25",
+      "version": "2.11.26",
       "license": "Unlicense",
       "dependencies": {
         "@gesslar/colours": "^0.0.1",
