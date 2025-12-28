@@ -22,7 +22,7 @@ jobs:
 
   CreateTag:
     needs: WaitForQuality
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
@@ -79,7 +79,7 @@ jobs:
   PrepareGitHubRelease:
     needs: CreateTag
     if: ${{ needs.CreateTag.outputs.new_tag != '🙅🏻‍♂️' }}
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
@@ -126,7 +126,7 @@ jobs:
 
   PublishToNPM:
     needs: WaitForQuality
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
