@@ -8,18 +8,40 @@ on:
       - main
 
 jobs:
-  WaitForQuality:
+  ConfigureWorkflow:
     runs-on: ubuntu-latest
+    outputs:
+      quality_check: ${{ steps.cfg.outputs.quality_check }}
+    steps:
+      - id: cfg
+        run: |+
+          # If we need to wait for a workflow to have completed before
+          # we get here, name the workflow here so that it is checked
+          # against later. Or just leave empty, implicitly telling this
+          # workflow not to wait, just keep swimming.
 
+          # echo "quality_check=" >> "$GITHUB_OUTPUT"
+          echo "quality_check=CodeQL, Linting, Testing" >> "$GITHUB_OUTPUT"
+
+
+  WaitForQuality:
+    needs: ConfigureWorkflow
+    runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.merged == true }}
+
     steps:
       - name: Wait for Quality workflow to complete
+        if: ${{ needs.ConfigureWorkflow.outputs.quality_check != '' }}
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.ref }}
-          running-workflow-name: "CodeQL, Linting, Testing"
+          running-workflow-name: ${{ needs.ConfigureWorkflow.outputs.quality_check }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
+
+      - name: Skipping wait (no quality_check configured)
+        if: ${{ needs.ConfigureWorkflow.outputs.quality_check == '' }}
+        run: echo "No quality check configured; continuing."
 
   CreateTag:
     needs: WaitForQuality
