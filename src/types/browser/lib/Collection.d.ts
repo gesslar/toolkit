@@ -77,9 +77,11 @@ export default class Collection {
      *
      * @param {Array<unknown>} arr - The array to check
      * @param {string} [type] - The type to check for (optional, defaults to the type of the first element)
+     * @param {unknown} options - Options for checking types
+     * @param {boolean} [options.strict] - Whether to use strict type or looser TypeSpec checking
      * @returns {boolean} Whether all elements are of the specified type
      */
-    static isArrayUniform(arr: Array<unknown>, type?: string): boolean;
+    static isArrayUniform(arr: Array<unknown>, type?: string, options?: unknown): boolean;
     /**
      * Checks if an array is unique
      *

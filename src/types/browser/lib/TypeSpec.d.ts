@@ -7,9 +7,9 @@ export default class TypeSpec {
      * Creates a new TypeSpec instance.
      *
      * @param {string} string - The type specification string (e.g., "string|number", "object[]")
-     * @param {object} options - Additional parsing options
+     * @param {unknown} options - Additional parsing options
      */
-    constructor(string: string, options: object);
+    constructor(string: string, options: unknown);
     specs: any[];
     length: number;
     stringRepresentation: string;
@@ -22,9 +22,9 @@ export default class TypeSpec {
     /**
      * Returns a JSON representation of the TypeSpec.
      *
-     * @returns {object} Object containing specs, length, and string representation
+     * @returns {unknown} Object containing specs, length, and string representation
      */
-    toJSON(): object;
+    toJSON(): unknown;
     /**
      * Executes a provided function once for each type specification.
      *
@@ -79,13 +79,11 @@ export default class TypeSpec {
      * Handles array types, union types, and empty value validation.
      *
      * @param {unknown} value - The value to test against the type specifications
-     * @param {object} options - Validation options
+     * @param {unknown} options - Validation options
      * @param {boolean} options.allowEmpty - Whether empty values are allowed
      * @returns {boolean} True if the value matches any type specification
      */
-    matches(value: unknown, options: {
-        allowEmpty: boolean;
-    }): boolean;
+    matches(value: unknown, options: unknown): boolean;
     match(value: any, options: any): unknown[];
     #private;
 }

@@ -10,6 +10,7 @@ import Data from "./Data.js"
 import Valid from "./Valid.js"
 import Sass from "./Sass.js"
 import Util from "./Util.js"
+import TypeSpec from "./TypeSpec.js"
 
 /**
  * Utility class for collection operations.
@@ -204,9 +205,11 @@ export default class Collection {
    *
    * @param {Array<unknown>} arr - The array to check
    * @param {string} [type] - The type to check for (optional, defaults to the type of the first element)
+   * @param {unknown} options - Options for checking types
+   * @param {boolean} [options.strict] - Whether to use strict type or looser TypeSpec checking
    * @returns {boolean} Whether all elements are of the specified type
    */
-  static isArrayUniform(arr, type) {
+  static isArrayUniform(arr, type, options={strict: true}) {
     const req = "Array"
     const arrType = Data.typeOf(arr)
 
@@ -217,12 +220,15 @@ export default class Collection {
       Valid.type(type, "string", `Invalid type parameter. Expected 'string', got '${Data.typeOf(type)}'`)
     }
 
-    const checkType = type ? Util.capitalize(type) : null
+    const checkType = type ? Util.capitalize(type) : Data.typeOf(arr[0])
 
-    return arr.every(
-      (item, _index, arr) =>
-        Data.typeOf(item) === (checkType || Data.typeOf(arr[0])),
-    )
+    if(options?.strict === false) {
+      const ts = new TypeSpec(checkType)
+
+      return arr.every(e =>  ts.matches(e))
+    }
+
+    return arr.every(e => Data.typeOf(e) === checkType)
   }
 
   /**

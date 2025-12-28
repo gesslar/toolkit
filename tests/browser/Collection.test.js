@@ -458,6 +458,23 @@ describe("Collection", () => {
       assert.equal(Collection.isArrayUniform([1, 2, 3], "string"), false)
     })
 
+    it("isArrayUniform respects strict option for inheritance checking", () => {
+      const sass1 = Sass.new("error 1")
+      const sass2 = Sass.new("error 2")
+      const baseError = new Error("base")
+
+      // Strict mode (default): requires exact type match
+      assert.equal(Collection.isArrayUniform([sass1, sass2], "Sass"), true)
+      assert.equal(Collection.isArrayUniform([sass1, baseError], "Error"), false)
+
+      // Loose mode: allows inheritance
+      assert.equal(Collection.isArrayUniform([sass1, sass2], "Error", {strict: false}), true)
+      assert.equal(Collection.isArrayUniform([sass1, baseError], "Error", {strict: false}), true)
+
+      // Parent type doesn't match child requirement
+      assert.equal(Collection.isArrayUniform([baseError], "Sass", {strict: false}), false)
+    })
+
     it("isArrayUnique removes duplicates", () => {
       assert.deepEqual(Collection.isArrayUnique([1, 2, 2, 3, 1]), [1, 2, 3])
       assert.deepEqual(Collection.isArrayUnique(["a", "b", "a", "c"]), ["a", "b", "c"])

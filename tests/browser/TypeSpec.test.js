@@ -342,4 +342,51 @@ describe("Type", () => {
       assert.equal(arraySpec.matches([], { allowEmpty: false }), false)
     })
   })
+
+  describe("inheritance-aware type matching", () => {
+    it("matches parent types in inheritance chain", () => {
+      const errorSpec = new Type("Error")
+      const sassError = new Sass("test error")
+
+      // Sass extends Error, so should match "Error" type
+      assert.equal(errorSpec.matches(sassError), true)
+
+      // But base Error should not match "Sass" type
+      const sassSpec = new Type("Sass")
+      const baseError = new Error("base error")
+
+      assert.equal(sassSpec.matches(baseError), false)
+    })
+
+    it("does not match sibling types", () => {
+      // Create two different error types (would be siblings if both extend Error)
+      const sassSpec = new Type("Sass")
+      const baseError = new Error("test")
+
+      // Error should not match Sass spec (parent doesn't match child)
+      assert.equal(sassSpec.matches(baseError), false)
+    })
+
+    it("handles null and undefined correctly", () => {
+      const stringSpec = new Type("String")
+
+      assert.equal(stringSpec.matches(null), false)
+      assert.equal(stringSpec.matches(undefined), false)
+    })
+
+    it("restricts Object type to plain objects only", () => {
+      const objSpec = new Type("Object")
+
+      // Plain objects should match
+      assert.equal(objSpec.matches({}), true)
+      assert.equal(objSpec.matches(Object.create(null)), true)
+
+      // Built-in objects should NOT match
+      assert.equal(objSpec.matches([]), false)
+      assert.equal(objSpec.matches(new Map()), false)
+      assert.equal(objSpec.matches(new Set()), false)
+      assert.equal(objSpec.matches(new Date()), false)
+      assert.equal(objSpec.matches(new Error()), false)
+    })
+  })
 })
