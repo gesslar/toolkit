@@ -16,8 +16,6 @@ on:
     workflows: ["GiddyUp"]
     types:
       - completed
-    branches:
-      - main
   schedule:
     - cron: "20 14 * * 1"
 
