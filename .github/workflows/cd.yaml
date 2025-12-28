@@ -2,7 +2,7 @@ name: Generate New Tag if Needed and Release
 
 on:
   workflow_run:
-    workflows: ["CodeQL"]
+    workflows: ["CodeQL Advanced"]
     types:
       - completed
     branches:
