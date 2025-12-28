@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "2.11.1",
+  "version": "2.11.2",
   "description": "A collection of utilities for Node.js and browser environments.",
   "main": "./src/index.js",
   "type": "module",
@@ -62,7 +62,7 @@
   "dependencies": {
     "@gesslar/colours": "^0.0.1",
     "ajv": "^8.17.1",
-    "globby": "^16.0.0",
+    "globby": "^16.1.0",
     "json5": "^2.2.3",
     "yaml": "^2.8.2"
   },
