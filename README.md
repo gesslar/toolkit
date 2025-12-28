@@ -97,7 +97,7 @@ The browser version includes: Collection, Data, Disposer, HTML, Notify, Sass, Ta
 
 ## Post Partum
 
-If you made it this far, please understand that I have absolutely zero scruples when it comes to breaking changes. Primarily, the audience for this library is myself. Consequently, anything that relies on the contents of this library will dutifully crash and I'll have to refactor those things then. It's like leaving playing nicky nicky nine doors. But with myself. And there's a lazy bomb waiting for me. That I planted. For me. And the bomb just explodes poop.
+If you made it this far, please understand that I have absolutely zero scruples when it comes to breaking changes. Primarily, the audience for this library is myself. Consequently, anything that relies on the contents of this library will dutifully crash and I'll have to refactor those things then. It's like leaving nicky nicky nine doors. But with myself. And there's a lazy bomb waiting for me. That I planted. For me. And the bomb just explodes poop.
 
 You're of course welcome to use my library! It's pretty robust. Uhhh, but maybe lock in the version until you see if something is gonna poop all over you. I make robots make my PR notifications and generally they're very good at firing off klaxons about my fetish for breaking changes, so you should be all right if you're paying attention. 🤷🏻
 
