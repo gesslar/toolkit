@@ -23,7 +23,10 @@ jobs:
           # against later. Or just leave empty, implicitly telling this
           # workflow not to wait, just keep swimming.
 
-          echo "quality_check=" >> "$GITHUB_OUTPUT" # skipping because can't PR without it
+          # skipping the QC because you cannot even create a PR without it
+          # having succeeded.
+
+          echo "quality_check=" >> "$GITHUB_OUTPUT"
 
   WaitForQuality:
     needs: ConfigureWorkflow
