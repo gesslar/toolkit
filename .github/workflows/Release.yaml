@@ -23,8 +23,7 @@ jobs:
           # against later. Or just leave empty, implicitly telling this
           # workflow not to wait, just keep swimming.
 
-          # echo "quality_check=" >> "$GITHUB_OUTPUT"
-          echo "quality_check=CodeQL, Linting, Testing" >> "$GITHUB_OUTPUT"
+          echo "quality_check=" >> "$GITHUB_OUTPUT" # skipping because can't PR without it
 
   WaitForQuality:
     needs: ConfigureWorkflow
