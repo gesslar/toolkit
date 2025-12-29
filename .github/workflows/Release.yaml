@@ -23,10 +23,7 @@ jobs:
           # against later. Or just leave empty, implicitly telling this
           # workflow not to wait, just keep swimming.
 
-          # skipping the QC because you cannot even create a PR without it
-          # having succeeded.
-
-          echo "quality_check=" >> "$GITHUB_OUTPUT"
+          echo "quality_check='CodeQL, Linting, Testing'" >> "$GITHUB_OUTPUT"
 
   WaitForQuality:
     needs: ConfigureWorkflow
@@ -50,6 +47,7 @@ jobs:
   DetermineVersion:
     needs: WaitForQuality
     runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.merged == true }}
 
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
@@ -191,7 +189,7 @@ jobs:
 
   PublishToNPM:
     needs: DetermineVersion
-    if: ${{ needs.DetermineVersion.outputs.version != '🙅🏻‍♂️' }}
+    if: ${{ github.event.pull_request.merged == true && needs.DetermineVersion.outputs.version != '🙅🏻‍♂️' }}
     runs-on: ubuntu-latest
 
     permissions:
