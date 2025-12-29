@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      version: ${{ steps.version.VERSION }}
+      version: ${{ steps.version.outputs.VERSION }}
 
     steps:
       - uses: actions/checkout@v4
@@ -72,7 +72,7 @@ jobs:
           if [[ "$UPDATED_VERSION" == "no changes" ]]; then
             echo "VERSION=🙅🏻‍♂️" >>  "$GITHUB_OUTPUT"
           else
-            echo "VERSION=${UPDATED_VERSION}"
+            echo "VERSION=${UPDATED_VERSION}" >> "$GITHUB_OUTPUT"
           fi
 
   CreateTag:
