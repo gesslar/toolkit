@@ -67,7 +67,7 @@
     "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@gesslar/uglier": "^0.0.8",
+    "@gesslar/uglier": "^0.0.9",
     "typescript": "^5.9.3"
   }
 }
