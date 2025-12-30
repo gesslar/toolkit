@@ -111,8 +111,6 @@ jobs:
 
           if [[ "$NODE_RAW" =~ [^0-9]*([0-9]+) ]]; then
             NODE_VERSION="${BASH_REMATCH[1]}"
-            [[ -n "${BASH_REMATCH[2]}" ]] && NODE_VERSION+="${BASH_REMATCH[2]}"
-            [[ -n "${BASH_REMATCH[3]}" ]] && NODE_VERSION+="${BASH_REMATCH[3]}"
           else
             echo "::error::Unable to parse engines.node ('${NODE_RAW}') for a Node.js version."
             exit 1
