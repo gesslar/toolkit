@@ -79,7 +79,7 @@ jobs:
       - name: Configure Package Manager
         id: cfg2
         run: |+
-          set -euox pipefail
+          set -euo pipefail
 
           PM_DEFAULT="${{ steps.cfg1.outputs.pm_default }}"
           PACKAGE_MANAGER="${{ steps.cfg1.outputs.package_manager }}"
