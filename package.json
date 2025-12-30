@@ -38,7 +38,7 @@
     "submit": "npm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
     "update": "npx npm-check-updates -u && npm install",
     "test": "node --test tests/**/*.test.js",
-    "pr": "gt submit --publish --restack --ai"
+    "pr": "gt submit -p --ai"
   },
   "repository": {
     "type": "git",
@@ -60,14 +60,14 @@
   "license": "Unlicense",
   "homepage": "https://github.com/gesslar/toolkit#readme",
   "dependencies": {
-    "@gesslar/colours": "^0.0.1",
+    "@gesslar/colours": "^0.3.0",
     "ajv": "^8.17.1",
     "globby": "^16.1.0",
     "json5": "^2.2.3",
     "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@gesslar/uglier": "^0.0.9",
+    "@gesslar/uglier": "^0.1.0",
     "typescript": "^5.9.3"
   }
 }
