@@ -1,7 +1,30 @@
 {
   "name": "@gesslar/toolkit",
-  "version": "3.4.0",
   "description": "A collection of utilities for Node.js and browser environments.",
+  "author": {
+    "name": "gesslar",
+    "email": "bmw@gesslar.dev",
+    "url": "https://gesslar.dev"
+  },
+  "version": "3.4.0",
+  "license": "Unlicense",
+  "homepage": "https://github.com/gesslar/toolkit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gesslar/toolkit.git"
+  },
+  "keywords": [
+    "toolkit",
+    "utilities",
+    "file",
+    "directory",
+    "data",
+    "validation",
+    "typescript",
+    "nodejs",
+    "browser",
+    "node"
+  ],
   "main": "./src/index.js",
   "type": "module",
   "types": "./src/types/index.d.ts",
@@ -39,25 +62,6 @@
     "test": "node --test tests/**/*.test.js",
     "pr": "gt submit -p --ai"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/gesslar/toolkit.git"
-  },
-  "keywords": [
-    "toolkit",
-    "utilities",
-    "file",
-    "directory",
-    "data",
-    "validation",
-    "typescript",
-    "nodejs",
-    "browser",
-    "node"
-  ],
-  "author": "gesslar",
-  "license": "Unlicense",
-  "homepage": "https://github.com/gesslar/toolkit#readme",
   "dependencies": {
     "@gesslar/colours": "^0.4.0",
     "ajv": "^8.17.1",
@@ -66,7 +70,7 @@
     "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@gesslar/uglier": "^0.1.0",
+    "@gesslar/uglier": "^0.2.0",
     "typescript": "^5.9.3"
   }
 }
