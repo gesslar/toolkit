@@ -93,6 +93,7 @@ jobs:
             PM=$(jq -er .packageManager package.json)
             printf "PM=%s\n" "$PM"
 
+            set +e
             if [[ ! "$PM" ]]; then
               PACKAGE_MANAGER="$PM_DEFAULT"
             elif [[ "$PM" =~ ^(pnpm)@([[:digit:]]+.[[:digit:]]+.[[:digit:]]+)$ ]]; then
@@ -103,6 +104,7 @@ jobs:
               PM_VERSION=""
             fi
           fi
+          set -e
 
           if ! NODE_RAW=$(jq -er '.engines.node' package.json); then
             echo "::error::engines.node is required in package.json."
