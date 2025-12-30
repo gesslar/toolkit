@@ -1,4 +1,4 @@
-# Toolkit
+# @gesslar/toolkit
 
 [![CodeQL, Linting, Testing](https://github.com/gesslar/toolkit/actions/workflows/Quality.yaml/badge.svg)](https://github.com/gesslar/toolkit/actions/workflows/Quality.yaml)
 
