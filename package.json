@@ -23,7 +23,6 @@
   },
   "files": [
     "src/",
-    "README.md",
     "UNLICENSE.txt"
   ],
   "sideEffects": false,
@@ -60,7 +59,7 @@
   "license": "Unlicense",
   "homepage": "https://github.com/gesslar/toolkit#readme",
   "dependencies": {
-    "@gesslar/colours": "^0.3.0",
+    "@gesslar/colours": "^0.4.0",
     "ajv": "^8.17.1",
     "globby": "^16.1.0",
     "json5": "^2.2.3",
