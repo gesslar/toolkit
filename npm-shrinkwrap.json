@@ -16,7 +16,7 @@
         "yaml": "^2.8.2"
       },
       "devDependencies": {
-        "@gesslar/uglier": "^0.1.0",
+        "@gesslar/uglier": "^0.2.0",
         "typescript": "^5.9.3"
       },
       "engines": {
@@ -266,13 +266,13 @@
       }
     },
     "node_modules/@gesslar/toolkit": {
-      "version": "3.2.0",
-      "resolved": "https://registry.npmjs.org/@gesslar/toolkit/-/toolkit-3.2.0.tgz",
-      "integrity": "sha512-TCAISE2hfmlQ/DxJoMcuWIEeAgmrWhj1cifR+lgFWMzBY8GKXfRkXMe+PRHccJFS97KpCfxchNZ2NhP1VIE1BA==",
+      "version": "3.4.0",
+      "resolved": "https://registry.npmjs.org/@gesslar/toolkit/-/toolkit-3.4.0.tgz",
+      "integrity": "sha512-AS6q/9MsgMJdEOWUyZsGBOBpUAQzkVEOzBDtZmq/gbip5gxFHb8ZZVtpV9P7TY4L2sHuq4/y68TGOu5jwTlnjQ==",
       "dev": true,
       "license": "Unlicense",
       "dependencies": {
-        "@gesslar/colours": "^0.0.1",
+        "@gesslar/colours": "^0.4.0",
         "ajv": "^8.17.1",
         "globby": "^16.1.0",
         "json5": "^2.2.3",
@@ -282,25 +282,15 @@
         "node": ">=22"
       }
     },
-    "node_modules/@gesslar/toolkit/node_modules/@gesslar/colours": {
-      "version": "0.0.1",
-      "resolved": "https://registry.npmjs.org/@gesslar/colours/-/colours-0.0.1.tgz",
-      "integrity": "sha512-dnRe/Rmjeva0SYrbjIt30THm3FQ6vsCNGYhMiHjagzTUHsIfmVgyKclRAhcoJem47PLvrC2D7VyzaUMl6OiBcQ==",
-      "dev": true,
-      "license": "Unlicense",
-      "bin": {
-        "colours": "src/cli.js"
-      }
-    },
     "node_modules/@gesslar/uglier": {
-      "version": "0.1.0",
-      "resolved": "https://registry.npmjs.org/@gesslar/uglier/-/uglier-0.1.0.tgz",
-      "integrity": "sha512-qrk1ol4DluT65quHczE4nUwtaKvNuoP+RRWP3N93RrCtYMnqf9eMnGYTRYAnJsLWgEO+5CFck74g6iR8ksrwng==",
+      "version": "0.2.0",
+      "resolved": "https://registry.npmjs.org/@gesslar/uglier/-/uglier-0.2.0.tgz",
+      "integrity": "sha512-mXxZppMcipHbVQ1oyRwlq1jSFvb9Ce3uBCzkAab08NbslIG+9XNScVHHupExdrMDc28i946qFI3LW99VRast1g==",
       "dev": true,
       "license": "Unlicense",
       "dependencies": {
         "@gesslar/colours": "^0.0.1",
-        "@gesslar/toolkit": "^3.1.0",
+        "@gesslar/toolkit": "^3.3.0",
         "@stylistic/eslint-plugin": "^5.6.1",
         "eslint-plugin-jsdoc": "^61.5.0",
         "globals": "^16.5.0"
