@@ -69,15 +69,20 @@ jobs:
           PACKAGE_MANAGER="${PM_DEFAULT}"
           PM_VERSION=""
 
-          PM_RAW=$(jq -r '.packageManager // empty' package.json 2>/dev/null || true)
+          if [[ "$PACKAGE_MANAGER" = "auto" ]]; then
+            printf "Package manager set to 'auto'.\n"
+            printf "Detecting: "
 
-          if [[ -n "$PM_RAW" ]]; then
-            if [[ $PM_RAW =~ ^(npm|pnpm)@([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            PM=$(jq -er .packageManager package.json)
+            printf "PM=%s\n" "$PM"
+
+            if [[ ! "$PM" ]]; then
+              PACKAGE_MANAGER="$PM_DEFAULT"
+            elif [[ "$PM" =~ ^(pnpm)@([[:digit:]]+.[[:digit:]]+.[[:digit:]]+)$ ]]; then
               PACKAGE_MANAGER="${BASH_REMATCH[1]}"
               PM_VERSION="${BASH_REMATCH[2]}"
             else
-              echo "::warning::packageManager invalid or unsupported ('${PM_RAW}'); falling back to ${PM_DEFAULT}."
-              PACKAGE_MANAGER="${PM_DEFAULT}"
+              PACKAGE_MANAGER="$PM_DEFAULT"
               PM_VERSION=""
             fi
           fi
