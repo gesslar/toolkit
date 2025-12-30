@@ -1,6 +1,7 @@
 name: CodeQL, Linting, Testing
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -9,28 +10,138 @@ on:
     - cron: "20 14 * * 1"
 
 jobs:
+  ### CONFIGURATION ###################################################
+  #
+  ### PACKAGE MANAGER
+  #
+  #   Set the package manager to use: "auto", "npm" or "pnpm
+  #   This will configure the appropriate setup and commands throughout
+  #   the workflow.
+  #
+  #   If set to "auto", this workflow will attempt to read the "packageManager"
+  #   value of the package.json. So, make sure you have one and that you have
+  #   also set this value. If it discovers pnpm, it will use that and falls
+  #   back to npm if missing.
+  #
+  #   Example:
+  #             PACKAGE_MANAGER="auto"
+  #             PACKAGE_MANAGER="pnpm"
+  #             PACKAGE_MANAGER="npm"
+  #
+  ### LINTING #########################################################
+  #
+  #   If we need to perform linting, set the value to "yes". Any other
+  #   value will skip linting.
+  #
+  #   Example:  PERFORM_LINTING="yes"
+  #             PERFORM_LINTING="no"
+  #
+  ### TESTING #########################################################
+  #
+  #   If we need to perform testing, set the value to "yes". Any other
+  #   value will skip testing.
+  #
+  #   Example:  PERFORM_TESTING="yes"
+  #             PERFORM_TESTING="no"
+  #
+  #####################################################################
+
   ConfigureWorkflow:
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
-      perform_testing: ${{ steps.cfg.outputs.perform_testing }}
-      perform_linting: ${{ steps.cfg.outputs.perform_linting }}
+      perform_linting: ${{ steps.cfg1.outputs.perform_linting }}
+      perform_testing: ${{ steps.cfg1.outputs.perform_testing }}
+      package_manager: ${{ steps.cfg2.outputs.package_manager }}
+      pm_install_cmd: ${{ steps.cfg2.outputs.pm_install_cmd }}
+      pm_default: ${{ steps.cfg1.outputs.pm_default }}
+      pm_version: ${{ steps.cfg2.outputs.pm_version }}
+      node_version: ${{ steps.cfg2.outputs.node_version }}
+
     steps:
-      - name: Configure workflow
-        id: cfg
+      - name: Configure Linting and Testing
+        id: cfg1
         run: |+
-          ### LINTING #########################################################
-          #
-          # If we need to perform linting, set the value to 'yes'. Any other
-          # value will skip linting.
+          #############################################################
+          PACKAGE_MANAGER="auto"
+          PERFORM_LINTING="yes"
+          PERFORM_TESTING="yes"
+          #############################################################
 
-          echo "perform_linting=yes" >> "$GITHUB_OUTPUT"
+          echo "perform_linting=${PERFORM_LINTING}" >> "$GITHUB_OUTPUT"
+          echo "perform_testing=${PERFORM_TESTING}" >> "$GITHUB_OUTPUT"
+          echo "package_manager=${PACKAGE_MANAGER}" >> "$GITHUB_OUTPUT"
+          echo "pm_default=npm" >> "$GITHUB_OUTPUT"
 
-          ### TESTING #########################################################
-          #
-          # If we need to perform testing, set the value to 'yes'. Any other
-          # value will skip testing.
+      - name: Check out repository
+        uses: actions/checkout@v6
 
-          echo "perform_testing=yes" >> "$GITHUB_OUTPUT"
+      - name: Configure Package Manager
+        id: cfg2
+        run: |+
+          set -euo pipefail
+
+          PM_DEFAULT="${{ steps.cfg1.outputs.pm_default }}"
+          PACKAGE_MANAGER="${{ steps.cfg1.outputs.package_manager }}"
+          PM_VERSION=""
+          NODE_VERSION=""
+
+          if [[ "$PACKAGE_MANAGER" = "auto" ]]; then
+            printf "Package manager set to 'auto'.\n"
+            printf "Detecting: "
+
+            PM=$(jq -er .packageManager package.json)
+            printf "PM=%s\n" "$PM"
+
+            if [[ ! "$PM" ]]; then
+              PACKAGE_MANAGER="$PM_DEFAULT"
+            elif [[ "$PM" =~ ^(pnpm)@([[:digit:]]+.[[:digit:]]+.[[:digit:]]+)$ ]]; then
+              PACKAGE_MANAGER="${BASH_REMATCH[1]}"
+              PM_VERSION="${BASH_REMATCH[2]}"
+            else
+              PACKAGE_MANAGER="$PM_DEFAULT"
+              PM_VERSION=""
+            fi
+          fi
+
+          if ! NODE_RAW=$(jq -er '.engines.node' package.json); then
+            echo "::error::engines.node is required in package.json."
+            exit 1
+          fi
+
+          if [[ $NODE_RAW =~ ([0-9]+)(\.[0-9]+)?(\.[0-9]+)? ]]; then
+            NODE_VERSION="${BASH_REMATCH[1]}"
+            [[ -n "${BASH_REMATCH[2]}" ]] && NODE_VERSION+="${BASH_REMATCH[2]}"
+            [[ -n "${BASH_REMATCH[3]}" ]] && NODE_VERSION+="${BASH_REMATCH[3]}"
+          else
+            echo "::error::Unable to parse engines.node ('${NODE_RAW}') for a Node.js version."
+            exit 1
+          fi
+
+          echo "package_manager=${PACKAGE_MANAGER}" >> "$GITHUB_OUTPUT"
+          echo "pm_version=${PM_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "node_version=${NODE_VERSION}" >> "$GITHUB_OUTPUT"
+
+          if [[ "$PACKAGE_MANAGER" = "pnpm" ]]; then
+            echo "pm_install_cmd=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+          else
+            echo "pm_install_cmd=npm ci" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Display Configuration
+        run: |+
+          printf "Linting: %s\n" "${{ steps.cfg1.outputs.perform_linting }}"
+          printf "Testing: %s\n" "${{ steps.cfg1.outputs.perform_testing }}"
+          printf "Package Manager: %s" "${{ steps.cfg2.outputs.package_manager }}"
+
+          if [[ "${{ steps.cfg2.outputs.package_manager }}" = "pnpm" ]]; then
+            printf " (%s)\n" "${{ steps.cfg2.outputs.pm_version }}"
+          else
+            printf "\n"
+          fi
+
+          printf "Package Manager Install: %s\n" "${{ steps.cfg2.outputs.pm_install_cmd }}"
+          printf "Node: %s\n" "${{ steps.cfg2.outputs.node_version }}"
 
   Lint:
     needs: ConfigureWorkflow
@@ -39,29 +150,33 @@ jobs:
     permissions:
       contents: read
 
-    strategy:
-      matrix:
-        node-version: [22.x]
-
     steps:
       - name: Check out repository
         if: ${{ needs.ConfigureWorkflow.outputs.perform_linting == 'yes' }}
         uses: actions/checkout@v6
 
-      - name: Using Node v${{ matrix.node-version }}
+      - name: Install pnpm
+        if: >
+          ${{ needs.ConfigureWorkflow.outputs.perform_linting == 'yes' &&
+              needs.ConfigureWorkflow.outputs.package_manager == 'pnpm' }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ needs.ConfigureWorkflow.outputs.pm_version }}
+
+      - name: Using Node v${{ needs.ConfigureWorkflow.outputs.node_version }}
         if: ${{ needs.ConfigureWorkflow.outputs.perform_linting == 'yes' }}
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          node-version: ${{ needs.ConfigureWorkflow.outputs.node_version }}
+          cache: ${{ needs.ConfigureWorkflow.outputs.package_manager }}
 
       - name: Install dependencies
         if: ${{ needs.ConfigureWorkflow.outputs.perform_linting == 'yes' }}
-        run: npm ci
+        run: ${{ needs.ConfigureWorkflow.outputs.pm_install_cmd }}
 
       - name: Perform lint check
         if: ${{ needs.ConfigureWorkflow.outputs.perform_linting == 'yes' }}
-        run: npm run lint
+        run: ${{ needs.ConfigureWorkflow.outputs.package_manager }} run lint
 
   Test:
     needs: ConfigureWorkflow
@@ -72,27 +187,39 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version:
+          - 22.x
+          - 23.x
+          - 24.x
+          - 25.x
 
     steps:
       - name: Check out repository
         if: ${{ needs.ConfigureWorkflow.outputs.perform_testing == 'yes' }}
         uses: actions/checkout@v6
 
+      - name: Install pnpm
+        if: >
+          ${{ needs.ConfigureWorkflow.outputs.perform_testing == 'yes' &&
+              needs.ConfigureWorkflow.outputs.package_manager == 'pnpm' }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ needs.ConfigureWorkflow.outputs.pm_version }}
+
       - name: Using Node v${{ matrix.node-version }}
         if: ${{ needs.ConfigureWorkflow.outputs.perform_testing == 'yes' }}
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: ${{ needs.ConfigureWorkflow.outputs.package_manager }}
 
       - name: Install dependencies
         if: ${{ needs.ConfigureWorkflow.outputs.perform_testing == 'yes' }}
-        run: npm ci
+        run: ${{ needs.ConfigureWorkflow.outputs.pm_install_cmd }}
 
       - name: Definitely don't cheat on tests
         if: ${{ needs.ConfigureWorkflow.outputs.perform_testing == 'yes' }}
-        run: npm test
+        run: ${{ needs.ConfigureWorkflow.outputs.package_manager }} test
 
   Analyze:
     name: Analyze (${{ matrix.language }})
@@ -119,43 +246,15 @@ jobs:
             build-mode: none
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      # Add any setup steps before running the `github/codeql-action/init` action.
-      # This includes steps like installing compilers or runtimes (`actions/setup-node`
-      # or others). This is typically only required for manual builds.
-      # - name: Setup runtime (example)
-      #   uses: actions/setup-example@v1
-
-      # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
-          # If you wish to specify custom queries, you can do so here or in a config file.
-          # By default, queries listed here will override any specified in a config file.
-          # Prefix the list here with "+" to use these queries and those in the config file.
-
-          # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+          # Uncomment to enable stricter security queries:
           # queries: security-extended,security-and-quality
-
-      # If the analyze step fails for one of the languages you are analyzing with
-      # "We were unable to automatically build your code", modify the matrix above
-      # to set the build mode to "manual" for that language. Then modify this step
-      # to build your code.
-      # ℹ️ Command-line programs to run using the OS shell.
-      # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
-      - name: Run manual build steps
-        if: matrix.build-mode == 'manual'
-        shell: bash
-        run: |
-          echo 'If you are using a "manual" build mode for one or more of the' \
-            'languages you are analyzing, replace this with the commands to build' \
-            'your code, for example:'
-          echo '  make bootstrap'
-          echo '  make release'
-          exit 1
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
