@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@gesslar/colours':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.7.1
+        version: 0.7.1
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -88,6 +88,11 @@ packages:
 
   '@gesslar/colours@0.5.0':
     resolution: {integrity: sha512-q5i94ov7cNpFIunyhLpdq9nHt56nZ9iofaeFvZEyE2iVqwjLTt1g/65T5W9/7T2ARvYPizDzL9RwizuswJXeAA==}
+    engines: {node: '>=22'}
+    hasBin: true
+
+  '@gesslar/colours@0.7.1':
+    resolution: {integrity: sha512-monvp64dwofrQKjW5H/uVLRdNf1iJKoev3TuZG3eWWioSJWY6vT5ZNSXWt7qgHSZimRx1AjPqFZhQYZ1TBq0AA==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -649,6 +654,8 @@ snapshots:
   '@gesslar/colours@0.0.1': {}
 
   '@gesslar/colours@0.5.0': {}
+
+  '@gesslar/colours@0.7.1': {}
 
   '@gesslar/toolkit@3.6.2':
     dependencies:
