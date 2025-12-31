@@ -21,6 +21,7 @@ a Tauri app.
 | Promised | Promise utilities for settling, filtering, and extracting values from promise results |
 | Sass | Custom Error class with enhanced features |
 | Tantrum | AggregateError implementation |
+| Time | Timing operations and promise-based delays with cancellation support |
 | Type | String-based type management (exported as TypeSpec in browser) |
 | Util | General utility functions |
 | Valid | Validation and assertion methods |

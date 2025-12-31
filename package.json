@@ -25,6 +25,7 @@
     "browser",
     "node"
   ],
+  "packageManager": "pnpm@10.26.2",
   "main": "./src/index.js",
   "type": "module",
   "types": "./src/types/index.d.ts",
@@ -54,13 +55,16 @@
   },
   "scripts": {
     "types:build": "node -e \"require('fs').rmSync('src/types',{recursive:true,force:true});\" && tsc -p tsconfig.types.json",
-    "prepublishOnly": "npm run types:build",
+    "prepublishOnly": "pnpm run types:build",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "submit": "npm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
-    "update": "npx npm-check-updates -u && npm install",
+    "submit": "pnpm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
+    "update": "pnpm up --latest --recursive",
     "test": "node --test tests/**/*.test.js",
-    "pr": "gt submit -p --ai"
+    "pr": "gt submit -p --ai",
+    "patch": "pnpm version patch",
+    "minor": "pnpm version minor",
+    "major": "pnpm version major"
   },
   "dependencies": {
     "@gesslar/colours": "^0.5.0",
@@ -70,7 +74,7 @@
     "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@gesslar/uglier": "^0.3.0",
+    "@gesslar/uglier": "^0.4.0",
     "typescript": "^5.9.3"
   }
 }
