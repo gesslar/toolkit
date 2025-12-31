@@ -6,7 +6,7 @@
     "email": "bmw@gesslar.dev",
     "url": "https://gesslar.dev"
   },
-  "version": "3.5.0",
+  "version": "3.6.0",
   "license": "Unlicense",
   "homepage": "https://github.com/gesslar/toolkit#readme",
   "repository": {
@@ -75,6 +75,7 @@
   },
   "devDependencies": {
     "@gesslar/uglier": "^0.4.0",
+    "eslint": "^9.39.2",
     "typescript": "^5.9.3"
   }
 }
