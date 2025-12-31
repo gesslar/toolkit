@@ -4,6 +4,7 @@ export { default as Notify } from "./lib/Notify.js";
 export { default as Promised } from "./lib/Promised.js";
 export { default as Sass } from "./lib/Sass.js";
 export { default as Tantrum } from "./lib/Tantrum.js";
+export { default as Time } from "./lib/Time.js";
 export { default as Type } from "./lib/TypeSpec.js";
 export { default as Util } from "./lib/Util.js";
 export { default as Valid } from "./lib/Valid.js";
