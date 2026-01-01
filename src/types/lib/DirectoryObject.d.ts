@@ -48,7 +48,6 @@
  * const file = dir.getFile("package.json")
  */
 export default class DirectoryObject extends FS {
-    [x: number]: () => object;
     /**
      * Constructs a DirectoryObject instance.
      *
@@ -293,8 +292,16 @@ export default class DirectoryObject extends FS {
      * const data = await file.read()
      */
     getFile(filename: string): FileObject;
+    /**
+     * Custom inspect method for Node.js console.
+     *
+     * @returns {object} JSON representation of this object.
+     */
+    [util.inspect.custom](): object;
     #private;
 }
 import FS from "./FS.js";
+import { URL } from "node:url";
 import FileObject from "./FileObject.js";
+import util from "node:util";
 //# sourceMappingURL=DirectoryObject.d.ts.map

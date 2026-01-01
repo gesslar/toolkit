@@ -69,12 +69,6 @@ The toolkit provides three categories of utilities:
 - `Valid` - Assertion utilities that throw Sass errors on validation failure
 - `Collection` - Array/Object/Map/Set evaluation and transformation utilities
 
-**Schemas & Contracts:**
-
-- `Schemer` - JSON Schema validation using AJV with enhanced error reporting
-- `Terms` - Interface definitions (what an action provides/accepts), supports file refs
-- `Contract` - Negotiates compatibility between Terms with schema validation
-
 **Utilities:**
 
 - `Cache` - File system cache with mtime-based invalidation
@@ -166,13 +160,6 @@ import assert from 'node:assert/strict'
 - Uses modification time (mtime) to invalidate cached file data
 - Eliminates redundant file reads during parallel processing
 - Automatically cleans up stale entries when files change
-
-### Contract System
-
-- `Terms` defines interfaces (provider outputs / consumer inputs)
-- `Contract.fromTerms()` creates single-party contracts with schema validation
-- `new Contract(providerTerms, consumerTerms)` negotiates compatibility
-- Validates that provider offers all required consumer capabilities with matching types
 
 ### Glog (Logger)
 

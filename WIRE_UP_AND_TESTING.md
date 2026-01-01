@@ -12,10 +12,13 @@
   npm run lint            # ESLint + JSDoc rules
   npm run lint:fix        # Auto-fix style issues
   npm test                # node:test suite in tests/browser + tests/node
+  npm run test:browser    # Run only browser tests (with happy-dom)
+  npm run test:node       # Run only node tests
   npm run types:build     # Regenerates src/types/*
   ```
 
-- Node >= 20 required; repo is `type: "module"`
+- Node >= 22 required; repo is `type: "module"`
+- Browser tests use **happy-dom** for headless browser API testing
 
 ### **Step 1: Validate the Logic Thoroughly**
 
@@ -80,8 +83,12 @@ After code changes:
 There is a real test suite. It uses the built-in `node:test` runner and lives in `tests/browser` (browser-safe API) and `tests/node` (Node-only API).
 
 - **Run everything**: `npm test`
+- **Run browser tests only**: `npm run test:browser`
+- **Run node tests only**: `npm run test:node`
 - **Targeted runs**: `npm test -- tests/browser/Valid.test.js`
-- **Helpers**: `tests/helpers/test-utils.js` provides fixture helpers and cleanup.
+- **Helpers**:
+  - `tests/helpers/test-utils.js` provides fixture helpers and cleanup
+  - `tests/helpers/browser-env.js` provides browser environment setup (happy-dom)
 
 #### **Test Template**
 
@@ -121,6 +128,61 @@ Focus tests on:
 - Error surfaces (message + error type)
 - Import compatibility (`@gesslar/toolkit` vs `/browser` where relevant)
 - Real-world usage paths
+
+#### **Browser Tests (with happy-dom)**
+
+Browser tests run in Node.js with **happy-dom** providing real browser APIs (window, document, CustomEvent, fetch, DOM manipulation, etc.).
+
+**When to use browser environment:**
+
+- Testing browser-specific components (HTML, Notify, etc.)
+- Code that uses DOM APIs (document.createElement, element.innerHTML, etc.)
+- Code that uses browser globals (window, CustomEvent, EventTarget, etc.)
+
+**Browser Test Template:**
+
+```javascript
+#!/usr/bin/env node
+
+import assert from "node:assert/strict"
+import {after, before, describe, it} from "node:test"
+import {setupBrowserEnvironment, cleanupBrowserEnvironment} from "../helpers/browser-env.js"
+
+import {YourBrowserClass} from "@gesslar/toolkit/browser"
+
+describe("YourBrowserClass", () => {
+	let cleanup
+
+	before(() => {
+		cleanup = setupBrowserEnvironment()
+		// Now window, document, CustomEvent, fetch, etc. are available
+	})
+
+	after(() => {
+		cleanupBrowserEnvironment(cleanup)
+	})
+
+	it("works with real DOM APIs", () => {
+		const element = document.createElement("div")
+		element.textContent = "test"
+		assert.equal(element.textContent, "test")
+	})
+
+	it("works with browser events", () => {
+		const received = []
+		window.addEventListener("custom", e => received.push(e.detail))
+		window.dispatchEvent(new CustomEvent("custom", {detail: "data"}))
+		assert.deepEqual(received, ["data"])
+	})
+})
+```
+
+**Important notes:**
+
+- Only add browser-env setup to tests that actually need browser APIs
+- Pure JavaScript utility tests (Data, Util, Collection) don't need the browser environment
+- happy-dom provides: window, document, navigator, CustomEvent, EventTarget, fetch, DOM APIs
+- Tests run fast (~800ms for all 894 tests) because happy-dom is lightweight
 
 ---
 
