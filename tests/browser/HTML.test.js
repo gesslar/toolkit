@@ -2,14 +2,17 @@
 
 import assert from "node:assert/strict"
 import {after, afterEach, before, describe, it} from "node:test"
+import {setupBrowserEnvironment, cleanupBrowserEnvironment} from "../helpers/browser-env.js"
 
 import {HTMLClass as HTML, Sass} from "@gesslar/toolkit/browser"
 
 describe("HTML", () => {
   const fakeSanitizer = input => `safe:${input}`
   let originalFetch
+  let cleanup
 
   before(() => {
+    cleanup = setupBrowserEnvironment()
     originalFetch = globalThis.fetch
   })
 
@@ -19,6 +22,7 @@ describe("HTML", () => {
 
   after(() => {
     globalThis.fetch = originalFetch
+    cleanupBrowserEnvironment(cleanup)
   })
 
   describe("loadHTML", () => {
@@ -45,7 +49,7 @@ describe("HTML", () => {
 
   describe("sanitise", () => {
     it("throws a Sass error when DOMPurify is unavailable", () => {
-      const html = new HTML()
+      const html = new HTML(null)
 
       assert.throws(() => html.sanitise("<p>unsafe</p>"), error => {
         assert.ok(error instanceof Sass)
