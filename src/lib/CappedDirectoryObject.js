@@ -133,6 +133,16 @@ export default class CappedDirectoryObject extends DirectoryObject {
   }
 
   /**
+   * Re-caps this directory to itself, making it the new root of the capped tree.
+   * This is a protected method intended for use by subclasses like TempDirectoryObject.
+   *
+   * @protected
+   */
+  _recapToSelf() {
+    this.#cap = this.#realPath
+  }
+
+  /**
    * Returns the cap path for this directory.
    *
    * @returns {string} The cap directory path
@@ -221,14 +231,14 @@ export default class CappedDirectoryObject extends DirectoryObject {
    * Returns the parent directory of this capped directory.
    * Returns null only if this directory is at the cap (the "root" of the capped tree).
    *
-   * Note: The returned parent is a plain DirectoryObject (not capped).
-   * Use getDirectory() for creating capped subdirectories.
+   * Note: The returned parent is a CappedDirectoryObject with the same cap.
+   * This maintains the capping behavior throughout the directory hierarchy.
    *
-   * @returns {DirectoryObject|null} Parent directory or null if at cap root
+   * @returns {CappedDirectoryObject|null} Parent directory or null if at cap root
    * @example
    * const capped = new TempDirectoryObject("myapp")
    * const subdir = capped.getDirectory("data")
-   * console.log(subdir.parent.path) // Returns parent DirectoryObject
+   * console.log(subdir.parent.path) // Returns parent CappedDirectoryObject
    * console.log(capped.parent) // null (at cap root)
    */
   get parent() {
@@ -239,13 +249,17 @@ export default class CappedDirectoryObject extends DirectoryObject {
       return null
     }
 
-    // Otherwise return the parent using real path (plain DirectoryObject, not capped)
+    // Compute parent's real path
     const parentPath = path.dirname(this.#realPath)
     const isRoot = parentPath === this.#realPath
 
-    return isRoot
-      ? null
-      : new DirectoryObject(parentPath, this.temporary)
+    if(isRoot) {
+      return null
+    }
+
+    // Compute relative path from current to parent (just "..")
+    // Then use getDirectory to create the parent, which preserves the class type
+    return this.getDirectory("..")
   }
 
   /**
@@ -264,9 +278,24 @@ export default class CappedDirectoryObject extends DirectoryObject {
    */
   toJSON() {
     const capResolved = path.resolve(this.#cap)
-    const parentPath = this.#realPath === capResolved
-      ? null
-      : "/"
+    let parentPath
+
+    if(this.#realPath === capResolved) {
+      // At cap root, no parent
+      parentPath = null
+    } else {
+      // Compute parent's virtual path
+      const parentReal = path.dirname(this.#realPath)
+      const relative = path.relative(capResolved, parentReal)
+
+      // If parent is cap root or empty, return "/"
+      if(!relative || relative === ".") {
+        parentPath = "/"
+      } else {
+        // Return parent's virtual path with leading slash
+        parentPath = "/" + relative.split(path.sep).join("/")
+      }
+    }
 
     return {
       supplied: this.supplied,
@@ -278,6 +307,7 @@ export default class CappedDirectoryObject extends DirectoryObject {
       isFile: this.isFile,
       isDirectory: this.isDirectory,
       parent: parentPath,
+      root: this.root.path,
       real: this.real.toJSON()
     }
   }
@@ -436,10 +466,11 @@ export default class CappedDirectoryObject extends DirectoryObject {
     // Start at cap root
     let current = this.#createCappedAtRoot()
 
-    // Traverse each segment, creating CappedDirectoryObject instances
-    // (not subclass instances, to avoid constructor signature issues)
+    // Traverse each segment, using constructor to preserve class type
     for(const segment of segments) {
-      current = new CappedDirectoryObject(segment, current, this.temporary)
+      // Use simple name constructor to preserve subclass type
+      // Works for both CappedDirectoryObject and TempDirectoryObject
+      current = new this.constructor(segment, current, this.temporary)
     }
 
     return current
