@@ -38,6 +38,13 @@ export default class CappedDirectoryObject extends DirectoryObject {
      */
     constructor(dirPath: string, parent?: CappedDirectoryObject | null, temporary?: boolean);
     /**
+     * Re-caps this directory to itself, making it the new root of the capped tree.
+     * This is a protected method intended for use by subclasses like TempDirectoryObject.
+     *
+     * @protected
+     */
+    protected _recapToSelf(): void;
+    /**
      * Returns the cap path for this directory.
      *
      * @returns {string} The cap directory path
@@ -75,6 +82,21 @@ export default class CappedDirectoryObject extends DirectoryObject {
      * subdir.real.parent              // Can traverse outside the cap
      */
     get real(): DirectoryObject;
+    /**
+     * Returns the parent directory of this capped directory.
+     * Returns null only if this directory is at the cap (the "root" of the capped tree).
+     *
+     * Note: The returned parent is a CappedDirectoryObject with the same cap.
+     * This maintains the capping behavior throughout the directory hierarchy.
+     *
+     * @returns {CappedDirectoryObject|null} Parent directory or null if at cap root
+     * @example
+     * const capped = new TempDirectoryObject("myapp")
+     * const subdir = capped.getDirectory("data")
+     * console.log(subdir.parent.path) // Returns parent CappedDirectoryObject
+     * console.log(capped.parent) // null (at cap root)
+     */
+    get parent(): CappedDirectoryObject | null;
     /**
      * Returns the URL with virtual path (cap-relative).
      *

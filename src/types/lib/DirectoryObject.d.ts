@@ -139,6 +139,24 @@ export default class DirectoryObject extends FS {
      */
     get parent(): DirectoryObject | null;
     /**
+     * Returns the root directory of the filesystem.
+     *
+     * For DirectoryObject, this walks up to the filesystem root.
+     * For CappedDirectoryObject, this returns the cap root.
+     *
+     * @returns {DirectoryObject} The root directory
+     * @example
+     * const dir = new DirectoryObject("/usr/local/bin")
+     * console.log(dir.root.path)  // "/"
+     *
+     * @example
+     * const capped = new CappedDirectoryObject("/projects/myapp")
+     * const sub = capped.getDirectory("src/lib")
+     * console.log(sub.root.path)  // "/" (virtual, cap root)
+     * console.log(sub.root.real.path)  // "/projects/myapp"
+     */
+    get root(): DirectoryObject;
+    /**
      * Recursively removes a temporary directory and all its contents.
      *
      * This method will delete all files and subdirectories within this directory,

@@ -157,7 +157,8 @@ export default class DirectoryObject extends FS {
       extension: this.extension,
       isFile: this.isFile,
       isDirectory: this.isDirectory,
-      parent: this.parent ? this.parent.path : null
+      parent: this.parent ? this.parent.path : null,
+      root: this.root.path
     }
   }
 
@@ -292,6 +293,34 @@ export default class DirectoryObject extends FS {
       : new DirectoryObject(parentPath, this.temporary)
 
     return this.#parent
+  }
+
+  /**
+   * Returns the root directory of the filesystem.
+   *
+   * For DirectoryObject, this walks up to the filesystem root.
+   * For CappedDirectoryObject, this returns the cap root.
+   *
+   * @returns {DirectoryObject} The root directory
+   * @example
+   * const dir = new DirectoryObject("/usr/local/bin")
+   * console.log(dir.root.path)  // "/"
+   *
+   * @example
+   * const capped = new CappedDirectoryObject("/projects/myapp")
+   * const sub = capped.getDirectory("src/lib")
+   * console.log(sub.root.path)  // "/" (virtual, cap root)
+   * console.log(sub.root.real.path)  // "/projects/myapp"
+   */
+  get root() {
+    // Walk up until we find a directory with no parent
+    let current = this
+
+    while(current.parent !== null) {
+      current = current.parent
+    }
+
+    return current
   }
 
   /**

@@ -99,11 +99,13 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
         )
       }
 
-      // SECURITY: Ensure parent's cap is tmpdir (prevent escape to other caps)
-      const tmpdir = os.tmpdir()
-      if(parent.cap !== tmpdir) {
+      // SECURITY: Ensure parent's cap is within tmpdir (prevent escape to other caps)
+      const tmpdir = path.resolve(os.tmpdir())
+      const parentCap = path.resolve(parent.cap)
+
+      if(!parentCap.startsWith(tmpdir)) {
         throw Sass.new(
-          `Parent must be capped to OS temp directory (${tmpdir}), ` +
+          `Parent must be capped to OS temp directory (${tmpdir}) or a subdirectory thereof, ` +
           `got cap: ${parent.cap}`
         )
       }
@@ -119,6 +121,13 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
 
     // Temp-specific behavior: create directory immediately
     this.#createDirectory()
+
+    // Re-cap to the temp directory itself for consistent behavior with CappedDirectoryObject
+    // This makes temp.cap === temp.real.path and temp.parent === null
+    if(!parent) {
+      // Only re-cap if this is a root temp directory (no TempDirectoryObject parent)
+      this._recapToSelf()
+    }
   }
 
   /**
