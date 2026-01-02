@@ -35,12 +35,16 @@ export default class CappedDirectoryObject extends DirectoryObject {
    * (virtual root). With a parent, the path is resolved relative to the parent's
    * cap using virtual path semantics (absolute paths treated as cap-relative).
    *
-   * @param {string} dirPath - Directory path (becomes cap if no parent, else relative to parent's cap)
+   * @param {string} [dirPath="."] - Directory path (becomes cap if no parent, else relative to parent's cap, defaults to current directory)
    * @param {CappedDirectoryObject?} [parent] - Optional parent capped directory
    * @param {boolean} [temporary=false] - Whether this is a temporary directory
-   * @throws {Sass} If path is empty
    * @throws {Sass} If parent is provided but not a CappedDirectoryObject
    * @throws {Sass} If the resulting path would escape the cap
+   * @example
+   * // Create new capped directory at current directory
+   * const cwd = new CappedDirectoryObject()
+   * // path: process.cwd(), cap: process.cwd()
+   *
    * @example
    * // Create new capped directory
    * const cache = new CappedDirectoryObject("/home/user/.cache")
@@ -56,9 +60,8 @@ export default class CappedDirectoryObject extends DirectoryObject {
    * const config = new CappedDirectoryObject("/etc/config", cache)
    * // path: /home/user/.cache/etc/config, cap: /home/user/.cache
    */
-  constructor(dirPath, parent=null, temporary=false) {
+  constructor(dirPath=".", parent=null, temporary=false) {
     Valid.type(dirPath, "String")
-    Valid.assert(dirPath.length > 0, "Path must not be empty.")
 
     // Validate parent using inheritance-aware type checking
     if(parent !== null && !Data.isType(parent, "CappedDirectoryObject")) {
@@ -111,6 +114,22 @@ export default class CappedDirectoryObject extends DirectoryObject {
 
     // Validate that this path is within the cap
     this.#validateCapPath()
+  }
+
+  /**
+   * Creates a CappedDirectoryObject from the current working directory.
+   * This is useful when working with pnpx or other tools where you need to
+   * cap at the project's root directory determined at runtime.
+   *
+   * @returns {CappedDirectoryObject} A CappedDirectoryObject capped at the current working directory
+   * @example
+   * // When using pnpx or similar tools
+   * const projectRoot = CappedDirectoryObject.fromCwd()
+   * const srcDir = projectRoot.getDirectory("src")
+   * // srcDir is capped at the project root
+   */
+  static fromCwd() {
+    return new this(process.cwd())
   }
 
   /**

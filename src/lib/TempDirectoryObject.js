@@ -131,6 +131,19 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
   }
 
   /**
+   * TempDirectoryObject does not support fromCwd() since it is specifically
+   * designed to work within the OS temporary directory tree.
+   *
+   * @throws {Sass} Always throws an error
+   */
+  static fromCwd() {
+    throw Sass.new(
+      "TempDirectoryObject.fromCwd() is not supported. " +
+      "Use CappedDirectoryObject.fromCwd() instead if you need to cap at the current working directory."
+    )
+  }
+
+  /**
    * Creates the directory synchronously on the filesystem.
    *
    * @private

@@ -35,12 +35,18 @@ describe("DirectoryObject", () => {
       assert.equal(dir.name, path.basename(process.cwd()))
     })
 
-    it("handles null/undefined input", () => {
-      const dir1 = new DirectoryObject(null)
-      const dir2 = new DirectoryObject(undefined)
+    it("handles no arguments (defaults to current directory)", () => {
+      const dir = new DirectoryObject()
 
-      assert.equal(dir1.supplied, ".")
-      assert.equal(dir2.supplied, ".")
+      assert.equal(dir.supplied, ".")
+      assert.equal(dir.path, process.cwd())
+    })
+
+    it("handles undefined input (defaults to current directory)", () => {
+      const dir = new DirectoryObject(undefined)
+
+      assert.equal(dir.supplied, ".")
+      assert.equal(dir.path, process.cwd())
     })
 
     it("accepts DirectoryObject as input (polymorphic)", () => {
@@ -1148,6 +1154,54 @@ describe("DirectoryObject", () => {
       const subDir = dir.getDirectory("child")
 
       assert.equal(subDir.constructor, dir.constructor)
+    })
+  })
+
+  describe("fromCwd() static method", () => {
+    it("creates DirectoryObject from current working directory", () => {
+      const dir = DirectoryObject.fromCwd()
+
+      assert.ok(dir instanceof DirectoryObject)
+      assert.equal(dir.path, process.cwd())
+    })
+
+    it("returns absolute path", () => {
+      const dir = DirectoryObject.fromCwd()
+
+      assert.ok(path.isAbsolute(dir.path))
+    })
+
+    it("creates new instance each time", () => {
+      const dir1 = DirectoryObject.fromCwd()
+      const dir2 = DirectoryObject.fromCwd()
+
+      assert.ok(dir1 instanceof DirectoryObject)
+      assert.ok(dir2 instanceof DirectoryObject)
+      assert.notEqual(dir1, dir2)
+      assert.equal(dir1.path, dir2.path)
+    })
+
+    it("works with CappedDirectoryObject subclass", async () => {
+      const {CappedDirectoryObject} = await import("../../src/index.js")
+      const cappedCwd = CappedDirectoryObject.fromCwd()
+
+      assert.ok(cappedCwd instanceof CappedDirectoryObject)
+      assert.ok(cappedCwd instanceof DirectoryObject)
+      assert.equal(cappedCwd.realPath, process.cwd())
+      assert.equal(cappedCwd.cap, process.cwd())
+    })
+
+    it("throws for TempDirectoryObject subclass", async () => {
+      const {TempDirectoryObject, Sass} = await import("../../src/index.js")
+
+      assert.throws(
+        () => TempDirectoryObject.fromCwd(),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /not supported/)
+          return true
+        }
+      )
     })
   })
 
