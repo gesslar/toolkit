@@ -49,12 +49,23 @@
  */
 export default class DirectoryObject extends FS {
     /**
+     * Creates a DirectoryObject from the current working directory.
+     * Useful when working with pnpx or other tools where the project root
+     * needs to be determined at runtime.
+     *
+     * @returns {DirectoryObject} A DirectoryObject representing the current working directory
+     * @example
+     * const projectRoot = DirectoryObject.fromCwd()
+     * console.log(projectRoot.path) // process.cwd()
+     */
+    static fromCwd(): DirectoryObject;
+    /**
      * Constructs a DirectoryObject instance.
      *
-     * @param {string? | DirectoryObject?} directory - The directory path or DirectoryObject
+     * @param {string? | DirectoryObject?} [directory="."] - The directory path or DirectoryObject (defaults to current directory)
      * @param {boolean} [temporary] - Whether this is a temporary directory.
      */
-    constructor(directory?: any, temporary?: boolean);
+    constructor(directory?: string, temporary?: boolean);
     /**
      * Returns a JSON representation of the DirectoryObject.
      *

@@ -101,19 +101,19 @@ export default class DirectoryObject extends FS {
   /**
    * Constructs a DirectoryObject instance.
    *
-   * @param {string? | DirectoryObject?} directory - The directory path or DirectoryObject
+   * @param {string? | DirectoryObject?} [directory="."] - The directory path or DirectoryObject (defaults to current directory)
    * @param {boolean} [temporary] - Whether this is a temporary directory.
    */
-  constructor(directory=null, temporary=false) {
+  constructor(directory=".", temporary=false) {
     super()
 
-    Valid.type(directory, "String|TempDirectoryObject|DirectoryObject|Null")
+    Valid.type(directory, "String|TempDirectoryObject|DirectoryObject")
 
     // If passed a DirectoryObject, extract its path
     if(Data.isType(directory, "DirectoryObject") || Data.isType(directory, "TempDirectoryObject"))
       directory = directory.path
 
-    const fixedDir = FS.fixSlashes(directory ?? ".")
+    const fixedDir = FS.fixSlashes(directory)
     const resolved = path.resolve(fixedDir)
     const url = new URL(FS.pathToUri(resolved))
     const baseName = path.basename(resolved) || "."
@@ -131,6 +131,20 @@ export default class DirectoryObject extends FS {
     this.#meta.temporary = temporary
 
     Object.freeze(this.#meta)
+  }
+
+  /**
+   * Creates a DirectoryObject from the current working directory.
+   * Useful when working with pnpx or other tools where the project root
+   * needs to be determined at runtime.
+   *
+   * @returns {DirectoryObject} A DirectoryObject representing the current working directory
+   * @example
+   * const projectRoot = DirectoryObject.fromCwd()
+   * console.log(projectRoot.path) // process.cwd()
+   */
+  static fromCwd() {
+    return new this(process.cwd())
   }
 
   /**

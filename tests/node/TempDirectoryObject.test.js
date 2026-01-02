@@ -18,6 +18,20 @@ describe("TempDirectoryObject", () => {
     tempDirs.length = 0
   })
 
+  describe("fromCwd() static method", () => {
+    it("throws error when called on TempDirectoryObject", () => {
+      assert.throws(
+        () => TempDirectoryObject.fromCwd(),
+        (error) => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /not supported/)
+          assert.match(error.message, /CappedDirectoryObject\.fromCwd/)
+          return true
+        }
+      )
+    })
+  })
+
   describe("constructor", () => {
     it("creates TempDirectoryObject with name", async () => {
       const temp = new TempDirectoryObject("test-temp")
