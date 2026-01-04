@@ -1,9 +1,11 @@
 import assert from "node:assert/strict"
 import fs from "node:fs/promises"
+
 import path from "node:path"
 import {URL} from "node:url"
 import {afterEach,beforeEach,describe,it} from "node:test"
 
+import {Time} from "../../src/browser/index.js"
 import {DirectoryObject,Sass} from "../../src/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
 
@@ -11,6 +13,7 @@ describe("DirectoryObject", () => {
   let testDir
 
   describe("constructor and basic properties", () => {
+
     it("creates DirectoryObject with valid directory", () => {
       const dir = new DirectoryObject("/home/user/test")
 
@@ -49,34 +52,6 @@ describe("DirectoryObject", () => {
       assert.equal(dir.path, process.cwd())
     })
 
-    it("accepts DirectoryObject as input (polymorphic)", () => {
-      const original = new DirectoryObject("/home/user/test")
-      const clone = new DirectoryObject(original)
-
-      assert.ok(clone instanceof DirectoryObject)
-      assert.equal(clone.path, original.path)
-      assert.equal(clone.name, original.name)
-      assert.notEqual(clone, original) // Should be a new instance
-    })
-
-    it("preserves temporary flag when passed explicitly", () => {
-      const original = new DirectoryObject("/tmp/test", true)
-      const fromObject = new DirectoryObject(original, false)
-
-      // When passing a DirectoryObject, it extracts the path
-      // The second parameter should still control the temporary flag
-      assert.equal(fromObject.temporary, false)
-    })
-
-    it("accepts DirectoryObject and can override temporary flag", () => {
-      const regular = new DirectoryObject("/tmp/test", false)
-      const asTemp = new DirectoryObject(regular, true)
-
-      assert.equal(regular.temporary, false)
-      assert.equal(asTemp.temporary, true)
-      assert.equal(asTemp.path, regular.path)
-    })
-
     it("fixes slashes in paths", () => {
       const dir = new DirectoryObject("path\\\\with\\\\backslashes")
 
@@ -86,6 +61,7 @@ describe("DirectoryObject", () => {
   })
 
   describe("getters", () => {
+
     let testDirObj
 
     beforeEach(() => {
@@ -125,9 +101,11 @@ describe("DirectoryObject", () => {
     it("isDirectory returns true", () => {
       assert.equal(testDirObj.isDirectory, true)
     })
+
   })
 
   describe("parent property", () => {
+
     it("returns DirectoryObject for non-root directory", () => {
       const dir = new DirectoryObject("/home/user/projects")
       const parent = dir.parent
@@ -157,13 +135,6 @@ describe("DirectoryObject", () => {
       const parent2 = dir.parent
 
       assert.strictEqual(parent1, parent2)
-    })
-
-    it("preserves temporary flag in parent", () => {
-      const dir = new DirectoryObject("/tmp/test/sub", true)
-      const parent = dir.parent
-
-      assert.equal(parent.temporary, true)
     })
   })
 
@@ -1061,69 +1032,27 @@ describe("DirectoryObject", () => {
     })
   })
 
-  describe("temporary getter", () => {
-    it("returns false for regular directories", () => {
-      const dir = new DirectoryObject(process.cwd())
-
-      assert.equal(dir.temporary, false)
-    })
-
-    it("returns true for temporary directories", async () => {
-      const {TempDirectoryObject} = await import("../../src/index.js")
-      const tempDir = new TempDirectoryObject("test-temp-getter")
-      await tempDir.assureExists()
-
-      try {
-        assert.equal(tempDir.temporary, true)
-      } finally {
-        await tempDir.remove()
-      }
-    })
-
-    it("returns false when constructed without temporary flag", () => {
-      const dir = new DirectoryObject("/some/path")
-
-      assert.equal(dir.temporary, false)
-    })
-
-    it("returns true when constructed with temporary flag", () => {
-      const dir = new DirectoryObject("/some/path", true)
-
-      assert.equal(dir.temporary, true)
-    })
-
-    it("is a boolean value", () => {
-      const dir1 = new DirectoryObject(process.cwd())
-      const dir2 = new DirectoryObject(process.cwd(), true)
-
-      assert.equal(typeof dir1.temporary, "boolean")
-      assert.equal(typeof dir2.temporary, "boolean")
-    })
-  })
-
   describe("getDirectory() method", () => {
     it("creates DirectoryObject by extending path", () => {
-      const dir = new DirectoryObject("/projects/git/toolkit")
-      const subDir = dir.getDirectory("src/lib")
+      const dir = new DirectoryObject("/temp/toolkit")
+      const subDir = dir.getDirectory("src")
 
       assert.ok(subDir instanceof DirectoryObject)
-      assert.equal(subDir.path, path.join("/projects/git/toolkit", "src/lib"))
+      assert.equal(subDir.path, path.join("/temp/toolkit", "src"))
     })
 
-    it("handles overlapping path segments", () => {
-      const dir = new DirectoryObject("/projects/git/toolkit")
-      const subDir = dir.getDirectory("toolkit/src")
+    it("requires chaining for nested paths", () => {
+      const dir = new DirectoryObject("/temp/toolkit")
 
-      // Should intelligently merge overlapping "toolkit" segment
-      assert.ok(subDir.path.includes("toolkit"))
-      assert.ok(subDir.path.includes("src"))
-    })
+      // Nested paths with separators are rejected
+      assert.throws(
+        () => dir.getDirectory("src/lib"),
+        /out of bounds/
+      )
 
-    it("preserves temporary flag from parent", () => {
-      const tempDir = new DirectoryObject("/tmp/test", true)
-      const subDir = tempDir.getDirectory("child")
-
-      assert.equal(subDir.temporary, true)
+      // Must chain instead
+      const subDir = dir.getDirectory("src").getDirectory("lib")
+      assert.ok(subDir.path.endsWith("lib"))
     })
 
     it("returns new DirectoryObject instance", () => {
@@ -1134,17 +1063,18 @@ describe("DirectoryObject", () => {
       assert.ok(subDir instanceof DirectoryObject)
     })
 
-    it("validates newPath parameter type", () => {
+    it("validates directory name parameter", () => {
       const dir = new DirectoryObject("/test")
 
+      // Rejects paths with separators
       assert.throws(
-        () => dir.getDirectory(123),
-        /type/i
+        () => dir.getDirectory("../parent"),
+        /out of bounds/
       )
 
       assert.throws(
-        () => dir.getDirectory(null),
-        /type/i
+        () => dir.getDirectory("/absolute"),
+        /out of bounds/
       )
     })
 
@@ -1187,8 +1117,8 @@ describe("DirectoryObject", () => {
 
       assert.ok(cappedCwd instanceof CappedDirectoryObject)
       assert.ok(cappedCwd instanceof DirectoryObject)
-      assert.equal(cappedCwd.realPath, process.cwd())
-      assert.equal(cappedCwd.cap, process.cwd())
+      assert.equal(cappedCwd.real.path, process.cwd())
+      assert.equal(cappedCwd.cap.path, process.cwd())
     })
 
     it("throws for TempDirectoryObject subclass", async () => {
@@ -1207,28 +1137,25 @@ describe("DirectoryObject", () => {
 
   describe("getFile() method", () => {
     it("creates FileObject by extending path", () => {
-      const dir = new DirectoryObject("/projects/git/toolkit")
+      const dir = new DirectoryObject("/temp/toolkit")
       const file = dir.getFile("package.json")
 
       assert.equal(file.constructor.name, "FileObject")
-      assert.equal(file.path, path.join("/projects/git/toolkit", "package.json"))
+      assert.equal(file.path, path.join("/temp/toolkit", "package.json"))
     })
 
-    it("handles nested file paths", () => {
-      const dir = new DirectoryObject("/projects/git/toolkit")
-      const file = dir.getFile("src/index.js")
+    it("requires chaining for nested file paths", () => {
+      const dir = new DirectoryObject("/temp/toolkit")
 
-      assert.ok(file.path.includes("src"))
+      // Nested paths with separators are rejected
+      assert.throws(
+        () => dir.getFile("src/index.js"),
+        /out of bounds/
+      )
+
+      // Must navigate to directory first
+      const file = dir.getDirectory("src").getFile("index.js")
       assert.ok(file.path.includes("index.js"))
-    })
-
-    it("handles overlapping path segments", () => {
-      const dir = new DirectoryObject("/projects/git/toolkit")
-      const file = dir.getFile("toolkit/package.json")
-
-      // Should intelligently merge overlapping "toolkit" segment
-      assert.ok(file.path.includes("toolkit"))
-      assert.ok(file.path.includes("package.json"))
     })
 
     it("returns new FileObject instance", () => {
@@ -1239,17 +1166,18 @@ describe("DirectoryObject", () => {
       assert.ok(file.path.endsWith("test.txt"))
     })
 
-    it("validates filename parameter type", () => {
+    it("validates filename parameter", () => {
       const dir = new DirectoryObject("/test")
 
+      // Rejects paths with separators
       assert.throws(
-        () => dir.getFile(123),
-        /type/i
+        () => dir.getFile("../parent/file.txt"),
+        /out of bounds/
       )
 
       assert.throws(
-        () => dir.getFile(null),
-        /type/i
+        () => dir.getFile("/absolute/file.txt"),
+        /out of bounds/
       )
     })
 
@@ -1258,153 +1186,6 @@ describe("DirectoryObject", () => {
       const file = dir.getFile("file with spaces & symbols!.json")
 
       assert.ok(file.path.includes("file with spaces & symbols!.json"))
-    })
-  })
-
-  describe("remove() method", () => {
-    let tempDir
-    let TempDirectoryObject
-
-    beforeEach(async () => {
-      const imports = await import("../../src/index.js")
-      TempDirectoryObject = imports.TempDirectoryObject
-      tempDir = new TempDirectoryObject("test-remove")
-      await tempDir.assureExists()
-    })
-
-    afterEach(async () => {
-      // Try to clean up if test failed
-      try {
-        if(tempDir && await tempDir.exists)
-          await tempDir.remove()
-      } catch(_) {
-        // Ignore cleanup errors
-      }
-    })
-
-    it("removes empty temporary directory", async () => {
-      assert.ok(await tempDir.exists)
-
-      await tempDir.remove()
-
-      assert.ok(!(await tempDir.exists))
-    })
-
-    it("removes temporary directory with files", async () => {
-      const {FileObject} = await import("../../src/index.js")
-      const file1 = new FileObject("test1.txt", tempDir)
-      const file2 = new FileObject("test2.txt", tempDir)
-
-      await file1.write("content1")
-      await file2.write("content2")
-
-      assert.ok(await file1.exists)
-      assert.ok(await file2.exists)
-
-      await tempDir.remove()
-
-      assert.ok(!(await tempDir.exists))
-      assert.ok(!(await file1.exists))
-      assert.ok(!(await file2.exists))
-    })
-
-    it("removes temporary directory with nested subdirectories", async () => {
-      const subDir1 = new TempDirectoryObject("sub1", tempDir)
-      await subDir1.assureExists()
-      const subDir2 = new TempDirectoryObject("sub2", tempDir)
-      await subDir2.assureExists()
-
-      assert.ok(await subDir1.exists)
-      assert.ok(await subDir2.exists)
-
-      await tempDir.remove()
-
-      assert.ok(!(await tempDir.exists))
-      assert.ok(!(await subDir1.exists))
-      assert.ok(!(await subDir2.exists))
-    })
-
-    it("removes deeply nested structure", async () => {
-      const {FileObject} = await import("../../src/index.js")
-      const level1 = new TempDirectoryObject("level1", tempDir)
-      await level1.assureExists()
-      const level2 = new TempDirectoryObject("level2", level1)
-      await level2.assureExists()
-      const file = new FileObject("deep.txt", level2)
-
-      await file.write("deep content")
-
-      assert.ok(await file.exists)
-
-      await tempDir.remove()
-
-      assert.ok(!(await tempDir.exists))
-      assert.ok(!(await level1.exists))
-      assert.ok(!(await level2.exists))
-      assert.ok(!(await file.exists))
-    })
-
-    it("throws error for non-temporary directory", async () => {
-      const regularDir = new DirectoryObject(process.cwd())
-
-      await assert.rejects(
-        () => regularDir.remove(),
-        /This is not a temporary directory/
-      )
-    })
-
-    it("handles directory with mix of files and subdirectories", async () => {
-      const {FileObject} = await import("../../src/index.js")
-      const subDir = new TempDirectoryObject("subdir", tempDir)
-      await subDir.assureExists()
-      const file1 = new FileObject("root.txt", tempDir)
-      const file2 = new FileObject("nested.txt", subDir)
-
-      await file1.write("root content")
-      await file2.write("nested content")
-
-      assert.ok(await file1.exists)
-      assert.ok(await file2.exists)
-      assert.ok(await subDir.exists)
-
-      await tempDir.remove()
-
-      assert.ok(!(await tempDir.exists))
-      assert.ok(!(await subDir.exists))
-      assert.ok(!(await file1.exists))
-      assert.ok(!(await file2.exists))
-    })
-
-    it("removes directory recursively in correct order", async () => {
-      const {FileObject} = await import("../../src/index.js")
-
-      // Create a structure
-      const child = new TempDirectoryObject("child", tempDir)
-      await child.assureExists()
-      const file = new FileObject("test.txt", child)
-      await file.write("content")
-
-      await tempDir.remove()
-
-      // Directory should be deleted successfully
-      assert.ok(!(await tempDir.exists))
-    })
-
-    it("cleans up all resources before final deletion", async () => {
-      const {FileObject} = await import("../../src/index.js")
-      const file = new FileObject("test.txt", tempDir)
-      await file.write("content")
-
-      await tempDir.remove()
-
-      // Verify the directory no longer exists
-      assert.ok(!(await tempDir.exists))
-
-      // Verify we can create a new temp directory with same name pattern
-      const newTemp = new TempDirectoryObject("test-remove")
-      await newTemp.assureExists()
-      assert.ok(await newTemp.exists)
-      await newTemp.remove()
     })
   })
 })

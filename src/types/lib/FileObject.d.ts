@@ -26,10 +26,10 @@ export default class FileObject extends FS {
     /**
      * Constructs a FileObject instance.
      *
-     * @param {string | FileObject} fileName - The file path or FileObject
+     * @param {string} fileName - The file path
      * @param {DirectoryObject|string|null} [parent] - The parent directory (object or string)
      */
-    constructor(fileName: string | FileObject, parent?: DirectoryObject | string | null);
+    constructor(fileName: string, parent?: DirectoryObject | string | null);
     /**
      * Returns a JSON representation of the FileObject.
      *
@@ -109,6 +109,7 @@ export default class FileObject extends FS {
      * @returns {DirectoryObject} The parent directory object
      */
     get parent(): DirectoryObject;
+    get parentPath(): any;
     /**
      * Returns a plain FileObject representing the actual filesystem location.
      * This provides an "escape hatch" when working with capped directories,

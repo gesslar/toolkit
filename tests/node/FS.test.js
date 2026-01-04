@@ -40,17 +40,17 @@ describe("FS", () => {
       assert.equal(FS.fixSlashes(""), "")
     })
 
-    it("pathToUri converts paths to file URLs", () => {
+    it("pathToUrl converts paths to file URLs", () => {
       const testPath = "/home/user/file.txt"
-      const uri = FS.pathToUri(testPath)
+      const uri = FS.pathToUrl(testPath)
 
       assert.ok(uri.startsWith("file://"))
       assert.ok(uri.includes(testPath))
     })
 
-    it("pathToUri handles invalid paths gracefully", () => {
+    it("pathToUrl handles invalid paths gracefully", () => {
       const invalidPath = "\0invalid"
-      const result = FS.pathToUri(invalidPath)
+      const result = FS.pathToUrl(invalidPath)
 
       // Node.js actually URL-encodes invalid characters instead of failing
       assert.ok(result.startsWith("file://"))

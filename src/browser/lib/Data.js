@@ -75,7 +75,7 @@ export default class Data {
    *
    * @type {Array<string>}
    */
-  static emptyableTypes = Object.freeze(["String", "Array", "Object"])
+  static emptyableTypes = Object.freeze(["String", "Array", "Object", "Map", "Set"])
 
   /**
    * Appends a string to another string if it does not already end with it.
@@ -84,8 +84,10 @@ export default class Data {
    * @param {string} append - The string to append
    * @returns {string} The appended string
    */
-  static appendString(string, append) {
-    return string.endsWith(append) ? string : `${string}${append}`
+  static append(string, append) {
+    return string.endsWith(append)
+      ? string :
+      `${string}${append}`
   }
 
   /**
@@ -95,8 +97,63 @@ export default class Data {
    * @param {string} prepend - The string to prepend
    * @returns {string} The prepended string
    */
-  static prependString(string, prepend) {
-    return string.startsWith(prepend) ? string : `${prepend}${string}`
+  static prepend(string, prepend) {
+    return string.startsWith(prepend)
+      ? string
+      : `${prepend}${string}`
+  }
+
+  static chopRight(string, toChop, caseInsensitive=false) {
+    const escaped = toChop.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const regex = new RegExp(`${escaped}$`, caseInsensitive === true ? "i" : "")
+
+    return string.replace(regex, "")
+  }
+
+  static chopLeft(string, toChop, caseInsensitive=false) {
+    const escaped = toChop.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const regex = new RegExp(`^${escaped}`, caseInsensitive === true ? "i" : "")
+
+    return string.replace(regex, "")
+  }
+
+  /**
+   * Chop a string after the first occurence of another string.
+   *
+   * @param {string} string - The string to search
+   * @param {string} needle - The bit to chop after
+   * @param {boolean} caseInsensitive - Whether to search insensitive to case
+   * @returns {string} The remaining string
+   */
+  static chopAfter(string, needle, caseInsensitive=false) {
+    const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const regex = new RegExp(`${escaped}`, caseInsensitive === true ? "i" : "")
+    const index = string.search(regex)
+
+    if(index === -1)
+      return string
+
+    return string.slice(0, index)
+  }
+
+  /**
+   * Chop a string before the first occurrence of another string.
+   *
+   * @param {string} string - The string to search
+   * @param {string} needle - The bit to chop before
+   * @param {boolean} caseInsensitive - Whether to search insensitive to case
+   * @returns {string} The remaining string
+   */
+  static chopBefore(string, needle, caseInsensitive=false) {
+    const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const regex = new RegExp(`${escaped}`, caseInsensitive === true ? "i" : "")
+    const length = needle.length
+    const index = string.search(regex)
+
+    if(index === -1)
+      return string
+
+    return string.slice(index + length)
   }
 
   /**
@@ -236,6 +293,9 @@ export default class Data {
         return Object.keys(value).length === 0
       case "String":
         return value.trim().length === 0
+      case "Map":
+      case "Set":
+        return value.size === 0
       default:
         return false
     }

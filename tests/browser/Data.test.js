@@ -29,26 +29,167 @@ describe("Data", () => {
     })
 
     it("has correct emptyable types", () => {
-      const expected = ["String", "Array", "Object"]
+      const expected = ["String", "Array", "Object", "Map", "Set"]
       assert.deepEqual(Data.emptyableTypes, expected)
       assert.ok(Object.isFrozen(Data.emptyableTypes))
     })
   })
 
   describe("string utilities", () => {
-    it("appendString adds suffix if not present", () => {
-      assert.equal(Data.appendString("hello", "!"), "hello!")
-      assert.equal(Data.appendString("hello!", "!"), "hello!") // no duplicate
-      assert.equal(Data.appendString("", "test"), "test")
+    it("append adds suffix if not present", () => {
+      assert.equal(Data.append("hello", "!"), "hello!")
+      assert.equal(Data.append("hello!", "!"), "hello!") // no duplicate
+      assert.equal(Data.append("", "test"), "test")
     })
 
-    it("prependString adds prefix if not present", () => {
-      assert.equal(Data.prependString("world", "hello "), "hello world")
-      assert.equal(Data.prependString("hello world", "hello "), "hello world") // no duplicate
-      assert.equal(Data.prependString("", "test"), "test")
+    it("prepend adds prefix if not present", () => {
+      assert.equal(Data.prepend("world", "hello "), "hello world")
+      assert.equal(Data.prepend("hello world", "hello "), "hello world") // no duplicate
+      assert.equal(Data.prepend("", "test"), "test")
+    })
+
+    describe("chopRight", () => {
+      it("removes suffix from end of string", () => {
+        assert.equal(Data.chopRight("hello.txt", ".txt"), "hello")
+        assert.equal(Data.chopRight("test-file.md", ".md"), "test-file")
+        assert.equal(Data.chopRight("document", "ment"), "docu")
+      })
+
+      it("returns original string if suffix not found", () => {
+        assert.equal(Data.chopRight("hello.txt", ".md"), "hello.txt")
+        assert.equal(Data.chopRight("test", "xyz"), "test")
+      })
+
+      it("handles regex special characters correctly", () => {
+        // These characters should be escaped and treated literally
+        assert.equal(Data.chopRight("test.file", "."), "test.file") // . not at end, no match
+        assert.equal(Data.chopRight("hello*world", "*"), "hello*world") // * not at end, no match
+        assert.equal(Data.chopRight("test$", "$"), "test")
+        assert.equal(Data.chopRight("file^name", "^"), "file^name") // ^ not at end
+        assert.equal(Data.chopRight("test[1]", "]"), "test[1")
+        assert.equal(Data.chopRight("item()", ")"), "item(")
+      })
+
+      it("handles case-insensitive matching", () => {
+        assert.equal(Data.chopRight("hello.TXT", ".txt", true), "hello")
+        assert.equal(Data.chopRight("TEST.MD", ".md", true), "TEST")
+        assert.equal(Data.chopRight("File.DOC", ".doc", false), "File.DOC") // no match without flag
+      })
+
+      it("handles empty strings", () => {
+        assert.equal(Data.chopRight("", "test"), "")
+        assert.equal(Data.chopRight("test", ""), "test")
+        assert.equal(Data.chopRight("", ""), "")
+      })
+    })
+
+    describe("chopLeft", () => {
+      it("removes prefix from start of string", () => {
+        assert.equal(Data.chopLeft("prefix-test", "prefix-"), "test")
+        assert.equal(Data.chopLeft("hello world", "hello "), "world")
+        assert.equal(Data.chopLeft("document", "docu"), "ment")
+      })
+
+      it("returns original string if prefix not found", () => {
+        assert.equal(Data.chopLeft("hello", "world"), "hello")
+        assert.equal(Data.chopLeft("test", "xyz"), "test")
+      })
+
+      it("handles regex special characters correctly", () => {
+        assert.equal(Data.chopLeft(".hidden", "."), "hidden")
+        assert.equal(Data.chopLeft("$price", "$"), "price")
+        assert.equal(Data.chopLeft("^start", "^"), "start")
+        assert.equal(Data.chopLeft("[test]", "["), "test]")
+        assert.equal(Data.chopLeft("(group)", "("), "group)")
+        assert.equal(Data.chopLeft("*wildcard", "*"), "wildcard")
+      })
+
+      it("handles case-insensitive matching", () => {
+        assert.equal(Data.chopLeft("PREFIX-test", "prefix-", true), "test")
+        assert.equal(Data.chopLeft("HELLO world", "hello ", true), "world")
+        assert.equal(Data.chopLeft("Test", "test", false), "Test") // no match
+      })
+
+      it("handles empty strings", () => {
+        assert.equal(Data.chopLeft("", "test"), "")
+        assert.equal(Data.chopLeft("test", ""), "test")
+      })
+    })
+
+    describe("chopAfter", () => {
+      it("removes everything after first occurrence of needle", () => {
+        assert.equal(Data.chopAfter("hello.world.test", "."), "hello")
+        assert.equal(Data.chopAfter("path/to/file", "/"), "path")
+        assert.equal(Data.chopAfter("one-two-three", "-"), "one")
+      })
+
+      it("returns original string if needle not found", () => {
+        assert.equal(Data.chopAfter("hello", "xyz"), "hello")
+        assert.equal(Data.chopAfter("test", "@"), "test")
+      })
+
+      it("handles regex special characters correctly", () => {
+        assert.equal(Data.chopAfter("test.file.txt", "."), "test")
+        assert.equal(Data.chopAfter("a*b*c", "*"), "a")
+        assert.equal(Data.chopAfter("price$100", "$"), "price")
+        assert.equal(Data.chopAfter("^start^end", "^"), "")
+        assert.equal(Data.chopAfter("item[0][1]", "["), "item")
+        assert.equal(Data.chopAfter("(a)(b)", "("), "")
+      })
+
+      it("returns empty string when needle is at start", () => {
+        assert.equal(Data.chopAfter(".hidden", "."), "")
+        assert.equal(Data.chopAfter("$price", "$"), "")
+      })
+
+      it("handles case-insensitive matching", () => {
+        assert.equal(Data.chopAfter("hello.WORLD.test", ".", true), "hello")
+        assert.equal(Data.chopAfter("TEST-one-two", "-", true), "TEST")
+      })
+
+      it("handles empty strings", () => {
+        assert.equal(Data.chopAfter("", "test"), "")
+        assert.equal(Data.chopAfter("test", ""), "") // empty needle matches at position 0
+      })
+    })
+
+    describe("chopBefore", () => {
+      it("removes everything before first occurrence of needle", () => {
+        assert.equal(Data.chopBefore("hello.world.test", "."), "world.test")
+        assert.equal(Data.chopBefore("path/to/file", "/"), "to/file")
+        assert.equal(Data.chopBefore("one-two-three", "-"), "two-three")
+      })
+
+      it("returns original string if needle not found", () => {
+        assert.equal(Data.chopBefore("hello", "xyz"), "hello")
+        assert.equal(Data.chopBefore("test", "@"), "test")
+      })
+
+      it("handles regex special characters correctly", () => {
+        assert.equal(Data.chopBefore("test.file.txt", "."), "file.txt")
+        assert.equal(Data.chopBefore("a*b*c", "*"), "b*c")
+        assert.equal(Data.chopBefore("price$100$200", "$"), "100$200")
+        assert.equal(Data.chopBefore("^start^end", "^"), "start^end")
+        assert.equal(Data.chopBefore("item[0][1]", "["), "0][1]")
+        assert.equal(Data.chopBefore("(a)(b)(c)", "("), "a)(b)(c)")
+      })
+
+      it("returns empty string when needle is at end", () => {
+        assert.equal(Data.chopBefore("test.", "."), "")
+        assert.equal(Data.chopBefore("price$", "$"), "")
+      })
+
+      it("handles case-insensitive matching", () => {
+        assert.equal(Data.chopBefore("hello.WORLD.test", ".", true), "WORLD.test")
+        assert.equal(Data.chopBefore("TEST-one-two", "-", true), "one-two")
+      })
+
+      it("handles empty strings", () => {
+        assert.equal(Data.chopBefore("", "test"), "")
+        assert.equal(Data.chopBefore("test", ""), "test")
+      })
     })
   })
-
 
   describe("object utilities", () => {
 
@@ -168,16 +309,22 @@ describe("Data", () => {
       assert.equal(Data.isEmpty("   "), true) // whitespace-only
       assert.equal(Data.isEmpty([]), true)
       assert.equal(Data.isEmpty({}), true)
+      assert.equal(Data.isEmpty(new Map()), true)
+      assert.equal(Data.isEmpty(new Set()), true)
 
       // Non-empty values
       assert.equal(Data.isEmpty("hello"), false)
       assert.equal(Data.isEmpty([1]), false)
       assert.equal(Data.isEmpty({ a: 1 }), false)
+      assert.equal(Data.isEmpty(new Map([["key", "value"]])), false)
+      assert.equal(Data.isEmpty(new Set([1, 2, 3])), false)
       assert.equal(Data.isEmpty(0), false) // number not emptyable
 
       // Without checkForNothing
       assert.equal(Data.isEmpty(null, false), false)
       assert.equal(Data.isEmpty(undefined, false), false)
+      assert.equal(Data.isEmpty(new Map(), false), true) // still empty
+      assert.equal(Data.isEmpty(new Set(), false), true) // still empty
     })
   })
 
