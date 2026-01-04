@@ -28,9 +28,8 @@ export default class CappedDirectoryObject extends DirectoryObject {
      * (virtual root). With a parent, the path is resolved relative to the parent's
      * cap using virtual path semantics (absolute paths treated as cap-relative).
      *
-     * @param {string} [dirPath="."] - Directory path (becomes cap if no parent, else relative to parent's cap, defaults to current directory)
+     * @param {string} [directory="."] - Directory path (becomes cap if no parent, else relative to parent's cap, defaults to current directory)
      * @param {CappedDirectoryObject?} [parent] - Optional parent capped directory
-     * @param {boolean} [temporary=false] - Whether this is a temporary directory
      * @throws {Sass} If parent is provided but not a CappedDirectoryObject
      * @throws {Sass} If the resulting path would escape the cap
      * @example
@@ -53,33 +52,34 @@ export default class CappedDirectoryObject extends DirectoryObject {
      * const config = new CappedDirectoryObject("/etc/config", cache)
      * // path: /home/user/.cache/etc/config, cap: /home/user/.cache
      */
-    constructor(dirPath?: string, parent?: CappedDirectoryObject | null, temporary?: boolean);
+    constructor(directory?: string, source?: any);
     /**
-     * Re-caps this directory to itself, making it the new root of the capped tree.
-     * This is a protected method intended for use by subclasses like TempDirectoryObject.
+     * Indicates whether this directory is capped (constrained to a specific tree).
+     * Always returns true for CappedDirectoryObject instances.
      *
-     * @protected
+     * @returns {boolean} True for all CappedDirectoryObject instances
+     * @example
+     * const capped = new TempDirectoryObject("myapp")
+     * console.log(capped.isCapped) // true
+     *
+     * const regular = new DirectoryObject("/tmp")
+     * console.log(regular.isCapped) // false
      */
-    protected _recapToSelf(): void;
+    get isCapped(): boolean;
     /**
-     * Returns the cap path for this directory.
+     * Returns the cap (root) of the capped directory tree.
+     * For root CappedDirectoryObject instances, returns itself.
+     * For children, returns the inherited cap from the parent chain.
      *
-     * @returns {string} The cap directory path
-     */
-    get cap(): string;
-    /**
-     * Returns whether this directory is capped.
+     * @returns {CappedDirectoryObject} The cap directory object (root of the capped tree)
+     * @example
+     * const temp = new TempDirectoryObject("myapp")
+     * console.log(temp.cap === temp) // true (root is its own cap)
      *
-     * @returns {boolean} Always true for CappedDirectoryObject instances
+     * const subdir = temp.getDirectory("data")
+     * console.log(subdir.cap === temp) // true (child inherits parent's cap)
      */
-    get capped(): boolean;
-    /**
-     * Returns the real filesystem path (for internal and subclass use).
-     *
-     * @protected
-     * @returns {string} The actual filesystem path
-     */
-    protected get realPath(): string;
+    get cap(): CappedDirectoryObject;
     /**
      * Returns a plain DirectoryObject representing the actual filesystem location.
      * This provides an "escape hatch" from the capped environment to interact
@@ -115,50 +115,25 @@ export default class CappedDirectoryObject extends DirectoryObject {
      */
     get parent(): CappedDirectoryObject | null;
     /**
-     * Returns the URL with virtual path (cap-relative).
+     * Returns the path of the parent directory.
+     * Returns null if this directory is at the cap root (no parent).
      *
-     * @returns {URL} Virtual URL
-     */
-    get url(): URL;
-    /**
-     * Returns a generator that walks up to the cap.
-     *
-     * @returns {Generator<DirectoryObject>} Generator yielding parent directories
-     */
-    get walkUp(): Generator<DirectoryObject>;
-    /**
-     * Creates a new CappedDirectoryObject by extending this directory's path.
-     *
-     * All paths are coerced to remain within the cap directory tree:
-     * - Absolute paths (e.g., "/foo") are treated as relative to the cap
-     * - Parent traversal ("..") is allowed but clamped at the cap boundary
-     * - The cap acts as the virtual root directory
-     *
-     * @param {string} newPath - The path to resolve (can be absolute or contain ..)
-     * @returns {CappedDirectoryObject} A new CappedDirectoryObject with the coerced path
+     * @returns {string|null} The parent directory path, or null if at cap root
      * @example
-     * const capped = new TempDirectoryObject("myapp")
-     * const subDir = capped.getDirectory("data")
-     * console.log(subDir.path) // "/tmp/myapp-ABC123/data"
+     * const temp = new TempDirectoryObject("myapp")
+     * console.log(temp.parentPath) // null (at cap root)
      *
-     * @example
-     * // Absolute paths are relative to cap
-     * const abs = capped.getDirectory("/foo/bar")
-     * console.log(abs.path) // "/tmp/myapp-ABC123/foo/bar"
-     *
-     * @example
-     * // Excessive .. traversal clamps to cap
-     * const up = capped.getDirectory("../../../etc/passwd")
-     * console.log(up.path) // "/tmp/myapp-ABC123" (clamped to cap)
+     * const subdir = temp.getDirectory("data")
+     * console.log(subdir.parentPath) // "/data" or similar (parent's virtual path)
      */
-    getDirectory(newPath: string): CappedDirectoryObject;
+    get parentPath(): string | null;
     /**
      * Override read to use real filesystem path and return capped objects.
      *
      * @param {string} [pat=""] - Optional glob pattern
      * @returns {Promise<{files: Array<FileObject>, directories: Array}>} Directory contents
      */
-    read(pat?: string): Promise<{
+    read(...arg: any[]): Promise<{
         files: Array<FileObject>;
         directories: any[];
     }>;

@@ -1,16 +1,18 @@
 /**
  * @file FS.js
  *
- * File system utilities for path manipulation, file discovery, and path resolution.
- * Provides glob-based file search, URI conversion, and intelligent path merging.
+ * File system utilities for path manipulation, file discovery, and path
+ * resolution.
+ *
+ * Provides glob-based file search, URI conversion, and intelligent path
+ * merging.
  */
 
-import {globby} from "globby"
 import path from "node:path"
 import url from "node:url"
 
 import Collection from "../browser/lib/Collection.js"
-import Sass from "./Sass.js"
+import Data from "../browser/lib/Data.js"
 import Valid from "./Valid.js"
 
 /** @typedef {import("./FileObject.js").default} FileObject */
@@ -58,7 +60,7 @@ export default class FS {
    * @returns {string} The fixed path
    */
   static fixSlashes(pathName) {
-    return pathName.replace(/\\/g, "/")
+    return path.normalize(pathName.replace(/\\/g, "/"))
   }
 
   /**
@@ -68,12 +70,10 @@ export default class FS {
    * @param {string} pathName - The path to convert
    * @returns {string} The URI
    */
-  static pathToUri(pathName) {
+  static pathToUrl(pathName) {
     try {
       return url.pathToFileURL(pathName).href
-    } catch(e) {
-      void e // stfu linter
-
+    } catch {
       return pathName
     }
   }
@@ -85,61 +85,19 @@ export default class FS {
    * @param {string} pathName - The URI to convert
    * @returns {string} The path
    */
-  static uriToPath(pathName) {
+  static urlToPath(pathName) {
     try {
-      return url.fileURLToPath(pathName)
-    } catch(_) {
+      return url.fileURLToPath(new URL(pathName).pathName)
+    } catch {
       return pathName
     }
   }
 
   /**
-   * Retrieve all files matching a specific glob pattern.
-   *
-   * @static
-   * @param {string|Array<string>} glob - The glob pattern(s) to search.
-   * @returns {Promise<Array<FileObject>>} A promise that resolves to an array of file objects
-   * @throws {Sass} If the input is not a string or array of strings.
-   * @throws {Sass} If the glob pattern array is empty or for other search failures.
-   */
-  static async getFiles(glob) {
-    const isString = typeof glob === "string"
-    const isArray = Array.isArray(glob)
-    const isStringArray = isArray && glob.every(item => typeof item === "string")
-
-    Valid.assert(
-      (isString && glob.length > 0) ||
-      (isStringArray && glob.length > 0),
-      "glob must be a non-empty string or array of strings.",
-      1
-    )
-
-    const globbyArray = (
-      isString
-        ? glob.split("|").map(g => g.trim()).filter(Boolean)
-        : glob
-    ).map(g => FS.fixSlashes(g))
-
-    if(isArray && !globbyArray.length)
-      throw Sass.new(
-        `Invalid glob pattern: Array cannot be empty. Got ${JSON.stringify(glob)}`,
-      )
-
-    // Use Globby to fetch matching files
-    const {default: FileObject} = await import("./FileObject.js")
-
-    const filesArray = await globby(globbyArray)
-    const files = filesArray.map(file => new FileObject(file))
-
-    // Flatten the result and remove duplicates
-    return files
-  }
-
-  /**
    * Computes the relative path from one file or directory to another.
    *
-   * If the target is outside the source (i.e., the relative path starts with ".."),
-   * returns the absolute path to the target instead.
+   * If the target is outside the source (i.e., the relative path starts with
+   * ".."), returns the absolute path to the target instead.
    *
    * @static
    * @param {FileObject|DirectoryObject} from - The source file or directory object
@@ -159,7 +117,8 @@ export default class FS {
   }
 
   /**
-   * Merge two paths by finding overlapping segments and combining them efficiently
+   * Merge two paths by finding overlapping segments and combining them
+   * efficiently
    *
    * @static
    * @param {string} path1 - The first path
@@ -169,8 +128,8 @@ export default class FS {
    */
   static mergeOverlappingPaths(path1, path2, sep=path.sep) {
     const isAbsolutePath1 = path.isAbsolute(path1)
-    const from = path1.split(sep).filter(Boolean)
-    const to = path2.split(sep).filter(Boolean)
+    const from = path.normalize(path1).split(sep).filter(Boolean)
+    const to = path.normalize(path2).split(sep).filter(Boolean)
 
     // If they're the same, just return path1
     if(to.length === from.length && from.every((f, i) => to[i] === f))
@@ -203,9 +162,16 @@ export default class FS {
    * @returns {string} The resolved path
    */
   static resolvePath(fromPath, toPath) {
+    Valid.type(fromPath, "String")
+    Valid.type(toPath, "String")
+
     // Normalize inputs
-    const from = fromPath?.trim() ?? ""
-    const to = toPath?.trim() ?? ""
+    const from = this.fixSlashes(fromPath?.trim() ?? "")
+    const to = this.fixSlashes(toPath?.trim() ?? "")
+
+    // Are they the same? What's the resolve?
+    if(from === to)
+      return from
 
     // Handle empty cases
     if(!from && !to)
@@ -217,20 +183,205 @@ export default class FS {
     if(!to)
       return from
 
-    const normalizedTo = /^\.\//.test(to)
-      ? path.normalize(to)
-      : to
-
     // Strategy 1: If 'to' is absolute, it's standalone
-    if(path.isAbsolute(normalizedTo))
-      return normalizedTo
+    if(path.isAbsolute(to))
+      return path.resolve(to)
 
     // Strategy 2: If 'to' contains relative navigation
-    if(to.startsWith("../"))
-      return path.resolve(from, normalizedTo)
+    if(to.startsWith(this.fixSlashes("../")))
+      return path.resolve(from, to)
 
     // Strategy 3: Try overlap-based merging, which will default to a basic
     // join if no overlap
-    return FS.mergeOverlappingPaths(from, normalizedTo)
+    return FS.mergeOverlappingPaths(from, to)
+  }
+
+  /**
+   * Check if a candidate path is contained within a container path.
+   *
+   * @static
+   * @param {string} container - The container path to check against
+   * @param {string} candidate - The candidate path that might be contained
+   * @returns {boolean} True if candidate is within container, false otherwise
+   * @throws {Sass} If container is not a non-empty string
+   * @throws {Sass} If candidate is not a non-empty string
+   * @example
+   * FS.pathContains("/home/user", "/home/user/docs") // true
+   * FS.pathContains("/home/user", "/home/other") // false
+   */
+  static pathContains(container, candidate) {
+    Valid.type(container, "String", {allowEmpty: false})
+    Valid.type(candidate, "String", {allowEmpty: false})
+
+    const realPath = Data.append(container, "/")  // bookend this mofo
+
+    return candidate.startsWith(realPath)
+  }
+
+  /**
+   * Convert an absolute path to a relative path by finding overlapping segments.
+   * Returns the relative portion of the 'to' path after the last occurrence
+   * of the final segment from the 'from' path.
+   *
+   * @static
+   * @param {string} from - The base path to calculate relative from
+   * @param {string} to - The target path to make relative
+   * @param {string} [sep=path.sep] - The path separator to use (defaults to system separator)
+   * @returns {string|null} The relative path, empty string if paths are identical, or null if no overlap found
+   * @example
+   * FS.toRelativePath("/projects/toolkit", "/projects/toolkit/src") // "src"
+   * FS.toRelativePath("/home/user", "/home/user") // ""
+   * FS.toRelativePath("/projects/app", "/other/path") // null
+   */
+  static toRelativePath(from, to, sep=path.sep) {
+    // If they're the same, just return ""
+    if(from === to)
+      return ""
+
+    const fromTrail = from.split(sep)
+    const toTrail = to.split(sep)
+    const overlapIndex = toTrail.findIndex(curr => curr === fromTrail.at(-1))
+
+    // If overlap is found, slice and join
+    if(overlapIndex !== -1) {
+      const relative = toTrail.slice(overlapIndex+1)
+
+      return relative.join(sep)
+    }
+
+    // If no overlap, we got nothing, soz.
+    return null
+  }
+
+  /**
+   * Find the common root path between two paths by identifying overlapping segments.
+   * Returns the portion of 'from' that matches up to the overlap point in 'to'.
+   *
+   * @static
+   * @param {string} from - The first path to compare
+   * @param {string} to - The second path to find common root with
+   * @param {string} [sep=path.sep] - The path separator to use (defaults to system separator)
+   * @returns {string|null} The common root path, the original path if identical, or null if no overlap found
+   * @throws {Sass} If from is not a non-empty string
+   * @throws {Sass} If to is not a non-empty string
+   * @example
+   * FS.getCommonRootPath("/projects/toolkit/src", "/projects/toolkit/tests") // "/projects/toolkit"
+   * FS.getCommonRootPath("/home/user", "/home/user") // "/home/user"
+   * FS.getCommonRootPath("/projects/app", "/other/path") // null
+   */
+  static getCommonRootPath(from, to, sep=path.sep) {
+    Valid.type(from, "String", {allowEmpty: false})
+    Valid.type(to, "String", {allowEmpty: false})
+
+    // If they're the same, just return one or t'other, tis no mattah
+    if(from === to)
+      return from
+
+    const fromTrail = from.split(sep)
+    const toTrail = to.split(sep)
+    const overlapIndex = toTrail.findLastIndex(
+      curr => curr === fromTrail.at(-1)
+    )
+
+    // If overlap is found, slice and join
+    if(overlapIndex !== -1) {
+      const relative = fromTrail.slice(0, overlapIndex+1)
+
+      return relative.join(sep)
+    }
+
+    // If no overlap, we got nothing, soz.
+    return null
+  }
+
+  /**
+   * @typedef {object} PathParts
+   * @property {string} base - The file name with extension
+   * @property {string} dir - The directory path
+   * @property {string} ext - The file extension (including dot)
+   */
+
+  /**
+   * Deconstruct a file or directory name into parts.
+   *
+   * @static
+   * @param {string} pathName - The file/directory name to deconstruct
+   * @returns {PathParts} The filename parts
+   * @throws {Sass} If not a string of more than 1 character
+   */
+  static pathParts(pathName) {
+    Valid.type(pathName, "String", {allowEmpty: false})
+
+    return path.parse(pathName)
+  }
+
+  /**
+   * Convert a virtual capped path to its real filesystem path.
+   * For capped objects, resolves the virtual path relative to the cap's real path.
+   * For uncapped objects, returns the path unchanged.
+   *
+   * @static
+   * @param {FileObject|DirectoryObject} fileOrDirectoryObject - The file or directory object to convert
+   * @returns {string} The real filesystem path
+   * @throws {Sass} If parameter is not a FileObject or DirectoryObject
+   * @example
+   * const temp = new TempDirectoryObject("myapp")
+   * const file = temp.getFile("/config.json")
+   * FS.virtualToRealPath(file) // "/tmp/myapp-ABC123/config.json"
+   *
+   * @example
+   * const regular = new FileObject("/home/user/file.txt")
+   * FS.virtualToRealPath(regular) // "/home/user/file.txt"
+   */
+  static virtualToRealPath(fileOrDirectoryObject) {
+    Valid.type(fileOrDirectoryObject, "FileObject|DirectoryObject")
+
+    let target, cap
+
+    if(fileOrDirectoryObject.isFile) {
+      if(!fileOrDirectoryObject.parent.isCapped) {
+        return fileOrDirectoryObject.path
+      } else {
+        target = fileOrDirectoryObject.path
+        cap = fileOrDirectoryObject.parent.cap.real.path
+      }
+    } else {
+      if(!fileOrDirectoryObject.isCapped) {
+        return fileOrDirectoryObject.path
+      } else {
+        target = fileOrDirectoryObject.path
+        cap = fileOrDirectoryObject.cap.real.path
+      }
+    }
+
+    return this.resolvePath(cap, target)
+  }
+
+  /**
+   * Convert an absolute path to a relative format by removing the root component.
+   * By default, keeps a leading separator (making it "absolute-like relative").
+   * Use forceActuallyRelative to get a truly relative path without leading separator.
+   *
+   * @static
+   * @param {string} pathToCheck - The path to convert (returned unchanged if already relative)
+   * @param {boolean} [forceActuallyRelative=false] - If true, removes leading separator for truly relative path
+   * @returns {string} The relative path (with or without leading separator based on forceActuallyRelative)
+   * @example
+   * FS.absoluteToRelative("/home/user/docs") // "/home/user/docs" (with leading /)
+   * FS.absoluteToRelative("/home/user/docs", true) // "home/user/docs" (truly relative)
+   * FS.absoluteToRelative("relative/path") // "relative/path" (unchanged)
+   */
+  static absoluteToRelative(pathToCheck, forceActuallyRelative=false) {
+    if(!path.isAbsolute(pathToCheck))
+      return pathToCheck
+
+    const {root} = this.pathParts(pathToCheck)
+    const sep = path.sep
+    const chopped = Data.chopLeft(pathToCheck, root)
+    const absolute = forceActuallyRelative
+      ? chopped
+      : Data.prepend(chopped, sep)
+
+    return absolute
   }
 }

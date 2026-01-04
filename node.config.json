@@ -1,0 +1,11 @@
+{
+  "nodeOptions": {
+    "test-coverage-lines": 80,
+    "test-coverage-branches": 60,
+    "test-coverage-functions": 80,
+    "test-coverage-exclude": [
+      "src/**/vendor/**",
+      "tests/**"
+    ]
+  }
+}

@@ -70,65 +70,61 @@ export default class FileObject extends FS {
     isFile: true,
     isDirectory: false,
     parent: null,
+    parentPath: null,
   })
 
   /**
    * Constructs a FileObject instance.
    *
-   * @param {string | FileObject} fileName - The file path or FileObject
+   * @param {string} fileName - The file path
    * @param {DirectoryObject|string|null} [parent] - The parent directory (object or string)
    */
   constructor(fileName, parent=null) {
     super()
 
-    // If passed a FileObject, extract its path
-    if(Data.isType(fileName, "FileObject"))
-      fileName = fileName.path
-
-    if(!fileName || typeof fileName !== "string" || fileName.length === 0)
-      throw Sass.new("fileName must be a non-empty string")
+    Valid.type(fileName, "String", {allowEmpty: false})
+    Valid.type(parent, "Null|String|DirectoryObject", {allowEmpty: false})
 
     const fixedFile = FS.fixSlashes(fileName)
-    const {dir,base,ext} = this.#deconstructFilenameToParts(fixedFile)
+    const {dir, base, ext} = FS.pathParts(fixedFile)
 
     const parentObject = (() => {
-      switch(Data.typeOf(parent)) {
-        case "String":
-          return new DirectoryObject(parent)
-        case "DirectoryObject":
-        case "CappedDirectoryObject":
-        case "TempDirectoryObject":
-          return parent
-        default:
-          return new DirectoryObject(dir)
-      }
+      if(Data.isType(parent, "String"))
+        return new DirectoryObject(parent)
+
+      if(Data.isType(parent, "DirectoryObject"))
+        return parent
+
+      return new DirectoryObject(dir)
     })()
 
+    // If the parent is passed, we need to treat the fileName as relative,
+    // regardless of what you-know-who says.
+    const resolvedFilename = parent
+      ? FS.absoluteToRelative(fixedFile, true)
+      : fixedFile
+
     // Use real path if parent is capped, otherwise use path
-    const parentPath = parentObject.realPath || parentObject.path
-    const final = FS.resolvePath(parentPath ?? ".", fixedFile)
+    const parentPath = parentObject.real?.path || parentObject.path
+    const resolved = FS.resolvePath(parentPath ?? ".", resolvedFilename)
+    const {dir: actualParent} = FS.pathParts(resolved)
+    const url = new URL(FS.pathToUrl(resolved))
 
-    const resolved = final
-    const url = new URL(FS.pathToUri(resolved))
-
-    // Compute the actual parent directory from the resolved path
-    const actualParentPath = path.dirname(resolved)
-
-    // If the file is directly in the provided parent directory, reuse that object
-    // Otherwise, create a DirectoryObject for the actual parent directory
-    // Use real path for comparison if parent is capped
-    const parentRealPath = parentObject.realPath || parentObject.path
-    const actualParent = parentObject && actualParentPath === parentRealPath
-      ? parentObject
-      : new DirectoryObject(actualParentPath)
-
-    this.#meta.supplied = fixedFile
+    this.#meta.supplied = fileName
     this.#meta.path = resolved
     this.#meta.url = url
     this.#meta.name = base
     this.#meta.extension = ext
     this.#meta.module = path.basename(this.supplied, this.extension)
-    this.#meta.parent = actualParent
+    this.#meta.parentPath = actualParent
+    // Preserve capped parent or use actualParent path match
+    const useCappedParent =
+      parentObject.isCapped ||
+      FS.fixSlashes(actualParent) === FS.fixSlashes(parentObject.path)
+
+    this.#meta.parent = useCappedParent
+      ? parentObject
+      : new DirectoryObject(actualParent)
 
     Object.freeze(this.#meta)
   }
@@ -157,6 +153,7 @@ export default class FileObject extends FS {
       extension: this.extension,
       isFile: this.isFile,
       isDirectory: this.isDirectory,
+      parentPath: this.parentPath,
       parent: this.parent ? this.parent.path : null
     }
   }
@@ -190,7 +187,9 @@ export default class FileObject extends FS {
 
   /**
    * Returns the file path. If the parent is a capped directory, returns the
-   * virtual path relative to the cap. Otherwise returns the real filesystem path.
+   * virtual path relative to the cap. Otherwise returns the real filesystem
+   * path.
+   *
    * Use `.real.path` to always get the actual filesystem path.
    *
    * @returns {string} The file path (virtual if parent is capped, real otherwise)
@@ -200,13 +199,14 @@ export default class FileObject extends FS {
     const parent = this.#meta.parent
 
     // If parent is capped, return virtual path
-    if(parent?.capped) {
-      const cap = parent.cap
+    if(parent?.isCapped) {
+      const cap = parent.cap.real.path
       const capResolved = path.resolve(cap)
-      const relative = path.relative(capResolved, realPath)
+      const relativeRealPath = FS.absoluteToRelative(realPath)
+      const absolute = FS.resolvePath(capResolved, relativeRealPath)
 
       // Return with leading slash to indicate it's cap-relative
-      return "/" + relative.split(path.sep).join("/")
+      return FS.absoluteToRelative(absolute)
     }
 
     // Otherwise return real path
@@ -220,12 +220,9 @@ export default class FileObject extends FS {
    * @returns {URL} The file URL (virtual if parent is capped, real otherwise)
    */
   get url() {
-    const parent = this.#meta.parent
-
     // If parent is capped, return virtual URL
-    if(parent?.capped) {
-      return new URL(FS.pathToUri(this.path))
-    }
+    if(this.parent?.isCapped)
+      return new URL(FS.pathToUrl(this.path))
 
     return this.#meta.url
   }
@@ -293,6 +290,10 @@ export default class FileObject extends FS {
     return this.#meta.parent
   }
 
+  get parentPath() {
+    return this.#meta.parentPath
+  }
+
   /**
    * Returns a plain FileObject representing the actual filesystem location.
    * This provides an "escape hatch" when working with capped directories,
@@ -310,7 +311,7 @@ export default class FileObject extends FS {
    * file.real.parent.parent      // Can traverse outside the cap
    */
   get real() {
-    return new FileObject(this.#meta.path)
+    return new FileObject(this.path)
   }
 
   /**
@@ -323,7 +324,7 @@ export default class FileObject extends FS {
       await fs.access(this.#meta.path, fs.constants.R_OK)
 
       return true
-    } catch(_) {
+    } catch {
       return false
     }
   }
@@ -338,7 +339,7 @@ export default class FileObject extends FS {
       await fs.access(this.#meta.path, fs.constants.W_OK)
 
       return true
-    } catch(_) {
+    } catch {
       return false
     }
   }
@@ -353,7 +354,7 @@ export default class FileObject extends FS {
       await fs.access(this.#meta.path, fs.constants.F_OK)
 
       return true
-    } catch(_) {
+    } catch {
       return false
     }
   }
@@ -368,7 +369,7 @@ export default class FileObject extends FS {
       const stat = await fs.stat(this.#meta.path)
 
       return stat.size
-    } catch(_) {
+    } catch {
       return null
     }
   }
@@ -384,29 +385,9 @@ export default class FileObject extends FS {
       const stat = await fs.stat(this.#meta.path)
 
       return stat.mtime
-    } catch(_) {
+    } catch {
       return null
     }
-  }
-
-  /**
-   * @typedef {object} FileParts
-   * @property {string} base - The file name with extension
-   * @property {string} dir - The directory path
-   * @property {string} ext - The file extension (including dot)
-   */
-
-  /**
-   * Deconstruct a filename into parts
-   *
-   * @param {string} fileName - The filename to deconstruct
-   * @returns {FileParts} The filename parts
-   */
-  #deconstructFilenameToParts(fileName) {
-    Valid.assert(typeof fileName === "string" && fileName.length > 0,
-      "file must be a non-zero length string", 1)
-
-    return path.parse(fileName)
   }
 
   /**
@@ -464,14 +445,30 @@ export default class FileObject extends FS {
    * await file.write(JSON.stringify({key: 'value'}))
    */
   async write(content, encoding="utf8") {
-    if(!this.#meta.url)
-      throw Sass.new("No URL in file")
+    const realPath = FS.virtualToRealPath(this)
+    if(!realPath)
+      throw Sass.new("No actual disk location detected.")
 
-    if(await this.parent.exists)
-      await fs.writeFile(this.#meta.url, content, encoding)
+    // On Windows, normalize the parent directory path to handle 8.3 short names
+    let pathToWrite = realPath
+    if(process.platform === "win32") {
+      try {
+        const parentPath = path.dirname(realPath)
+        const normalizedParent = await fs.realpath(parentPath)
+        pathToWrite = path.join(normalizedParent, path.basename(realPath))
+      } catch {
+        // If normalization fails, use original path
+      }
+    }
 
-    else
-      throw Sass.new(`Invalid directory, ${this.parent.url.href}`)
+    try {
+      await fs.writeFile(pathToWrite, content, encoding)
+    } catch(error) {
+      if(error.code === "ENOENT")
+        throw Sass.new(`Invalid directory: ${path.dirname(pathToWrite)}`)
+
+      throw Sass.from(error, "Failed to write file")
+    }
   }
 
   /**
@@ -491,7 +488,7 @@ export default class FileObject extends FS {
    * await file.writeBinary(buffer)
    */
   async writeBinary(data) {
-    if(!this.#meta.url)
+    if(!this.url)
       throw Sass.new("No URL in file")
 
     const exists = await this.parent.exists
@@ -504,7 +501,7 @@ export default class FileObject extends FS {
 
     // According to the internet, if it's already binary, I don't need
     // an encoding. 🤷
-    return await fs.writeFile(this.#meta.url, bufferData)
+    return await fs.writeFile(this.url, bufferData)
   }
 
   /**
@@ -555,7 +552,7 @@ export default class FileObject extends FS {
    * @returns {Promise<object>} The file contents as a module.
    */
   async import() {
-    const url = this.#meta.url
+    const url = this.url
 
     if(!url)
       throw Sass.new("No URL in file map")
@@ -577,7 +574,7 @@ export default class FileObject extends FS {
    * await file.delete()
    */
   async delete() {
-    const url = this.#meta.url
+    const url = this.url
 
     if(!url)
       throw Sass.new("This object does not represent a valid resource.")

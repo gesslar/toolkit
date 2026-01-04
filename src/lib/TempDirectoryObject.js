@@ -4,13 +4,16 @@
  * to the OS's temporary directory tree.
  */
 
-import fs from "node:fs"
+import fs, {mkdirSync, mkdtempSync} from "node:fs"
 import os from "node:os"
 import path from "node:path"
 
-import CappedDirectoryObject from "./CappedDirectoryObject.js"
 import Data from "../browser/lib/Data.js"
+import CappedDirectoryObject from "./CappedDirectoryObject.js"
+import DirectoryObject from "./DirectoryObject.js"
+import FS from "./FS.js"
 import Sass from "./Sass.js"
+import Valid from "./Valid.js"
 
 /**
  * TempDirectoryObject extends CappedDirectoryObject with the cap set to
@@ -23,6 +26,8 @@ import Sass from "./Sass.js"
  * @augments CappedDirectoryObject
  */
 export default class TempDirectoryObject extends CappedDirectoryObject {
+  #tmpReal
+  #tmpCap
 
   /**
    * Constructs a TempDirectoryObject instance and creates the directory.
@@ -34,7 +39,7 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
    * is provided without a parent, creates a new directory with a unique suffix.
    * If a parent is provided, creates a subdirectory within that parent.
    *
-   * @param {string?} [name] - Base name for the temp directory (if empty/null, uses OS temp dir)
+   * @param {string?} [directory] - Base name for the temp directory (if empty/null, uses OS temp dir)
    * @param {TempDirectoryObject?} [parent] - Optional parent temporary directory
    * @throws {Sass} If name is absolute
    * @throws {Sass} If name is empty (when parent is provided)
@@ -43,91 +48,109 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
    * @throws {Sass} If parent's lineage does not trace back to the OS temp directory
    * @throws {Sass} If directory creation fails
    * @example
-   * // Use OS temp directory directly
-   * const temp = new TempDirectoryObject()
-   * console.log(temp.path) // "/tmp"
-   *
-   * @example
    * // Create with unique name
    * const temp = new TempDirectoryObject("myapp")
-   * console.log(temp.path) // "/tmp/myapp-ABC123"
-   *
-   * @example
-   * // Nested temp directories
-   * const parent = new TempDirectoryObject("parent")
-   * const child = new TempDirectoryObject("child", parent)
-   * await parent.remove() // Removes both parent and child
+   * console.log(temp.path) // "/"
+   * console.log(temp.real.path) // "/tmp/myapp-ABC123"
    */
-  constructor(name, parent=null) {
-    let dirPath
-    let cappedParent = parent
+  constructor(directory, source=null) {
+    Valid.type(source, "Null|TempDirectoryObject")
 
-    if(!parent) {
-      // No parent: need to create a capped parent at tmpdir first
-      cappedParent = new CappedDirectoryObject(os.tmpdir(), null, true)
+    directory ||= "temp"
+    directory = Data.append(directory, source ? "" : "-")
 
-      if(name) {
-        // Check if name is a simple name (no separators, not absolute)
-        const isSimpleName = !path.isAbsolute(name) &&
-                             !name.includes("/") &&
-                             !name.includes("\\") &&
-                             !name.includes(path.sep)
+    const parentRealPath = source?.real.path ?? os.tmpdir()
 
-        if(isSimpleName) {
-          // Simple name: add unique suffix
-          const prefix = name.endsWith("-") ? name : `${name}-`
-          const uniqueSuffix =
-            Math.random()
-              .toString(36)
-              .substring(2, 8)
-              .toUpperCase()
-          dirPath = `${prefix}${uniqueSuffix}`
-        } else {
-          // Complex path: use as-is, let CappedDirectoryObject handle coercion
-          dirPath = name
-        }
-      } else {
-        // No name: use tmpdir itself (no parent)
-        dirPath = os.tmpdir()
-        cappedParent = null
-      }
+    if(source && path.isAbsolute(directory)) {
+      const {root} = FS.pathParts(directory)
+
+      directory = Data.chopLeft(directory, root)
+    }
+
+    let realTempDirectoryPath, toSuper
+
+    if(source) {
+      toSuper = `/${directory}`
+      realTempDirectoryPath =
+        FS.mergeOverlappingPaths(parentRealPath, directory)
+      if(!fs.existsSync(realTempDirectoryPath))
+        mkdirSync(realTempDirectoryPath)
     } else {
-      // With parent: validate it's a proper temp directory parent
-      if(!Data.isType(parent, "CappedDirectoryObject")) {
-        throw Sass.new(
-          "Parent must be a CappedDirectoryObject or TempDirectoryObject."
-        )
-      }
-
-      // SECURITY: Ensure parent's cap is within tmpdir (prevent escape to other caps)
-      const tmpdir = path.resolve(os.tmpdir())
-      const parentCap = path.resolve(parent.cap)
-
-      if(!parentCap.startsWith(tmpdir)) {
-        throw Sass.new(
-          `Parent must be capped to OS temp directory (${tmpdir}) or a subdirectory thereof, ` +
-          `got cap: ${parent.cap}`
-        )
-      }
-
-      dirPath = name || ""
-      if(!dirPath) {
-        throw Sass.new("Name must not be empty when parent is provided.")
-      }
+      realTempDirectoryPath =
+        mkdtempSync(FS.mergeOverlappingPaths(os.tmpdir(), directory))
+      toSuper = path.resolve(path.sep)
     }
 
-    // Call parent constructor with new signature
-    super(dirPath, cappedParent, true)
+    super(toSuper, source)
 
-    // Temp-specific behavior: create directory immediately
-    this.#createDirectory()
+    this.#tmpReal = new DirectoryObject(realTempDirectoryPath)
+    this.#tmpCap = source?.cap ?? this
+  }
 
-    // Re-cap to the temp directory itself for consistent behavior with CappedDirectoryObject
-    // This makes temp.cap === temp.real.path and temp.parent === null
-    if(!parent) {
-      // Only re-cap if this is a root temp directory (no TempDirectoryObject parent)
-      this._recapToSelf()
-    }
+  get isTemporary() {
+    return true
+  }
+
+  /**
+   * Returns a plain DirectoryObject representing the actual filesystem location.
+   * This provides an "escape hatch" from the capped environment to interact
+   * with the real filesystem when needed.
+   *
+   * @returns {DirectoryObject} Uncapped directory object at the real filesystem path
+   * @example
+   * const temp = new TempDirectoryObject("myapp")
+   * const subdir = temp.getDirectory("data")
+   *
+   * // Work within the capped environment (virtual paths)
+   * console.log(subdir.path)        // "/data" (virtual)
+   * subdir.getFile("config.json")   // Stays within cap
+   *
+   * // Break out to real filesystem when needed
+   * console.log(subdir.real.path)   // "/tmp/myapp-ABC123/data" (real)
+   * subdir.real.parent              // Can traverse outside the cap
+   */
+  get real() {
+    return this.#tmpReal
+  }
+
+  get cap() {
+    return this.#tmpCap
+  }
+
+  /**
+   * Recursively removes a temporary directory and all its contents.
+   *
+   * This method will delete all files and subdirectories within this directory,
+   * then delete the directory itself. It only works on directories explicitly
+   * marked as temporary for safety.
+   *
+   * @async
+   * @returns {Promise<void>}
+   * @throws {Sass} If the directory is not marked as temporary
+   * @throws {Sass} If the directory deletion fails
+   * @example
+   * const tempDir = new TempDirectoryObject("my-temp")
+   * await tempDir.assureExists()
+   * // ... use the directory ...
+   * await tempDir.remove() // Recursively deletes everything
+   */
+  async remove() {
+    await this.#recurseDelete(this.real)
+  }
+
+  async #recurseDelete(directory) {
+    const {files, directories} = await directory.read()
+
+    // files first
+    for(const file of files)
+      await file.delete()
+
+    // now dir-ty dirs
+    for(const dir of directories)
+      await this.#recurseDelete(dir)
+
+    // byebyebyeeee 🕺🏾
+    await directory.delete()
   }
 
   /**
@@ -137,78 +160,6 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
    * @throws {Sass} Always throws an error
    */
   static fromCwd() {
-    throw Sass.new(
-      "TempDirectoryObject.fromCwd() is not supported. " +
-      "Use CappedDirectoryObject.fromCwd() instead if you need to cap at the current working directory."
-    )
-  }
-
-  /**
-   * Creates the directory synchronously on the filesystem.
-   *
-   * @private
-   * @throws {Sass} If directory creation fails
-   */
-  #createDirectory() {
-    try {
-      // Use recursive: true to create parent directories as needed
-      fs.mkdirSync(this.realPath, {recursive: true})
-    } catch(e) {
-      // EEXIST is fine - directory already exists
-      if(e.code !== "EEXIST") {
-        throw Sass.new(
-          `Unable to create temporary directory '${this.realPath}': ${e.message}`
-        )
-      }
-    }
-  }
-
-  /**
-   * Creates a new TempDirectoryObject by extending this directory's path.
-   *
-   * Validates that the resulting path remains within the temp directory tree.
-   *
-   * @param {string} newPath - The path segment to append
-   * @returns {TempDirectoryObject} A new TempDirectoryObject with the extended path
-   * @throws {Sass} If the path would escape the temp directory
-   * @throws {Sass} If the path is absolute
-   * @throws {Sass} If the path contains traversal (..)
-   * @example
-   * const temp = new TempDirectoryObject("myapp")
-   * const subDir = temp.getDirectory("data")
-   * console.log(subDir.path) // "/tmp/myapp-ABC123/data"
-   */
-  getDirectory(newPath) {
-    // Delegate to base class getDirectory() which will call TempDirectoryObject constructor
-    return super.getDirectory(newPath)
-  }
-
-  /**
-   * Creates a new FileObject by extending this directory's path.
-   *
-   * Validates that the resulting path remains within the temp directory tree.
-   *
-   * @param {string} filename - The filename to append
-   * @returns {FileObject} A new FileObject with the extended path
-   * @throws {Sass} If the path would escape the temp directory
-   * @throws {Sass} If the path is absolute
-   * @throws {Sass} If the path contains traversal (..)
-   * @example
-   * const temp = new TempDirectoryObject("myapp")
-   * const file = temp.getFile("config.json")
-   * console.log(file.path) // "/tmp/myapp-ABC123/config.json"
-   */
-  getFile(filename) {
-    // Delegate to base class getFile() which handles security checks
-    return super.getFile(filename)
-  }
-
-  /**
-   * Returns a string representation of the TempDirectoryObject.
-   *
-   * @returns {string} string representation of the TempDirectoryObject
-   */
-  toString() {
-    return `[TempDirectoryObject: ${this.path}]`
+    throw Sass.new("TempDirectoryObject.fromCwd() is not supported.")
   }
 }

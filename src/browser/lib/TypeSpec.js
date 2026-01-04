@@ -144,7 +144,6 @@ export default class TypeSpec {
 
   match(value, options) {
     const allowEmpty = options?.allowEmpty ?? true
-    const empty = Data.isEmpty(value)
 
     // If we have a list of types, because the string was validly parsed, we
     // need to ensure that all of the types that were parsed are valid types in
@@ -161,6 +160,9 @@ export default class TypeSpec {
     // types in an array, if it is an array and an array is allowed.
     const matchingTypeSpec = this.filter(spec => {
       const {typeName: allowedType, array: allowedArray} = spec
+      const empty =
+        Data.emptyableTypes.includes(allowedType) &&
+        Data.isEmpty(value)
 
       // Handle non-array values
       if(!isArray && !allowedArray) {

@@ -16,73 +16,26 @@ export default class TempDirectoryObject extends CappedDirectoryObject {
      * @throws {Sass} Always throws an error
      */
     static fromCwd(): void;
+    get isTemporary(): boolean;
+    get cap(): any;
     /**
-     * Constructs a TempDirectoryObject instance and creates the directory.
+     * Recursively removes a temporary directory and all its contents.
      *
-     * The directory is created synchronously during construction, so it will
-     * exist immediately after the constructor returns.
+     * This method will delete all files and subdirectories within this directory,
+     * then delete the directory itself. It only works on directories explicitly
+     * marked as temporary for safety.
      *
-     * If no name is provided, uses the OS temp directory directly. If a name
-     * is provided without a parent, creates a new directory with a unique suffix.
-     * If a parent is provided, creates a subdirectory within that parent.
-     *
-     * @param {string?} [name] - Base name for the temp directory (if empty/null, uses OS temp dir)
-     * @param {TempDirectoryObject?} [parent] - Optional parent temporary directory
-     * @throws {Sass} If name is absolute
-     * @throws {Sass} If name is empty (when parent is provided)
-     * @throws {Sass} If name contains path separators
-     * @throws {Sass} If parent is provided but not a temporary directory
-     * @throws {Sass} If parent's lineage does not trace back to the OS temp directory
-     * @throws {Sass} If directory creation fails
+     * @async
+     * @returns {Promise<void>}
+     * @throws {Sass} If the directory is not marked as temporary
+     * @throws {Sass} If the directory deletion fails
      * @example
-     * // Use OS temp directory directly
-     * const temp = new TempDirectoryObject()
-     * console.log(temp.path) // "/tmp"
-     *
-     * @example
-     * // Create with unique name
-     * const temp = new TempDirectoryObject("myapp")
-     * console.log(temp.path) // "/tmp/myapp-ABC123"
-     *
-     * @example
-     * // Nested temp directories
-     * const parent = new TempDirectoryObject("parent")
-     * const child = new TempDirectoryObject("child", parent)
-     * await parent.remove() // Removes both parent and child
+     * const tempDir = new TempDirectoryObject("my-temp")
+     * await tempDir.assureExists()
+     * // ... use the directory ...
+     * await tempDir.remove() // Recursively deletes everything
      */
-    constructor(name?: string | null, parent?: TempDirectoryObject | null);
-    /**
-     * Creates a new TempDirectoryObject by extending this directory's path.
-     *
-     * Validates that the resulting path remains within the temp directory tree.
-     *
-     * @param {string} newPath - The path segment to append
-     * @returns {TempDirectoryObject} A new TempDirectoryObject with the extended path
-     * @throws {Sass} If the path would escape the temp directory
-     * @throws {Sass} If the path is absolute
-     * @throws {Sass} If the path contains traversal (..)
-     * @example
-     * const temp = new TempDirectoryObject("myapp")
-     * const subDir = temp.getDirectory("data")
-     * console.log(subDir.path) // "/tmp/myapp-ABC123/data"
-     */
-    getDirectory(newPath: string): TempDirectoryObject;
-    /**
-     * Creates a new FileObject by extending this directory's path.
-     *
-     * Validates that the resulting path remains within the temp directory tree.
-     *
-     * @param {string} filename - The filename to append
-     * @returns {FileObject} A new FileObject with the extended path
-     * @throws {Sass} If the path would escape the temp directory
-     * @throws {Sass} If the path is absolute
-     * @throws {Sass} If the path contains traversal (..)
-     * @example
-     * const temp = new TempDirectoryObject("myapp")
-     * const file = temp.getFile("config.json")
-     * console.log(file.path) // "/tmp/myapp-ABC123/config.json"
-     */
-    getFile(filename: string): FileObject;
+    remove(): Promise<void>;
     #private;
 }
 import CappedDirectoryObject from "./CappedDirectoryObject.js";

@@ -25,7 +25,7 @@ export default class Valid {
   static type(value, type, options) {
     Valid.assert(
       Data.isType(value, type, options),
-      `Invalid type. Expected ${type}, got ${JSON.stringify(value)}`,
+      `Invalid type. Expected ${type}, got ${Data.typeOf(value)}`,
       1,
     )
   }
