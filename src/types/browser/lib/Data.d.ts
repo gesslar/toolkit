@@ -36,7 +36,7 @@ export default class Data {
      * @param {string} append - The string to append
      * @returns {string} The appended string
      */
-    static appendString(string: string, append: string): string;
+    static append(string: string, append: string): string;
     /**
      * Prepends a string to another string if it does not already start with it.
      *
@@ -44,7 +44,51 @@ export default class Data {
      * @param {string} prepend - The string to prepend
      * @returns {string} The prepended string
      */
-    static prependString(string: string, prepend: string): string;
+    static prepend(string: string, prepend: string): string;
+    /**
+     * Remove a suffix from the end of a string if present.
+     *
+     * @param {string} string - The string to process
+     * @param {string} toChop - The suffix to remove from the end
+     * @param {boolean} [caseInsensitive=false] - Whether to perform case-insensitive matching
+     * @returns {string} The string with suffix removed, or original if suffix not found
+     * @example
+     * Data.chopRight("hello.txt", ".txt") // "hello"
+     * Data.chopRight("Hello", "o") // "Hell"
+     * Data.chopRight("HELLO", "lo", true) // "HEL"
+     */
+    static chopRight(string: string, toChop: string, caseInsensitive?: boolean): string;
+    /**
+     * Remove a prefix from the beginning of a string if present.
+     *
+     * @param {string} string - The string to process
+     * @param {string} toChop - The prefix to remove from the beginning
+     * @param {boolean} [caseInsensitive=false] - Whether to perform case-insensitive matching
+     * @returns {string} The string with prefix removed, or original if prefix not found
+     * @example
+     * Data.chopLeft("hello.txt", "hello") // ".txt"
+     * Data.chopLeft("Hello", "H") // "ello"
+     * Data.chopLeft("HELLO", "he", true) // "LLO"
+     */
+    static chopLeft(string: string, toChop: string, caseInsensitive?: boolean): string;
+    /**
+     * Chop a string after the first occurence of another string.
+     *
+     * @param {string} string - The string to search
+     * @param {string} needle - The bit to chop after
+     * @param {boolean} caseInsensitive - Whether to search insensitive to case
+     * @returns {string} The remaining string
+     */
+    static chopAfter(string: string, needle: string, caseInsensitive?: boolean): string;
+    /**
+     * Chop a string before the first occurrence of another string.
+     *
+     * @param {string} string - The string to search
+     * @param {string} needle - The bit to chop before
+     * @param {boolean} caseInsensitive - Whether to search insensitive to case
+     * @returns {string} The remaining string
+     */
+    static chopBefore(string: string, needle: string, caseInsensitive?: boolean): string;
     /**
      * Creates a type spec from a string. A type spec is an array of objects
      * defining the type of a value and whether an array is expected.

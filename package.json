@@ -5,7 +5,7 @@
     "name": "gesslar",
     "url": "https://gesslar.dev"
   },
-  "version": "3.9.0",
+  "version": "3.10.0",
   "license": "Unlicense",
   "homepage": "https://github.com/gesslar/toolkit#readme",
   "repository": {
@@ -59,6 +59,7 @@
     "submit": "pnpm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
     "update": "pnpm up --latest --recursive",
     "test": "node --test tests/**/*.test.js",
+    "test:coverage": "node --experimental-config-file=node.config.json --experimental-test-coverage --test-timeout=3000 --test tests/**/*.test.js",
     "test:node": "node --test tests/node/*.test.js",
     "test:browser": "node --test tests/browser/*.test.js",
     "pr": "gt submit -p --ai",
@@ -69,7 +70,6 @@
   "dependencies": {
     "@gesslar/colours": "^0.7.1",
     "ajv": "^8.17.1",
-    "globby": "^16.1.0",
     "json5": "^2.2.3",
     "yaml": "^2.8.2"
   },

@@ -37,7 +37,7 @@ describe("FileObject", () => {
     it("creates FileObject with directory parameter as string", () => {
       const file = new FileObject("test.txt", "/home/user")
 
-      assert.ok(file.path.includes("/home/user"))
+      assert.ok(file.path.includes(path.normalize("/home/user")))
       assert.equal(file.name, "test.txt")
       assert.ok(file.parent instanceof DirectoryObject)
     })
@@ -46,7 +46,7 @@ describe("FileObject", () => {
       const dir = new DirectoryObject("/home/user")
       const file = new FileObject("test.txt", dir)
 
-      assert.ok(file.path.includes("/home/user"))
+      assert.ok(file.path.includes(path.normalize("/home/user")))
       assert.equal(file.name, "test.txt")
       assert.ok(file.parent instanceof DirectoryObject)
     })
@@ -65,46 +65,6 @@ describe("FileObject", () => {
       assert.equal(file.name, "archive.tar.gz")
       assert.equal(file.extension, ".gz")  // path.parse only gets last extension
       assert.equal(file.module, "archive.tar")
-    })
-
-    it("fixes slashes in paths", () => {
-      const file = new FileObject("path\\\\with\\\\backslashes\\\\file.txt")
-
-      assert.ok(!file.supplied.includes("\\\\"))
-      assert.ok(file.supplied.includes("/"))
-    })
-
-    it("accepts FileObject as input (polymorphic)", () => {
-      const original = new FileObject("/home/user/test.txt")
-      const clone = new FileObject(original)
-
-      assert.ok(clone instanceof FileObject)
-      assert.equal(clone.path, original.path)
-      assert.equal(clone.name, original.name)
-      assert.equal(clone.extension, original.extension)
-      assert.notEqual(clone, original) // Should be a new instance
-    })
-
-    it("accepts FileObject with different directory", () => {
-      const original = new FileObject("/home/user/test.txt")
-      const dir = new DirectoryObject("/tmp")
-      const relocated = new FileObject(original, dir)
-
-      // When passing a FileObject, it extracts the path (full path including filename)
-      // This creates a file with the same name in a different directory
-      assert.equal(relocated.name, original.name)
-      assert.equal(relocated.path, original.path) // Actually keeps the original full path
-    })
-
-    it("accepts FileObject and preserves all metadata", () => {
-      const original = new FileObject("/home/user/document.tar.gz")
-      const clone = new FileObject(original)
-
-      assert.equal(clone.name, original.name)
-      assert.equal(clone.extension, original.extension)
-      assert.equal(clone.module, original.module)
-      assert.equal(clone.path, original.path)
-      assert.equal(clone.parent.path, original.parent.path)
     })
   })
 
@@ -182,13 +142,13 @@ describe("FileObject", () => {
       assert.ok(file.parent.path.includes("nested"))
     })
 
-    it("correctly resolves parent for absolute paths regardless of parent parameter", () => {
+    it("treats the path as relative to the directory passed", () => {
       const dir = new DirectoryObject("/tmp")
       const file = new FileObject("/home/user/projects/test.js", dir)
 
-      // Parent should be /home/user/projects, not /tmp
+      // Parent should be /tmp/home/user/projects, not /tmp
       assert.ok(file.parent.path.endsWith("projects"))
-      assert.ok(!file.parent.path.includes("tmp"))
+      assert.ok(file.parent.path.includes("tmp"))
     })
 
     it("parent matches path.dirname of resolved path", () => {
@@ -241,7 +201,7 @@ describe("FileObject", () => {
     it("parent path is always the directory containing the file", () => {
       const file = new FileObject("/home/user/projects/src/lib/test.js")
 
-      assert.equal(file.parent.path, "/home/user/projects/src/lib")
+      assert.equal(file.parent.path, path.resolve("/home/user/projects/src/lib"))
       assert.equal(path.join(file.parent.path, file.name), file.path)
     })
 
@@ -249,7 +209,7 @@ describe("FileObject", () => {
       const file = new FileObject("/test.js")
 
       assert.ok(file.parent instanceof DirectoryObject)
-      assert.equal(file.parent.path, "/")
+      assert.ok(TestUtils.isRootPath(file.parent.path))
     })
 
     it("creates new parent when string parent doesn't match actual parent", () => {
@@ -571,10 +531,6 @@ describe("FileObject", () => {
       // Path should be absolute
       assert.ok(path.isAbsolute(file.path),
         `Expected absolute path, got: ${file.path}`)
-
-      // Should start with root directory
-      assert.ok(file.path.startsWith('/'),
-        `Path should start with /, got: ${file.path}`)
     })
 
     it("resolves relative paths with ./ prefix correctly", () => {

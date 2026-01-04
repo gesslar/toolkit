@@ -8,7 +8,6 @@
  * - Pattern-based content filtering with glob support
  * - Path traversal via walkUp generator
  * - Intelligent path merging for subdirectories and files
- * - Support for temporary directory management
  *
  * @property {string} supplied - The original directory path as supplied to constructor
  * @property {string} path - The absolute resolved directory path
@@ -18,7 +17,6 @@
  * @property {string} extension - The directory extension (typically empty string)
  * @property {string} sep - Platform-specific path separator ('/' or '\\')
  * @property {Array<string>} trail - Path segments split by separator
- * @property {boolean} temporary - Whether this is marked as a temporary directory
  * @property {boolean} isFile - Always false (this is a directory)
  * @property {boolean} isDirectory - Always true
  * @property {DirectoryObject|null} parent - The parent directory (null if root)
@@ -62,16 +60,20 @@ export default class DirectoryObject extends FS {
     /**
      * Constructs a DirectoryObject instance.
      *
-     * @param {string? | DirectoryObject?} [directory="."] - The directory path or DirectoryObject (defaults to current directory)
-     * @param {boolean} [temporary] - Whether this is a temporary directory.
+     * @param {string?} [directory="."] - The directory path or DirectoryObject (defaults to current directory)
      */
-    constructor(directory?: string, temporary?: boolean);
+    constructor(directory?: string | null);
     /**
      * Returns a JSON representation of the DirectoryObject.
      *
      * @returns {object} JSON representation of the DirectoryObject
      */
     toJSON(): object;
+    /**
+     * Custom inspect method for Node.js console.
+     *
+     * @returns {object} JSON representation of this object.
+     */
     /**
      * Checks if the directory exists (async).
      *
@@ -130,12 +132,6 @@ export default class DirectoryObject extends FS {
      */
     get trail(): Array<string>;
     /**
-     * Returns whether this directory is marked as temporary.
-     *
-     * @returns {boolean} True if this is a temporary directory, false otherwise
-     */
-    get temporary(): boolean;
-    /**
      * Returns the parent directory of this directory.
      * Returns null if this directory is the root directory.
      * Computed lazily on first access and cached.
@@ -149,42 +145,6 @@ export default class DirectoryObject extends FS {
      * console.log(root.parent) // null
      */
     get parent(): DirectoryObject | null;
-    /**
-     * Returns the root directory of the filesystem.
-     *
-     * For DirectoryObject, this walks up to the filesystem root.
-     * For CappedDirectoryObject, this returns the cap root.
-     *
-     * @returns {DirectoryObject} The root directory
-     * @example
-     * const dir = new DirectoryObject("/usr/local/bin")
-     * console.log(dir.root.path)  // "/"
-     *
-     * @example
-     * const capped = new CappedDirectoryObject("/projects/myapp")
-     * const sub = capped.getDirectory("src/lib")
-     * console.log(sub.root.path)  // "/" (virtual, cap root)
-     * console.log(sub.root.real.path)  // "/projects/myapp"
-     */
-    get root(): DirectoryObject;
-    /**
-     * Recursively removes a temporary directory and all its contents.
-     *
-     * This method will delete all files and subdirectories within this directory,
-     * then delete the directory itself. It only works on directories explicitly
-     * marked as temporary for safety.
-     *
-     * @async
-     * @returns {Promise<void>}
-     * @throws {Sass} If the directory is not marked as temporary
-     * @throws {Sass} If the directory deletion fails
-     * @example
-     * const tempDir = new TempDirectoryObject("my-temp")
-     * await tempDir.assureExists()
-     * // ... use the directory ...
-     * await tempDir.remove() // Recursively deletes everything
-     */
-    remove(): Promise<void>;
     /**
      * Returns false. Because this is a directory.
      *
@@ -235,7 +195,7 @@ export default class DirectoryObject extends FS {
      * Generator that walks up the directory tree, yielding each parent directory.
      * Starts from the current directory and yields each parent until reaching the root.
      *
-     * @returns {object} Generator yielding parent DirectoryObject instances
+     * @returns {DirectoryObject} Generator yielding parent DirectoryObject instances
      * @example
      * const dir = new DirectoryObject('/path/to/deep/directory')
      * for(const parent of dir.walkUp) {
@@ -247,7 +207,7 @@ export default class DirectoryObject extends FS {
      *   // /
      * }
      */
-    get walkUp(): object;
+    get walkUp(): DirectoryObject;
     /**
      * Deletes an empty directory from the filesystem.
      *
@@ -285,7 +245,7 @@ export default class DirectoryObject extends FS {
      * duplication (e.g., "/projects/toolkit" + "toolkit/src" = "/projects/toolkit/src").
      * The temporary flag is preserved from the parent directory.
      *
-     * @param {string} newPath - The subdirectory path to append (can be nested like "src/lib")
+     * @param {string} dir - The subdirectory path to append (can be nested like "src/lib")
      * @returns {DirectoryObject} A new DirectoryObject instance with the combined path
      * @throws {Sass} If newPath is not a string
      * @example
@@ -299,7 +259,7 @@ export default class DirectoryObject extends FS {
      * const subDir = dir.getDirectory("toolkit/src")
      * console.log(subDir.path) // "/projects/toolkit/src" (not /projects/toolkit/toolkit/src)
      */
-    getDirectory(newPath: string): DirectoryObject;
+    getDirectory(dir: string): DirectoryObject;
     /**
      * Creates a new FileObject by extending this directory's path.
      *
@@ -307,7 +267,7 @@ export default class DirectoryObject extends FS {
      * duplication. The resulting FileObject can be used for reading, writing,
      * and other file operations.
      *
-     * @param {string} filename - The filename to append (can include subdirectories like "src/index.js")
+     * @param {string} file - The filename to append (can include subdirectories like "src/index.js")
      * @returns {FileObject} A new FileObject instance with the combined path
      * @throws {Sass} If filename is not a string
      * @example
@@ -320,17 +280,9 @@ export default class DirectoryObject extends FS {
      * const file = dir.getFile("src/index.js")
      * const data = await file.read()
      */
-    getFile(filename: string): FileObject;
-    /**
-     * Custom inspect method for Node.js console.
-     *
-     * @returns {object} JSON representation of this object.
-     */
-    [util.inspect.custom](): object;
+    getFile(file: string): FileObject;
     #private;
 }
 import FS from "./FS.js";
-import { URL } from "node:url";
 import FileObject from "./FileObject.js";
-import util from "node:util";
 //# sourceMappingURL=DirectoryObject.d.ts.map
