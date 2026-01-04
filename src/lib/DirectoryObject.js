@@ -7,12 +7,11 @@
 import {glob, mkdir, opendir, readdir, rmdir} from "node:fs/promises"
 import path from "node:path"
 import {URL} from "node:url"
-import util from "node:util"
 
-import {Data, Valid} from "../browser/index.js"
 import FS from "./FS.js"
 import FileObject from "./FileObject.js"
 import Sass from "./Sass.js"
+import Valid from "./Valid.js"
 
 /**
  * DirectoryObject encapsulates metadata and operations for a directory,
@@ -24,7 +23,6 @@ import Sass from "./Sass.js"
  * - Pattern-based content filtering with glob support
  * - Path traversal via walkUp generator
  * - Intelligent path merging for subdirectories and files
- * - Support for temporary directory management
  *
  * @property {string} supplied - The original directory path as supplied to constructor
  * @property {string} path - The absolute resolved directory path
@@ -34,7 +32,6 @@ import Sass from "./Sass.js"
  * @property {string} extension - The directory extension (typically empty string)
  * @property {string} sep - Platform-specific path separator ('/' or '\\')
  * @property {Array<string>} trail - Path segments split by separator
- * @property {boolean} temporary - Whether this is marked as a temporary directory
  * @property {boolean} isFile - Always false (this is a directory)
  * @property {boolean} isDirectory - Always true
  * @property {DirectoryObject|null} parent - The parent directory (null if root)
@@ -87,48 +84,45 @@ export default class DirectoryObject extends FS {
     isDirectory: true,
     trail: null,
     sep: null,
-    temporary: null,
+    parent: undefined,
+    parentPath: undefined,
   })
 
-  /**
-   * Cached parent directory object
-   *
-   * @type {DirectoryObject|null|undefined}
-   * @private
-   */
+  // Not in the meta, because it gets frozen, and these are lazily
+  // set.
   #parent = undefined
 
   /**
    * Constructs a DirectoryObject instance.
    *
-   * @param {string? | DirectoryObject?} [directory="."] - The directory path or DirectoryObject (defaults to current directory)
-   * @param {boolean} [temporary] - Whether this is a temporary directory.
+   * @param {string?} [directory="."] - The directory path or DirectoryObject (defaults to current directory)
    */
-  constructor(directory=".", temporary=false) {
+  constructor(directory) {
+    directory ||= "."
+
+    Valid.type(directory, "String")
+
     super()
-
-    Valid.type(directory, "String|TempDirectoryObject|DirectoryObject")
-
-    // If passed a DirectoryObject, extract its path
-    if(Data.isType(directory, "DirectoryObject") || Data.isType(directory, "TempDirectoryObject"))
-      directory = directory.path
 
     const fixedDir = FS.fixSlashes(directory)
     const resolved = path.resolve(fixedDir)
-    const url = new URL(FS.pathToUri(resolved))
-    const baseName = path.basename(resolved) || "."
+    const url = new URL(FS.pathToUrl(resolved))
+    const baseName = path.basename(resolved) || ""
     const trail = resolved.split(path.sep)
     const sep = path.sep
+    const pathParts = FS.pathParts(resolved)
 
     this.#meta.supplied = fixedDir
     this.#meta.path = resolved
     this.#meta.url = url
     this.#meta.name = baseName
     this.#meta.extension = ""
-    this.#meta.module = baseName
+    this.#meta.module = baseName !== "." ? baseName : ""
     this.#meta.trail = trail
     this.#meta.sep = sep
-    this.#meta.temporary = temporary
+    this.#meta.parentPath = pathParts.dir === pathParts.root
+      ? null
+      : pathParts.dir
 
     Object.freeze(this.#meta)
   }
@@ -171,8 +165,7 @@ export default class DirectoryObject extends FS {
       extension: this.extension,
       isFile: this.isFile,
       isDirectory: this.isDirectory,
-      parent: this.parent ? this.parent.path : null,
-      root: this.root.path
+      parent: this.parent?.path ?? null,
     }
   }
 
@@ -181,9 +174,9 @@ export default class DirectoryObject extends FS {
    *
    * @returns {object} JSON representation of this object.
    */
-  [util.inspect.custom]() {
-    return this.toJSON()
-  }
+  // [util.inspect.custom]() {
+  //   return this.toJSON()
+  // }
 
   /**
    * Checks if the directory exists (async).
@@ -270,15 +263,6 @@ export default class DirectoryObject extends FS {
   }
 
   /**
-   * Returns whether this directory is marked as temporary.
-   *
-   * @returns {boolean} True if this is a temporary directory, false otherwise
-   */
-  get temporary() {
-    return this.#meta.temporary
-  }
-
-  /**
    * Returns the parent directory of this directory.
    * Returns null if this directory is the root directory.
    * Computed lazily on first access and cached.
@@ -293,84 +277,18 @@ export default class DirectoryObject extends FS {
    */
   get parent() {
     // Return cached value if available
-    if(this.#parent !== undefined) {
+    if(this.#parent !== undefined)
+      return this.#parent
+
+    if(this.#meta.parentPath === null) {
+      this.#parent = null
+
       return this.#parent
     }
 
-    // Compute parent directory (null if we're at root)
-    const parentPath = path.dirname(this.path)
-    const isRoot = parentPath === this.path
-
-    // Cache and return
-    this.#parent = isRoot
-      ? null
-      : new DirectoryObject(parentPath, this.temporary)
+    this.#parent = new this.constructor(this.#meta.parentPath)
 
     return this.#parent
-  }
-
-  /**
-   * Returns the root directory of the filesystem.
-   *
-   * For DirectoryObject, this walks up to the filesystem root.
-   * For CappedDirectoryObject, this returns the cap root.
-   *
-   * @returns {DirectoryObject} The root directory
-   * @example
-   * const dir = new DirectoryObject("/usr/local/bin")
-   * console.log(dir.root.path)  // "/"
-   *
-   * @example
-   * const capped = new CappedDirectoryObject("/projects/myapp")
-   * const sub = capped.getDirectory("src/lib")
-   * console.log(sub.root.path)  // "/" (virtual, cap root)
-   * console.log(sub.root.real.path)  // "/projects/myapp"
-   */
-  get root() {
-    // Walk up until we find a directory with no parent
-    let current = this
-
-    while(current.parent !== null) {
-      current = current.parent
-    }
-
-    return current
-  }
-
-  /**
-   * Recursively removes a temporary directory and all its contents.
-   *
-   * This method will delete all files and subdirectories within this directory,
-   * then delete the directory itself. It only works on directories explicitly
-   * marked as temporary for safety.
-   *
-   * @async
-   * @returns {Promise<void>}
-   * @throws {Sass} If the directory is not marked as temporary
-   * @throws {Sass} If the directory deletion fails
-   * @example
-   * const tempDir = new TempDirectoryObject("my-temp")
-   * await tempDir.assureExists()
-   * // ... use the directory ...
-   * await tempDir.remove() // Recursively deletes everything
-   */
-  async remove() {
-    if(!this.temporary)
-      throw Sass.new("This is not a temporary directory.")
-
-    /** @type {{files: Array<FileObject>, directories: Array<DirectoryObject>}} */
-    const {files, directories} = await this.read()
-
-    // Remove subdirectories recursively
-    for(const dir of directories)
-      await dir.remove()
-
-    // Remove files
-    for(const file of files)
-      await file.delete()
-
-    // Delete the now-empty directory
-    await this.delete()
   }
 
   /**
@@ -397,11 +315,15 @@ export default class DirectoryObject extends FS {
    * @returns {Promise<boolean>} Whether the directory exists
    */
   async #directoryExists() {
+    const url = this.isCapped
+      ? this.cap?.real.url
+      : this.url
+
     try {
-      (await opendir(this.path)).close()
+      (await opendir(url)).close()
 
       return true
-    } catch(_) {
+    } catch {
       return false
     }
   }
@@ -423,14 +345,27 @@ export default class DirectoryObject extends FS {
    * console.log(files) // Only .js files in ./src
    */
   async read(pat="") {
-    const cwd = this.path, withFileTypes = true
+    const withFileTypes = true
+    const url = this.isCapped
+      ? this.real?.url
+      : this.url
+
+    Valid.type(url, "URL")
+    // const href = url.href
+
     const found = !pat
-      ? await readdir(this.url, {withFileTypes})
+      ? await readdir(url, {withFileTypes})
       : await Array.fromAsync(
         glob(pat, {
-          cwd,
+          cwd: url,
           withFileTypes,
-          exclude: candidate => candidate.parentPath !== cwd
+          // exclude: candidate => {
+          // // Only allow entries within this directory's URL
+          //   const candidateHref = candidate.url.href
+
+          //   // Must start with our URL + path separator, or be exactly our URL
+          //   return !candidateHref.startsWith(href + "/") && candidateHref !== href
+          // }
         })
       )
 
@@ -441,9 +376,9 @@ export default class DirectoryObject extends FS {
     const directories = found
       .filter(dirent => dirent.isDirectory())
       .map(dirent => {
-        const dirPath = path.join(this.path, dirent.name)
+        const dirPath = FS.resolvePath(this.path, dirent.name)
 
-        return new DirectoryObject(dirPath, this.temporary)
+        return new this.constructor(dirPath, this)
       })
 
     return {files, directories}
@@ -497,11 +432,11 @@ export default class DirectoryObject extends FS {
       // Stop if we've reached an empty path (which would resolve to CWD)
       if(joined === "" || joined === this.sep) {
         // Yield the root and stop
-        yield new DirectoryObject(this.sep)
+        yield new this.constructor(this.sep)
         break
       }
 
-      yield new DirectoryObject(joined)
+      yield new this.constructor(joined)
       curr.pop()
     }
   }
@@ -510,7 +445,7 @@ export default class DirectoryObject extends FS {
    * Generator that walks up the directory tree, yielding each parent directory.
    * Starts from the current directory and yields each parent until reaching the root.
    *
-   * @returns {object} Generator yielding parent DirectoryObject instances
+   * @returns {DirectoryObject} Generator yielding parent DirectoryObject instances
    * @example
    * const dir = new DirectoryObject('/path/to/deep/directory')
    * for(const parent of dir.walkUp) {
@@ -578,6 +513,8 @@ export default class DirectoryObject extends FS {
     return await directory.exists
   }
 
+  #isLocal = candidate => (String(candidate) || "").search(/[\\/]/) === -1
+
   /**
    * Creates a new DirectoryObject by extending this directory's path.
    *
@@ -585,7 +522,7 @@ export default class DirectoryObject extends FS {
    * duplication (e.g., "/projects/toolkit" + "toolkit/src" = "/projects/toolkit/src").
    * The temporary flag is preserved from the parent directory.
    *
-   * @param {string} newPath - The subdirectory path to append (can be nested like "src/lib")
+   * @param {string} dir - The subdirectory path to append (can be nested like "src/lib")
    * @returns {DirectoryObject} A new DirectoryObject instance with the combined path
    * @throws {Sass} If newPath is not a string
    * @example
@@ -599,13 +536,10 @@ export default class DirectoryObject extends FS {
    * const subDir = dir.getDirectory("toolkit/src")
    * console.log(subDir.path) // "/projects/toolkit/src" (not /projects/toolkit/toolkit/src)
    */
-  getDirectory(newPath) {
-    Valid.type(newPath, "String")
+  getDirectory(dir) {
+    Valid.assert(this.#isLocal(dir), `${dir} would be out of bounds.`)
 
-    const thisPath = this.path
-    const merged = FS.mergeOverlappingPaths(thisPath, newPath)
-
-    return new this.constructor(merged, this.temporary)
+    return new this.constructor(dir, this)
   }
 
   /**
@@ -615,7 +549,7 @@ export default class DirectoryObject extends FS {
    * duplication. The resulting FileObject can be used for reading, writing,
    * and other file operations.
    *
-   * @param {string} filename - The filename to append (can include subdirectories like "src/index.js")
+   * @param {string} file - The filename to append (can include subdirectories like "src/index.js")
    * @returns {FileObject} A new FileObject instance with the combined path
    * @throws {Sass} If filename is not a string
    * @example
@@ -628,11 +562,9 @@ export default class DirectoryObject extends FS {
    * const file = dir.getFile("src/index.js")
    * const data = await file.read()
    */
-  getFile(filename) {
-    Valid.type(filename, "String")
+  getFile(file) {
+    Valid.assert(this.#isLocal(file), `${file} would be out of bounds.`)
 
-    // Pass the filename and this directory as parent
-    // This ensures the FileObject maintains the correct parent reference
-    return new FileObject(filename, this)
+    return new FileObject(file, this)
   }
 }

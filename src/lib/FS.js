@@ -10,6 +10,7 @@ import path from "node:path"
 import url from "node:url"
 
 import Collection from "../browser/lib/Collection.js"
+import Data from "../browser/lib/Data.js"
 import Sass from "./Sass.js"
 import Valid from "./Valid.js"
 
@@ -68,7 +69,7 @@ export default class FS {
    * @param {string} pathName - The path to convert
    * @returns {string} The URI
    */
-  static pathToUri(pathName) {
+  static pathToUrl(pathName) {
     try {
       return url.pathToFileURL(pathName).href
     } catch(e) {
@@ -203,7 +204,7 @@ export default class FS {
    * @returns {string} The resolved path
    */
   static resolvePath(fromPath, toPath) {
-    // Normalize inputs
+  // Normalize inputs
     const from = fromPath?.trim() ?? ""
     const to = toPath?.trim() ?? ""
 
@@ -232,5 +233,75 @@ export default class FS {
     // Strategy 3: Try overlap-based merging, which will default to a basic
     // join if no overlap
     return FS.mergeOverlappingPaths(from, normalizedTo)
+  }
+
+  static pathContains(container, candidate) {
+    Valid.type(container, "String", {allowEmpty: false})
+    Valid.type(candidate, "String", {allowEmpty: false})
+
+    const realPath = Data.append(container, "/")  // bookend this mofo
+
+    return candidate.startsWith(realPath)
+  }
+
+  static toRelativePath(from, to, sep=path.sep) {
+    // If they're the same, just return ""
+    if(from === to)
+      return ""
+
+    const fromTrail = from.split(sep)
+    const toTrail = to.split(sep)
+    const overlapIndex = toTrail.findIndex(curr => curr === fromTrail.at(-1))
+
+    // If overlap is found, slice and join
+    if(overlapIndex !== -1) {
+      const relative = toTrail.slice(overlapIndex+1)
+
+      return relative.join(sep)
+    }
+
+    // If no overlap, we got nothing, soz.
+    return null
+  }
+
+  static getCommonRootPath(from, to, sep=path.sep) {
+    // If they're the same, just return one or t'other, tis no mattah
+    if(from === to)
+      return from
+
+    const fromTrail = from.split(sep)
+    const toTrail = to.split(sep)
+    const overlapIndex = fromTrail.findIndex(curr => curr === toTrail.at(0))
+
+    // If overlap is found, slice and join
+    if(overlapIndex !== -1) {
+      const relative = fromTrail.slice(0, overlapIndex - 1)
+
+      return relative.join(sep)
+    }
+
+    // If no overlap, we got nothing, soz.
+    return null
+  }
+
+  /**
+   * @typedef {object} PathParts
+   * @property {string} base - The file name with extension
+   * @property {string} dir - The directory path
+   * @property {string} ext - The file extension (including dot)
+   */
+
+  /**
+   * Deconstruct a file or directory name into parts.
+   *
+   * @static
+   * @param {string} pathName - The file/directory name to deconstruct
+   * @returns {PathParts} The filename parts
+   * @throws {Sass} If not a string of more than 1 character
+   */
+  static pathParts(pathName) {
+    Valid.type(pathName, "String", {allowEmpty: false})
+
+    return path.parse(pathName)
   }
 }

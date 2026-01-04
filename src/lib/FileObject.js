@@ -70,57 +70,39 @@ export default class FileObject extends FS {
     isFile: true,
     isDirectory: false,
     parent: null,
+    parentPath: null,
   })
 
   /**
    * Constructs a FileObject instance.
    *
-   * @param {string | FileObject} fileName - The file path or FileObject
+   * @param {string} fileName - The file path
    * @param {DirectoryObject|string|null} [parent] - The parent directory (object or string)
    */
   constructor(fileName, parent=null) {
     super()
 
-    // If passed a FileObject, extract its path
-    if(Data.isType(fileName, "FileObject"))
-      fileName = fileName.path
-
-    if(!fileName || typeof fileName !== "string" || fileName.length === 0)
-      throw Sass.new("fileName must be a non-empty string")
+    Valid.type(fileName, "String", {allowEmpty: false})
+    Valid.type(parent, "Null|String|DirectoryObject", {allowEmpty: false})
 
     const fixedFile = FS.fixSlashes(fileName)
-    const {dir,base,ext} = this.#deconstructFilenameToParts(fixedFile)
+    const {dir,base,ext} = FS.pathParts(fixedFile)
 
     const parentObject = (() => {
-      switch(Data.typeOf(parent)) {
-        case "String":
-          return new DirectoryObject(parent)
-        case "DirectoryObject":
-        case "CappedDirectoryObject":
-        case "TempDirectoryObject":
-          return parent
-        default:
-          return new DirectoryObject(dir)
-      }
+      if(Data.isType(parent, "String"))
+        return new DirectoryObject(parent)
+
+      if(Data.isType(parent, "DirectoryObject"))
+        return parent
+
+      return new DirectoryObject(dir)
     })()
 
     // Use real path if parent is capped, otherwise use path
-    const parentPath = parentObject.realPath || parentObject.path
-    const final = FS.resolvePath(parentPath ?? ".", fixedFile)
-
-    const resolved = final
-    const url = new URL(FS.pathToUri(resolved))
-
-    // Compute the actual parent directory from the resolved path
-    const actualParentPath = path.dirname(resolved)
-
-    // If the file is directly in the provided parent directory, reuse that object
-    // Otherwise, create a DirectoryObject for the actual parent directory
-    // Use real path for comparison if parent is capped
-    const parentRealPath = parentObject.realPath || parentObject.path
-    const actualParent = parentObject && actualParentPath === parentRealPath
-      ? parentObject
-      : new DirectoryObject(actualParentPath)
+    const parentPath = parentObject.real?.path || parentObject.path
+    const resolved = FS.resolvePath(parentPath ?? ".", fixedFile)
+    const {dir: actualParent} = FS.pathParts(resolved)
+    const url = new URL(FS.pathToUrl(resolved))
 
     this.#meta.supplied = fixedFile
     this.#meta.path = resolved
@@ -128,7 +110,10 @@ export default class FileObject extends FS {
     this.#meta.name = base
     this.#meta.extension = ext
     this.#meta.module = path.basename(this.supplied, this.extension)
-    this.#meta.parent = actualParent
+    this.#meta.parentPath = actualParent
+    this.#meta.parent = actualParent === parentObject.path
+      ? parentObject
+      : new DirectoryObject(actualParent)
 
     Object.freeze(this.#meta)
   }
@@ -157,6 +142,7 @@ export default class FileObject extends FS {
       extension: this.extension,
       isFile: this.isFile,
       isDirectory: this.isDirectory,
+      parentPath: this.parentPath,
       parent: this.parent ? this.parent.path : null
     }
   }
@@ -200,8 +186,8 @@ export default class FileObject extends FS {
     const parent = this.#meta.parent
 
     // If parent is capped, return virtual path
-    if(parent?.capped) {
-      const cap = parent.cap
+    if(parent?.isCapped) {
+      const cap = parent.cap.real.path
       const capResolved = path.resolve(cap)
       const relative = path.relative(capResolved, realPath)
 
@@ -223,9 +209,8 @@ export default class FileObject extends FS {
     const parent = this.#meta.parent
 
     // If parent is capped, return virtual URL
-    if(parent?.capped) {
-      return new URL(FS.pathToUri(this.path))
-    }
+    if(parent?.isCapped)
+      return new URL(FS.pathToUrl(this.path))
 
     return this.#meta.url
   }
@@ -291,6 +276,10 @@ export default class FileObject extends FS {
    */
   get parent() {
     return this.#meta.parent
+  }
+
+  get parentPath() {
+    return this.#meta.parentPath
   }
 
   /**
@@ -387,26 +376,6 @@ export default class FileObject extends FS {
     } catch(_) {
       return null
     }
-  }
-
-  /**
-   * @typedef {object} FileParts
-   * @property {string} base - The file name with extension
-   * @property {string} dir - The directory path
-   * @property {string} ext - The file extension (including dot)
-   */
-
-  /**
-   * Deconstruct a filename into parts
-   *
-   * @param {string} fileName - The filename to deconstruct
-   * @returns {FileParts} The filename parts
-   */
-  #deconstructFilenameToParts(fileName) {
-    Valid.assert(typeof fileName === "string" && fileName.length > 0,
-      "file must be a non-zero length string", 1)
-
-    return path.parse(fileName)
   }
 
   /**
