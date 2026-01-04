@@ -1034,15 +1034,15 @@ describe("DirectoryObject", () => {
 
   describe("getDirectory() method", () => {
     it("creates DirectoryObject by extending path", () => {
-      const dir = new DirectoryObject("/projects/git/toolkit")
+      const dir = new DirectoryObject("/temp/toolkit")
       const subDir = dir.getDirectory("src")
 
       assert.ok(subDir instanceof DirectoryObject)
-      assert.equal(subDir.path, path.join("/projects/git/toolkit", "src"))
+      assert.equal(subDir.path, path.join("/temp/toolkit", "src"))
     })
 
     it("requires chaining for nested paths", () => {
-      const dir = new DirectoryObject("/projects/git/toolkit")
+      const dir = new DirectoryObject("/temp/toolkit")
 
       // Nested paths with separators are rejected
       assert.throws(
@@ -1137,15 +1137,15 @@ describe("DirectoryObject", () => {
 
   describe("getFile() method", () => {
     it("creates FileObject by extending path", () => {
-      const dir = new DirectoryObject("/projects/git/toolkit")
+      const dir = new DirectoryObject("/temp/toolkit")
       const file = dir.getFile("package.json")
 
       assert.equal(file.constructor.name, "FileObject")
-      assert.equal(file.path, path.join("/projects/git/toolkit", "package.json"))
+      assert.equal(file.path, path.join("/temp/toolkit", "package.json"))
     })
 
     it("requires chaining for nested file paths", () => {
-      const dir = new DirectoryObject("/projects/git/toolkit")
+      const dir = new DirectoryObject("/temp/toolkit")
 
       // Nested paths with separators are rejected
       assert.throws(

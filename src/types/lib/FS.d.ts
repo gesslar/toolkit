@@ -20,7 +20,7 @@ export default class FS {
      * @param {string} pathName - The path to convert
      * @returns {string} The URI
      */
-    static pathToUri(pathName: string): string;
+    static pathToUrl(pathName: string): string;
     /**
      * Convert a URI to a path
      *
@@ -71,6 +71,37 @@ export default class FS {
      * @returns {string} The resolved path
      */
     static resolvePath(fromPath: string, toPath: string): string;
+    static pathContains(container: any, candidate: any): any;
+    static toRelativePath(from: any, to: any, sep?: "\\" | "/"): any;
+    static getCommonRootPath(from: any, to: any, sep?: "\\" | "/"): any;
+    /**
+     * @typedef {object} PathParts
+     * @property {string} base - The file name with extension
+     * @property {string} dir - The directory path
+     * @property {string} ext - The file extension (including dot)
+     */
+    /**
+     * Deconstruct a file or directory name into parts.
+     *
+     * @static
+     * @param {string} pathName - The file/directory name to deconstruct
+     * @returns {PathParts} The filename parts
+     * @throws {Sass} If not a string of more than 1 character
+     */
+    static pathParts(pathName: string): {
+        /**
+         * - The file name with extension
+         */
+        base: string;
+        /**
+         * - The directory path
+         */
+        dir: string;
+        /**
+         * - The file extension (including dot)
+         */
+        ext: string;
+    };
     /**
      * Compute the relative path from another file or directory to this instance.
      *

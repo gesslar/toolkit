@@ -36,7 +36,7 @@ export default class Data {
      * @param {string} append - The string to append
      * @returns {string} The appended string
      */
-    static appendString(string: string, append: string): string;
+    static append(string: string, append: string): string;
     /**
      * Prepends a string to another string if it does not already start with it.
      *
@@ -44,7 +44,27 @@ export default class Data {
      * @param {string} prepend - The string to prepend
      * @returns {string} The prepended string
      */
-    static prependString(string: string, prepend: string): string;
+    static prepend(string: string, prepend: string): string;
+    static chopRight(string: any, toChop: any, caseInsensitive?: boolean): any;
+    static chopLeft(string: any, toChop: any, caseInsensitive?: boolean): any;
+    /**
+     * Chop a string after the first occurence of another string.
+     *
+     * @param {string} string - The string to search
+     * @param {string} needle - The bit to chop after
+     * @param {boolean} caseInsensitive - Whether to search insensitive to case
+     * @returns {string} The remaining string
+     */
+    static chopAfter(string: string, needle: string, caseInsensitive?: boolean): string;
+    /**
+     * Chop a string before the first occurrence of another string.
+     *
+     * @param {string} string - The string to search
+     * @param {string} needle - The bit to chop before
+     * @param {boolean} caseInsensitive - Whether to search insensitive to case
+     * @returns {string} The remaining string
+     */
+    static chopBefore(string: string, needle: string, caseInsensitive?: boolean): string;
     /**
      * Creates a type spec from a string. A type spec is an array of objects
      * defining the type of a value and whether an array is expected.

@@ -29,7 +29,7 @@ describe("Data", () => {
     })
 
     it("has correct emptyable types", () => {
-      const expected = ["String", "Array", "Object"]
+      const expected = ["String", "Array", "Object", "Map", "Set"]
       assert.deepEqual(Data.emptyableTypes, expected)
       assert.ok(Object.isFrozen(Data.emptyableTypes))
     })
@@ -309,16 +309,22 @@ describe("Data", () => {
       assert.equal(Data.isEmpty("   "), true) // whitespace-only
       assert.equal(Data.isEmpty([]), true)
       assert.equal(Data.isEmpty({}), true)
+      assert.equal(Data.isEmpty(new Map()), true)
+      assert.equal(Data.isEmpty(new Set()), true)
 
       // Non-empty values
       assert.equal(Data.isEmpty("hello"), false)
       assert.equal(Data.isEmpty([1]), false)
       assert.equal(Data.isEmpty({ a: 1 }), false)
+      assert.equal(Data.isEmpty(new Map([["key", "value"]])), false)
+      assert.equal(Data.isEmpty(new Set([1, 2, 3])), false)
       assert.equal(Data.isEmpty(0), false) // number not emptyable
 
       // Without checkForNothing
       assert.equal(Data.isEmpty(null, false), false)
       assert.equal(Data.isEmpty(undefined, false), false)
+      assert.equal(Data.isEmpty(new Map(), false), true) // still empty
+      assert.equal(Data.isEmpty(new Set(), false), true) // still empty
     })
   })
 
