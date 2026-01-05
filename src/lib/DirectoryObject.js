@@ -151,39 +151,7 @@ export default class DirectoryObject extends FS {
     return this.isCapped
       ?`[${this.constructor.name}: ${this.path} → ${this.real.path}]`
       :`[${this.constructor.name}: ${this.path}]`
-
-    return this.isCapped
-      ?`[${this.constructor.name}: ${this.path} → ${this.real.path}]`
-      :`[${this.constructor.name}: ${this.path}]`
   }
-
-  /**
-   * Returns a JSON representation of the DirectoryObject.
-   *
-   * @returns {object} JSON representation of the DirectoryObject
-   */
-  toJSON() {
-    return {
-      supplied: this.supplied,
-      path: this.path,
-      url: this.url.toString(),
-      name: this.name,
-      module: this.module,
-      extension: this.extension,
-      isFile: this.isFile,
-      isDirectory: this.isDirectory,
-      parent: this.parent?.path ?? null,
-    }
-  }
-
-  /**
-   * Custom inspect method for Node.js console.
-   *
-   * @returns {object} JSON representation of this object.
-   */
-  // [util.inspect.custom]() {
-  //   return this.toJSON()
-  // }
 
   /**
    * Checks if the directory exists (async).

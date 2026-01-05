@@ -198,29 +198,6 @@ export default class CappedDirectoryObject extends DirectoryObject {
   }
 
   /**
-   * Returns a JSON representation of the DirectoryObject.
-   *
-   * @returns {object} JSON representation of the DirectoryObject
-   */
-  toJSON() {
-    return {
-      supplied: this.supplied,
-      path: this.path,
-      url: this.url.toString(),
-      name: this.name,
-      module: this.module,
-      extension: this.extension,
-      isFile: this.isFile,
-      isDirectory: this.isDirectory,
-      parent: this.parent,
-      parentPath: this.parentPath,
-      capped: this.isCapped,
-      cap: this.cap,
-      real: this.real
-    }
-  }
-
-  /**
    * Override exists to use real filesystem path.
    *
    * @returns {Promise<boolean>} Whether the directory exists

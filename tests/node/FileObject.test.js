@@ -228,27 +228,6 @@ describe("FileObject", () => {
       assert.ok(str.includes("FileObject"))
       assert.ok(str.includes(file.path))
     })
-
-    it("toJSON returns object representation", () => {
-      const file = new FileObject("/test/path/file.txt")
-      const json = file.toJSON()
-
-      assert.equal(typeof json, "object")
-      assert.ok("supplied" in json)
-      assert.ok("path" in json)
-      assert.ok("url" in json)
-      assert.equal(typeof json.url, "string")
-      assert.ok(json.url.startsWith("file://"))
-      assert.ok("name" in json)
-      assert.ok("module" in json)
-      assert.ok("extension" in json)
-      assert.ok("isFile" in json)
-      assert.ok("isDirectory" in json)
-      assert.ok("parent" in json)
-
-      assert.equal(json.isFile, true)
-      assert.equal(json.isDirectory, false)
-    })
   })
 
   describe("file existence and permissions", () => {

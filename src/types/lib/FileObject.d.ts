@@ -14,7 +14,6 @@
  * @property {Promise<boolean>} exists - Whether the file exists (async)
  */
 export default class FileObject extends FS {
-    [x: number]: () => object;
     /**
      * Configuration mapping data types to their respective parser modules for loadData method.
      * Each parser module must have a .parse() method that accepts a string and returns parsed data.
@@ -31,12 +30,6 @@ export default class FileObject extends FS {
      * @param {DirectoryObject|string|null} [parent] - The parent directory (object or string)
      */
     constructor(fileName: string, parent?: DirectoryObject | string | null);
-    /**
-     * Returns a JSON representation of the FileObject.
-     *
-     * @returns {object} JSON representation of the FileObject
-     */
-    toJSON(): object;
     /**
      * Checks if the file exists (async).
      *

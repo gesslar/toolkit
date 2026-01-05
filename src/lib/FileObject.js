@@ -7,7 +7,6 @@
 import JSON5 from "json5"
 import fs from "node:fs/promises"
 import path from "node:path"
-import util from "node:util"
 import YAML from "yaml"
 import {URL} from "node:url"
 
@@ -135,36 +134,9 @@ export default class FileObject extends FS {
    * @returns {string} string representation of the FileObject
    */
   toString() {
-    return `[FileObject: ${this.path}]`
-  }
-
-  /**
-   * Returns a JSON representation of the FileObject.
-   *
-   * @returns {object} JSON representation of the FileObject
-   */
-  toJSON() {
-    return {
-      supplied: this.supplied,
-      path: this.path,
-      url: this.url.toString(),
-      name: this.name,
-      module: this.module,
-      extension: this.extension,
-      isFile: this.isFile,
-      isDirectory: this.isDirectory,
-      parentPath: this.parentPath,
-      parent: this.parent ? this.parent.path : null
-    }
-  }
-
-  /**
-   * Custom inspect method for Node.js console.
-   *
-   * @returns {object} JSON representation of this object.
-   */
-  [util.inspect.custom]() {
-    return this.toJSON()
+    return this.parent.isCapped
+      ?`[${this.constructor.name}: ${this.path} → ${this.real.path}]`
+      :`[${this.constructor.name}: ${this.path}]`
   }
 
   /**
