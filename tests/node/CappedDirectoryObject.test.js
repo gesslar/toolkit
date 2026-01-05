@@ -728,33 +728,6 @@ describe("CappedDirectoryObject", () => {
     })
   })
 
-  describe("inherited method - toJSON()", () => {
-    it("includes capped properties", () => {
-      const temp = new TempDirectoryObject("test-tojson")
-
-      cappedDirs.push(temp)
-
-      const json = temp.toJSON()
-
-      assert.ok(json.capped)
-      assert.ok(json.cap)
-      assert.ok(json.real)
-    })
-
-    it("returns object with standard properties", () => {
-      const temp = new TempDirectoryObject("test-json-props")
-
-      cappedDirs.push(temp)
-
-      const json = temp.toJSON()
-
-      assert.equal(typeof json.path, "string")
-      assert.equal(typeof json.name, "string")
-      assert.equal(json.isDirectory, true)
-      assert.equal(json.isFile, false)
-    })
-  })
-
   describe("edge cases and error handling", () => {
     it("handles special characters in paths", () => {
       const temp = new TempDirectoryObject("test-special-chars-$&")

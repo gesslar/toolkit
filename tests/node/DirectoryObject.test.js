@@ -154,27 +154,6 @@ describe("DirectoryObject", () => {
       assert.ok(str.includes("DirectoryObject"))
       assert.ok(str.includes(dir.path))
     })
-
-    it("toJSON returns object representation", () => {
-      const dir = new DirectoryObject("/test/path")
-      const json = dir.toJSON()
-
-      assert.equal(typeof json, "object")
-      assert.ok("supplied" in json)
-      assert.ok("path" in json)
-      assert.ok("url" in json)
-      assert.equal(typeof json.url, "string")
-      assert.ok(json.url.startsWith("file://"))
-      assert.ok("name" in json)
-      assert.ok("module" in json)
-      assert.ok("extension" in json)
-      assert.ok("isFile" in json)
-      assert.ok("isDirectory" in json)
-      assert.ok("parent" in json)
-
-      assert.equal(json.isFile, false)
-      assert.equal(json.isDirectory, true)
-    })
   })
 
   describe("exists check", () => {

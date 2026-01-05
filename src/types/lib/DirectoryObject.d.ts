@@ -64,17 +64,6 @@ export default class DirectoryObject extends FS {
      */
     constructor(directory?: string | null);
     /**
-     * Returns a JSON representation of the DirectoryObject.
-     *
-     * @returns {object} JSON representation of the DirectoryObject
-     */
-    toJSON(): object;
-    /**
-     * Custom inspect method for Node.js console.
-     *
-     * @returns {object} JSON representation of this object.
-     */
-    /**
      * Checks if the directory exists (async).
      *
      * @returns {Promise<boolean>} - A Promise that resolves to true or false
