@@ -4,7 +4,7 @@ import assert from "node:assert/strict"
 import {EventEmitter} from "node:events"
 import {describe, it} from "node:test"
 
-import {Sass,Util} from "../../src/index.js"
+import {Sass, Util} from "../../src/node/index.js"
 
 // Note: Base Util functionality is tested in browser tests
 // These tests only cover Node-specific features (hashOf, asyncEmit, asyncEmitQuack)

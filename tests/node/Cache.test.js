@@ -5,8 +5,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import {after,before,beforeEach,describe,it} from 'node:test'
 
-import Cache from '../../src/lib/Cache.js'
-import FileObject from '../../src/lib/FileObject.js'
+import {Cache, FileObject} from "../../src/node/index.js"
 
 describe('Cache', () => {
   let cache

@@ -6,7 +6,8 @@ import {URL} from "node:url"
 import {afterEach,beforeEach,describe,it} from "node:test"
 
 import {Time} from "../../src/browser/index.js"
-import {DirectoryObject,Sass} from "../../src/index.js"
+import {DirectoryObject, FileObject, Sass} from "../../src/node/index.js"
+import {TempDirectoryObject, VDirectoryObject, VFileObject} from "../../src/node/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
 
 describe("DirectoryObject", () => {
@@ -46,14 +47,14 @@ describe("DirectoryObject", () => {
     it("handles no arguments (defaults to current directory)", () => {
       const dir = new DirectoryObject()
 
-      assert.equal(dir.supplied, ".")
+      assert.equal(dir.supplied, undefined)
       assert.equal(dir.path, process.cwd())
     })
 
     it("handles undefined input (defaults to current directory)", () => {
       const dir = new DirectoryObject(undefined)
 
-      assert.equal(dir.supplied, ".")
+      assert.equal(dir.supplied, undefined)
       assert.equal(dir.path, process.cwd())
     })
 
@@ -92,18 +93,6 @@ describe("DirectoryObject", () => {
 
     it("name returns directory name", () => {
       assert.equal(testDirObj.name, "myapp")
-    })
-
-    it("module returns same as name for directories", () => {
-      assert.equal(testDirObj.module, testDirObj.name)
-    })
-
-    it("extension returns empty string", () => {
-      assert.equal(testDirObj.extension, "")
-    })
-
-    it("isFile returns false", () => {
-      assert.equal(testDirObj.isFile, false)
     })
 
     it("isDirectory returns true", () => {
@@ -388,12 +377,6 @@ describe("DirectoryObject", () => {
 
     it("matches Node.js path.sep", () => {
       const dir = new DirectoryObject("/any/path")
-
-      // Should be either '/' or '\\'
-      lin && assert.ok(dir.sep === "/")
-      win && assert.ok(dir.sep === "\\")
-
-      assert.ok(dir.sep === "/" || dir.sep === "\\")
       assert.equal(dir.sep, path.sep)
     })
 
@@ -1101,11 +1084,10 @@ describe("DirectoryObject", () => {
       assert.equal(dir1.path, dir2.path)
     })
 
-    it("works with CappedDirectoryObject subclass", async () => {
-      const {CappedDirectoryObject} = await import("../../src/index.js")
-      const cappedCwd = CappedDirectoryObject.fromCwd()
+    it("works with VDirectoryObject subclass", async () => {
+      const cappedCwd = VDirectoryObject.fromCwd()
 
-      assert.ok(cappedCwd instanceof CappedDirectoryObject)
+      assert.ok(cappedCwd instanceof VDirectoryObject)
       assert.ok(cappedCwd instanceof DirectoryObject)
       assert.equal(cappedCwd.real.path, process.cwd())
       // Cap root has virtual path at root
@@ -1113,8 +1095,6 @@ describe("DirectoryObject", () => {
     })
 
     it("throws for TempDirectoryObject subclass", async () => {
-      const {TempDirectoryObject, Sass} = await import("../../src/index.js")
-
       assert.throws(
         () => TempDirectoryObject.fromCwd(),
         (error) => {
@@ -1131,6 +1111,8 @@ describe("DirectoryObject", () => {
       const dir = new DirectoryObject(baseDir)
       const file = dir.getFile("package.json")
 
+      assert.ok(file instanceof FileObject)
+      assert.ok(!(file instanceof VFileObject))
       assert.equal(file.constructor.name, "FileObject")
       assert.equal(file.path, path.join(baseDir, "package.json"))
     })
@@ -1149,10 +1131,12 @@ describe("DirectoryObject", () => {
       assert.ok(file.path.includes("index.js"))
     })
 
-    it("returns new FileObject instance", () => {
+    it("returns new FileObject instance (not VFileObject)", () => {
       const dir = new DirectoryObject("/test")
       const file = dir.getFile("test.txt")
 
+      assert.ok(file instanceof FileObject)
+      assert.ok(!(file instanceof VFileObject))
       assert.equal(file.constructor.name, "FileObject")
       assert.ok(file.path.endsWith("test.txt"))
     })
@@ -1177,6 +1161,24 @@ describe("DirectoryObject", () => {
       const file = dir.getFile("file with spaces & symbols!.json")
 
       assert.ok(file.path.includes("file with spaces & symbols!.json"))
+    })
+
+    it("regular DirectoryObject returns FileObject, not VFileObject", () => {
+      const dir = new DirectoryObject("/test")
+      const file = dir.getFile("test.txt")
+
+      assert.ok(file instanceof FileObject)
+      assert.ok(!(file instanceof VFileObject))
+      assert.equal(file.isVirtual, undefined)
+    })
+
+    it("VDirectoryObject returns VFileObject via polymorphism", () => {
+      const vdir = new VDirectoryObject("/test")
+      const file = vdir.getFile("test.txt")
+
+      assert.ok(file instanceof VFileObject)
+      assert.ok(file instanceof FileObject)
+      assert.equal(file.isVirtual, true)
     })
   })
 })

@@ -3,7 +3,7 @@ import os from "node:os"
 import path from "node:path"
 import {afterEach,describe,it} from "node:test"
 
-import {CappedDirectoryObject,DirectoryObject,FS,Sass,TempDirectoryObject} from "../../src/index.js"
+import {VDirectoryObject,VFileObject,DirectoryObject,FileObject,Sass,TempDirectoryObject} from "../../src/node/index.js"
 
 describe("TempDirectoryObject", () => {
   /** @type {Array<TempDirectoryObject>} */
@@ -73,7 +73,7 @@ describe("TempDirectoryObject", () => {
     })
 
     it("rejects parent with non-tmpdir cap (security)", () => {
-      const badParent = new CappedDirectoryObject("/var/data")
+      const badParent = new VDirectoryObject("/var/data")
 
       assert.throws(
         () => new TempDirectoryObject("child", badParent),
@@ -167,6 +167,28 @@ describe("TempDirectoryObject", () => {
   })
 
   describe("getFile()", () => {
+    it("returns VFileObject instance", () => {
+      const temp = new TempDirectoryObject("test-temp")
+      tempDirs.push(temp)
+
+      const file = temp.getFile("test.txt")
+
+      assert.ok(file instanceof VFileObject)
+      assert.ok(file instanceof FileObject)
+      assert.equal(file.isVirtual, true)
+    })
+
+    it("VFileObject has real property", () => {
+      const temp = new TempDirectoryObject("test-temp")
+      tempDirs.push(temp)
+
+      const file = temp.getFile("test.txt")
+
+      assert.ok(file.real instanceof FileObject)
+      assert.ok(!(file.real instanceof VFileObject))
+      assert.notEqual(file.path, file.real.path)
+    })
+
     it("rejects absolute file paths", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
@@ -241,6 +263,23 @@ describe("TempDirectoryObject", () => {
       assert.equal(directories[0] instanceof TempDirectoryObject, true)
       assert.ok(directories[0].name.includes("subdir"))
     })
+
+    it("read() returns VFileObject instances for files", async () => {
+      const temp = new TempDirectoryObject("test-read-files")
+      tempDirs.push(temp)
+
+      const file = temp.getFile("test.txt")
+
+      await file.write("test content")
+
+      const {files} = await temp.read()
+
+      assert.equal(files.length, 1)
+      assert.ok(files[0] instanceof VFileObject)
+      assert.ok(files[0] instanceof FileObject)
+      assert.equal(files[0].name, "test.txt")
+      assert.equal(files[0].isVirtual, true)
+    })
   })
 
   describe("parent property (cap-aware)", () => {
@@ -269,7 +308,7 @@ describe("TempDirectoryObject", () => {
       assert.equal(current.parent, null)  // At cap, parent is null
     })
 
-    it("returns CappedDirectoryObject for subdirectory within cap", () => {
+    it("returns VDirectoryObject for subdirectory within cap", () => {
       const temp = new TempDirectoryObject("test-parent-sub")
       tempDirs.push(temp)
 
@@ -277,7 +316,7 @@ describe("TempDirectoryObject", () => {
       const parent = subdir.parent
 
       assert.ok(parent instanceof DirectoryObject)
-      assert.ok(parent instanceof CappedDirectoryObject)
+      assert.ok(parent instanceof VDirectoryObject)
       assert.equal(parent.path, temp.path)  // Parent returns virtual path (same as temp)
       assert.equal(parent.real.path, temp.real.path)  // Real path matches
     })
@@ -291,7 +330,7 @@ describe("TempDirectoryObject", () => {
 
       // Parent maintains the capped type
       assert.ok(parent instanceof TempDirectoryObject)
-      assert.ok(parent instanceof CappedDirectoryObject)
+      assert.ok(parent instanceof VDirectoryObject)
       assert.ok(parent instanceof DirectoryObject)
       // Maintains same cap as child
       assert.equal(parent.cap, subdir.cap)

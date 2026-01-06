@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import {describe,it} from "node:test"
 
-import {Sass, Term} from "../../src/index.js"
+import {Sass, Term} from "../../src/node/index.js"
 
 /**
  * Helper to capture console output for testing
