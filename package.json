@@ -25,27 +25,28 @@
     "node"
   ],
   "packageManager": "pnpm@10.26.2",
-  "main": "./src/index.js",
+  "main": "./src/node/index.js",
   "type": "module",
-  "types": "./src/types/index.d.ts",
+  "types": "./types/node/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/types/index.d.ts",
+      "types": "./types/node/index.d.ts",
       "browser": "./src/browser/index.js",
-      "node": "./src/index.js",
-      "default": "./src/index.js"
+      "node": "./src/node/index.js",
+      "default": "./src/node/index.js"
     },
     "./browser": {
-      "types": "./src/types/index.d.ts",
+      "types": "./types/browser/index.d.ts",
       "default": "./src/browser/index.js"
     },
     "./node": {
-      "types": "./src/types/index.d.ts",
-      "default": "./src/index.js"
+      "types": "./types/node/index.d.ts",
+      "default": "./src/node/index.js"
     }
   },
   "files": [
     "src/",
+    "types/",
     "UNLICENSE.txt"
   ],
   "engines": {
