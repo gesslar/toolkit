@@ -72,7 +72,7 @@ export class TestUtils {
     if (!(error instanceof expectedType)) {
       throw new Error(`Expected error of type ${expectedType.name}, got ${error.constructor.name}`)
     }
-    
+
     if (expectedMessage) {
       if (typeof expectedMessage === "string") {
         if (!error.message.includes(expectedMessage)) {
@@ -94,4 +94,22 @@ export class TestUtils {
   static async sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
+
+  /**
+   * Determines if a path is root. That is all. Eat your yoghurt.
+   *
+   * @static
+   * @param {string} p - The path to check if it's root.
+   * @returns {boolean} yay or nay tis rootzilla
+   */
+  static isRootPath = p => path.parse(p)?.root === p
+
+  /**
+   * Does this string make me look root beer?
+   *
+   * @static
+   * @param {string} p - The path to check if begins with a root.
+   * @returns {boolean} A boolean is a binary value of yes or no, true or false, chicken and egg.
+   */
+  static startsWithRoot = p => /^([a-zA-Z]:\\|\/)/.test(p)
 }

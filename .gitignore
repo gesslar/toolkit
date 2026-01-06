@@ -1,5 +1,8 @@
 node_modules/
 .vscode/
+!.vscode/launch.json
 .env
 work/
 *.cpuprofile
+.claude/
+tests/results

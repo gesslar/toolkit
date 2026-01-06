@@ -1,15 +1,22 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict"
-import {afterEach, before, describe, it} from "node:test"
+import {after, afterEach, before, describe, it} from "node:test"
+import {setupBrowserEnvironment, cleanupBrowserEnvironment} from "../helpers/browser-env.js"
 
 import {Notify} from "@gesslar/toolkit/browser"
 
 describe("Notify", () => {
   let originalWindow
+  let cleanup
 
   before(() => {
+    cleanup = setupBrowserEnvironment()
     originalWindow = globalThis.window
+  })
+
+  after(() => {
+    cleanupBrowserEnvironment(cleanup)
   })
 
   afterEach(() => {

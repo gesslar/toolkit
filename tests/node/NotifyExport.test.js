@@ -1,10 +1,8 @@
-#!/usr/bin/env node
-
 import assert from "node:assert/strict"
 import {EventEmitter} from "node:events"
 import {afterEach, describe, it} from "node:test"
 
-import {Notify} from "@gesslar/toolkit"
+import {Notify} from "../../src/node/index.js"
 
 describe("Notify (Node.js)", () => {
   let receivedEvents = []

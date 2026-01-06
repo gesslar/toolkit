@@ -1,10 +1,7 @@
-#!/usr/bin/env node
-
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
-import Sass from "../../src/lib/Sass.js"
-import Tantrum from "../../src/lib/Tantrum.js"
+import {Sass, Tantrum} from "../../src/node/index.js"
 
 // Helper for intercepting console output
 /**
@@ -23,7 +20,6 @@ function captureConsole(methods, fn) {
     console[method] = (...args) => {
       if(args.length > 0)
         calls.push(args.join(" "))
-
     }
   })
 

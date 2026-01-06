@@ -4,32 +4,26 @@
     "allowJs": true,
     "checkJs": false,
     "maxNodeModuleJsDepth": 0,
-
     // Type declaration generation
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-
     // Output configuration
-    "outDir": "./src/types",
+    "outDir": "./types",
     "rootDir": "./src",
-
     // Module system
     "module": "ES2022",
     "moduleResolution": "node",
     "target": "ES2022",
-
     // Strict type checking (helps generate better types)
     "strict": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
-
     // Additional checks
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-
     // Emit settings
     "stripInternal": false,
     "removeComments": false,
@@ -41,6 +35,7 @@
   "exclude": [
     "node_modules",
     "tests",
-    "src/types"
+    "work",
+    "types"
   ]
 }
