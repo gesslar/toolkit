@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import console from 'node:console'
 import {afterEach,beforeEach,describe,it} from 'node:test'
 
-import Glog from '../../src/lib/Glog.js'
+import {Glog} from "../../src/node/index.js"
 
 describe('Glog', () => {
   let originalConsoleLog

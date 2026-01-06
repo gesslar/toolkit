@@ -35,10 +35,9 @@ Includes all browser functionality plus Node.js-specific modules for file I/O, l
 | Name | Description |
 | ---- | ----------- |
 | Cache | Cache management for file I/O operations |
-| CappedDirectoryObject | Directory operations constrained to a specific tree |
 | DirectoryObject | Directory metadata and operations including path resolution, existence checks, and traversal |
 | FileObject | File system wrapper for file operations |
-| FS | Base class for file system operations with static utilities |
+| FileSystem | Base class for file system operations with static utilities |
 | Glog | Logging framework |
 | Notify | Event system wrapper for Node.js events |
 | Sass | Custom Error class with enhanced features |
@@ -47,6 +46,8 @@ Includes all browser functionality plus Node.js-specific modules for file I/O, l
 | Term | Terminal formatting and output utilities |
 | Util | General utility functions (Node-enhanced version) |
 | Valid | Validation and assertion methods |
+| VDirectoryObject | Directory operations constrained to a specific tree |
+| VFileObject | Virtual file operations for in-memory file handling |
 
 ## Installation
 
@@ -99,8 +100,8 @@ import { Data, Collection, Util } from '@gesslar/toolkit/browser'
 
 The browser version includes: Collection, Data, Disposer, HTML, Notify, Sass,
 Tantrum, Type (TypeSpec), Util, and Valid. Node-only modules (Cache,
-CappedDirectoryObject, DirectoryObject, FileObject, FS, Glog,
-TempDirectoryObject, Term) are not available in the browser version.
+DirectoryObject, FileObject, FileSystem, Glog, TempDirectoryObject, Term,
+VDirectoryObject, VFileObject) are not available in the browser version.
 
 ## Post Partum
 

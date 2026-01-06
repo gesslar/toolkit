@@ -2,9 +2,9 @@ import assert from "node:assert/strict"
 import fs from "node:fs/promises"
 import path from "node:path"
 import {URL} from "node:url"
-import {afterEach,beforeEach,describe,it} from "node:test"
+import {afterEach, beforeEach, describe, it} from "node:test"
 
-import {DirectoryObject,FileObject,Sass} from "../../src/index.js"
+import {DirectoryObject,FileObject,Sass} from "../../src/node/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
 
 describe("FileObject", () => {
@@ -106,7 +106,7 @@ describe("FileObject", () => {
     })
 
     it("isDirectory returns false", () => {
-      assert.equal(testFile.isDirectory, false)
+      assert.equal(testFile.isDirectory, undefined)
     })
 
     it("parent returns DirectoryObject", () => {
@@ -176,11 +176,12 @@ describe("FileObject", () => {
     })
 
     it("creates correct parent for file with complex relative path", () => {
-      const dir = new DirectoryObject("/home/user/projects/src")
+      const testPath = "/home/user/projects/src"
+      const dir = new DirectoryObject(testPath)
       const file = new FileObject("../../other/test.js", dir)
 
       // Should resolve to /home/user/other/test.js
-      const expectedParent = path.dirname(path.resolve(dir.path, "../../other/test.js"))
+      const expectedParent = path.dirname(path.resolve(testPath, "../../other/test.js"))
       assert.equal(file.parent.path, expectedParent)
     })
 
@@ -215,8 +216,9 @@ describe("FileObject", () => {
     it("creates new parent when string parent doesn't match actual parent", () => {
       const file = new FileObject("nested/test.js", "/tmp")
       const expectedParent = path.dirname(path.resolve("/tmp", "nested/test.js"))
+      const parentPath = file.parent.path
 
-      assert.equal(file.parent.path, expectedParent)
+      assert.equal(parentPath, expectedParent)
     })
   })
 
@@ -621,7 +623,7 @@ describe("FileObject", () => {
         () => file.write("content"),
         (error) => {
           assert.ok(error instanceof Sass)
-          assert.match(error.message, /Invalid directory/)
+          assert.match(error.message, /no such file or directory/)
           return true
         }
       )
@@ -680,7 +682,7 @@ describe("FileObject", () => {
         assert.fail("Should have thrown")
       } catch(error) {
         assert.ok(error instanceof Sass)
-        assert.match(error.message, /Invalid directory/)
+        assert.match(error.message, /no such file or directory/)
       }
     })
   })

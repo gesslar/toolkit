@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import {describe,it} from "node:test"
 
-import Sass from "../../src/lib/Sass.js"
+import {Sass} from "../../src/node/index.js"
 
 // Helpers for intercepting console output
 /**
@@ -20,7 +20,6 @@ function captureConsole(methods, fn) {
     console[method] = (...args) => {
       if(args.length > 0)
         calls.push(args.join(" "))
-
     }
   })
 

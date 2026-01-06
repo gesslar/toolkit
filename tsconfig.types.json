@@ -9,7 +9,7 @@
     "declarationMap": true,
     "emitDeclarationOnly": true,
     // Output configuration
-    "outDir": "./src/types",
+    "outDir": "./types",
     "rootDir": "./src",
     // Module system
     "module": "ES2022",
@@ -36,6 +36,6 @@
     "node_modules",
     "tests",
     "work",
-    "src/types"
+    "types"
   ]
 }

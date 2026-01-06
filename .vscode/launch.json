@@ -23,6 +23,17 @@
       "preLaunchTask": "clear"
     },
     {
+      "name": "Run VFO.mjs",
+      "type": "node",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/work/vfo.mjs",
+      "console": "integratedTerminal",
+      "preLaunchTask": "clear"
+    },
+    {
       "name": "Run Tests",
       "type": "node",
       "request": "launch",
@@ -43,20 +54,6 @@
       "runtimeExecutable": "node",
       "runtimeArgs": [
         "tests/node/Cache.test.js"
-      ],
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
-    },
-    {
-      "name": "Run Tests - Node - CappedDirectoryObject",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "tests/node/CappedDirectoryObject.test.js"
       ],
       "skipFiles": [
         "<node_internals>/**"
@@ -217,6 +214,34 @@
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
-    }
+    },
+    {
+      "name": "Run Tests - Node - VDirectoryObject",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "tests/node/VDirectoryObject.test.js"
+      ],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Run Tests - Node - VFileObject",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "tests/node/VFileObject.test.js"
+      ],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
   ]
 }
