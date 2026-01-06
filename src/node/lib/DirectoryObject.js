@@ -451,7 +451,9 @@ export default class DirectoryObject extends FS {
    * @returns {Promise<boolean>} True if the file exists, false otherwise
    */
   async hasFile(filename) {
-    const file = new FileObject(filename, this)
+    const file = this.isVirtual
+      ? new VFileObject(filename, this)
+      : new FileObject(filename, this)
 
     return await file.exists
   }
