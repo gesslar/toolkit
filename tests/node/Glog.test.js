@@ -233,7 +233,13 @@ describe('Glog', () => {
     it('withColors static method works', () => {
       const customColors = { debug: ['{F001}'], info: '{F002}' }
       Glog.withColors(customColors)
-      assert.equal(Glog.colors, customColors)
+
+      // Should merge with defaults, not replace
+      assert.equal(Glog.colors.debug, customColors.debug)
+      assert.equal(Glog.colors.info, customColors.info)
+      assert.equal(typeof Glog.colors.warn, 'string')
+      assert.equal(typeof Glog.colors.error, 'string')
+      assert.equal(typeof Glog.colors.reset, 'string')
 
       // Reset
       Glog.colors = null

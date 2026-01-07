@@ -25,20 +25,67 @@ declare class Glog {
     static stackTrace: boolean;
     static name: string;
     static tagsAsStrings: boolean;
-    static setLogPrefix(prefix: any): typeof Glog;
-    static setLogLevel(level: any): typeof Glog;
-    static withName(name: any): typeof Glog;
-    static withColors(colors?: {
-        debug: string[];
-        info: string;
-        warn: string;
-        error: string;
-        reset: string;
-    }): typeof Glog;
+    /**
+     * Set the log prefix for global usage
+     *
+     * @param {string} prefix - Prefix to prepend to all log messages
+     * @returns {typeof Glog} The Glog class for chaining
+     */
+    static setLogPrefix(prefix: string): typeof Glog;
+    /**
+     * Set the log level for global usage (0-5)
+     *
+     * @param {number} level - Log level (0 = off, 1-5 = increasing verbosity)
+     * @returns {typeof Glog} The Glog class for chaining
+     */
+    static setLogLevel(level: number): typeof Glog;
+    /**
+     * Set the logger name for global usage
+     *
+     * @param {string} name - Logger name to display in output
+     * @returns {typeof Glog} The Glog class for chaining
+     */
+    static withName(name: string): typeof Glog;
+    /**
+     * Enable colors for global usage
+     * Merges with existing color configuration (can pass partial config)
+     * Shape: {debug?: string[], info?: string, warn?: string, error?: string, reset?: string}
+     * - debug: Array of 5 color codes [level0, level1, level2, level3, level4]
+     * - info, warn, error, reset: Single color code strings
+     * Uses @gesslar/colours format like "{F196}"
+     *
+     * @param {object} [colors=loggerColours] - Color configuration object (partial or complete)
+     * @returns {typeof Glog} The Glog class for chaining
+     */
+    static withColors(colors?: object): typeof Glog;
+    /**
+     * Enable stack trace extraction for global usage
+     *
+     * @param {boolean} [enabled=true] - Whether to enable stack traces
+     * @returns {typeof Glog} The Glog class for chaining
+     */
     static withStackTrace(enabled?: boolean): typeof Glog;
+    /**
+     * Use tag names as strings instead of symbols for global usage
+     *
+     * @param {boolean} [enabled=false] - Whether to use string tags
+     * @returns {typeof Glog} The Glog class for chaining
+     */
     static withTagsAsStrings(enabled?: boolean): typeof Glog;
-    static create(options?: {}): Glog;
-    static execute(...args: any[]): void;
+    /**
+     * Create a new Glog instance with fluent configuration
+     *
+     * @param {object} [options={}] - Initial options
+     * @returns {Glog} New Glog instance
+     */
+    static create(options?: object): Glog;
+    /**
+     * Core execute method for simple static usage
+     * Can be called as: Glog(data) or Glog(level, data)
+     *
+     * @param {...unknown} args - Arguments (optional level number, then data)
+     */
+    static execute(...args: unknown[]): void;
     /**
      * Static version of colorize for global usage
      *
@@ -116,13 +163,18 @@ declare class Glog {
     withName(name: any): this;
     withLogLevel(level: any): this;
     withPrefix(prefix: any): this;
-    withColors(colors?: {
-        debug: string[];
-        info: string;
-        warn: string;
-        error: string;
-        reset: string;
-    }): this;
+    /**
+     * Enable colors for this logger instance
+     * Merges with existing color configuration (can pass partial config)
+     * Shape: {debug?: string[], info?: string, warn?: string, error?: string, reset?: string}
+     * - debug: Array of 5 color codes [level0, level1, level2, level3, level4]
+     * - info, warn, error, reset: Single color code strings
+     * Uses @gesslar/colours format like "{F196}"
+     *
+     * @param {object} [colors=loggerColours] - Color configuration object (partial or complete)
+     * @returns {Glog} This Glog instance for chaining
+     */
+    withColors(colors?: object): Glog;
     withStackTrace(enabled?: boolean): this;
     withTagsAsStrings(enabled?: boolean): this;
     noDisplayName(): this;
