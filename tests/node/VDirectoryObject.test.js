@@ -876,4 +876,196 @@ describe("VDirectoryObject", () => {
       assert.equal(temp.parent, null)
     })
   })
+
+  describe("async method - glob()", () => {
+    it("returns VFileObject instances for files", async () => {
+      const temp = new TempDirectoryObject("test-glob-vfiles")
+
+      cappedDirs.push(temp)
+
+      const subdir = temp.getDirectory("subdir")
+
+      await temp.getFile("root.json").write("{}")
+      await subdir.getFile("nested.json").write("{}")
+
+      const {files} = await temp.glob("**/*.json")
+
+      assert.equal(files.length, 2)
+      assert.ok(files.every(f => f instanceof VFileObject))
+      assert.ok(files.every(f => f.isVirtual === true))
+    })
+
+    it("VFileObject paths are relative to virtual directory, not concatenated", async () => {
+      const temp = new TempDirectoryObject("test-glob-paths")
+
+      cappedDirs.push(temp)
+
+      const subdir = temp.getDirectory("subdir")
+
+      await subdir.getFile("test.json").write("{}")
+
+      const {files} = await temp.glob("**/*.json")
+
+      assert.equal(files.length, 1)
+
+      const file = files[0]
+
+      // Virtual path should be clean, not concatenated
+      assert.ok(file.path.includes("subdir"))
+      assert.ok(file.path.includes("test.json"))
+      // Should NOT contain the real temp directory path
+      assert.ok(!file.path.includes(temp.real.path))
+    })
+
+    it("VFileObject real paths point to actual filesystem", async () => {
+      const temp = new TempDirectoryObject("test-glob-real")
+
+      cappedDirs.push(temp)
+
+      const subdir = temp.getDirectory("subdir")
+
+      await subdir.getFile("test.json").write("{}")
+
+      const {files} = await temp.glob("**/*.json")
+
+      assert.equal(files.length, 1)
+
+      const file = files[0]
+
+      // Real path should be absolute and contain temp directory
+      assert.ok(path.isAbsolute(file.real.path))
+      assert.ok(file.real.path.includes("test-glob-real"))
+      assert.ok(file.real.path.includes("subdir"))
+      assert.ok(file.real.path.includes("test.json"))
+    })
+
+    it("returns VDirectoryObject instances for directories", async () => {
+      const temp = new TempDirectoryObject("test-glob-vdirs")
+
+      cappedDirs.push(temp)
+
+      temp.getDirectory("dir1")
+      temp.getDirectory("dir2")
+
+      const {directories} = await temp.glob("*")
+
+      assert.ok(directories.length >= 2)
+      assert.ok(directories.every(d => d instanceof VDirectoryObject))
+      assert.ok(directories.every(d => d.isVirtual === true))
+    })
+
+    it("VDirectoryObject paths from glob are not concatenated", async () => {
+      const temp = new TempDirectoryObject("test-glob-dir-paths")
+
+      cappedDirs.push(temp)
+
+      temp.getDirectory("subdir")
+
+      const {directories} = await temp.glob("*")
+
+      const subdir = directories.find(d => d.path.endsWith("subdir"))
+
+      assert.ok(subdir)
+      // Virtual path should be clean
+      assert.ok(subdir.path.includes("subdir"))
+      // Should NOT contain the real temp directory path
+      assert.ok(!subdir.path.includes(temp.real.path))
+    })
+
+    it("glob results maintain correct parent references", async () => {
+      const temp = new TempDirectoryObject("test-glob-parents")
+
+      cappedDirs.push(temp)
+
+      const subdir = temp.getDirectory("subdir")
+
+      await subdir.getFile("test.json").write("{}")
+
+      const {files} = await temp.glob("**/*.json")
+
+      assert.equal(files.length, 1)
+
+      const file = files[0]
+
+      // Parent should be a VDirectoryObject (the subdir)
+      assert.ok(file.parent instanceof VDirectoryObject)
+      assert.ok(file.parent.path.includes("subdir"))
+      // Cap should be the root temp directory
+      assert.strictEqual(file.parent.cap, temp)
+    })
+
+    it("glob with nested structure returns correct paths", async () => {
+      const temp = new TempDirectoryObject("test-glob-nested")
+
+      cappedDirs.push(temp)
+
+      const level1 = temp.getDirectory("level1")
+      const level2 = level1.getDirectory("level2")
+
+      await level2.getFile("deep.json").write("{}")
+
+      const {files} = await temp.glob("**/*.json")
+
+      assert.equal(files.length, 1)
+
+      const file = files[0]
+
+      // Virtual path should show the nested structure cleanly
+      assert.ok(file.path.includes("level1"))
+      assert.ok(file.path.includes("level2"))
+      assert.ok(file.path.includes("deep.json"))
+
+      // Real path should point to actual filesystem
+      assert.ok(path.isAbsolute(file.real.path))
+      assert.ok(file.real.path.includes("test-glob-nested"))
+      assert.ok(file.real.path.includes("level1"))
+      assert.ok(file.real.path.includes("level2"))
+    })
+
+    it("glob on non-virtual DirectoryObject still works", async () => {
+      const testDir = await TestUtils.createTestDir("glob-non-virtual")
+
+      const filePath = path.join(testDir, "test.json")
+
+      await fs.writeFile(filePath, "{}")
+
+      const dir = new DirectoryObject(testDir)
+      const {files} = await dir.glob("*.json")
+
+      assert.equal(files.length, 1)
+      assert.ok(files[0] instanceof FileObject)
+      assert.ok(!(files[0] instanceof VFileObject))
+      assert.equal(files[0].isVirtual, undefined)
+
+      await TestUtils.cleanupTestDir(testDir)
+    })
+
+    it("glob pattern with wildcard returns all files and directories", async () => {
+      const temp = new TempDirectoryObject("test-glob-wildcard")
+
+      cappedDirs.push(temp)
+
+      await temp.getFile("file1.txt").write("content")
+      await temp.getFile("file2.json").write("{}")
+      temp.getDirectory("subdir")
+
+      const {files, directories} = await temp.glob("*")
+
+      assert.ok(files.length >= 2)
+      assert.ok(directories.length >= 1)
+    })
+
+    it("glob pattern with no matches returns empty arrays", async () => {
+      const temp = new TempDirectoryObject("test-glob-nomatch")
+
+      cappedDirs.push(temp)
+
+      await temp.getFile("test.txt").write("content")
+
+      const {files, directories} = await temp.glob("**/*.xml")
+
+      assert.equal(files.length, 0)
+      assert.equal(directories.length, 0)
+    })
+  })
 })

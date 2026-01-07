@@ -368,26 +368,29 @@ export default class DirectoryObject extends FS {
     const files = [], directories = []
     const virtual = this.isVirtual
 
-    found.forEach(e => {
+    for(const e of found) {
       if(e.isFile()) {
         const {name, parentPath} = e
         const resolved = FS.resolvePath(parentPath, name)
 
         const file = virtual
-          ? new VFileObject(resolved, this)
+          ? new VFileObject(path.relative(this.real.path, resolved), this)
           : new FileObject(resolved, this)
 
         files.push(file)
       } else if(e.isDirectory()) {
         const {name, parentPath} = e
         const resolved = FS.resolvePath(parentPath, name)
-        const directory = new this.constructor(resolved, this)
+        const relativePath = virtual
+          ? path.relative(this.real.path, resolved)
+          : resolved
+        const directory = new this.constructor(relativePath, this)
 
         directories.push(directory)
       } else {
         throw Sass.new(`wtf is this? ${e}`)
       }
-    })
+    }
 
     return {files, directories}
   }

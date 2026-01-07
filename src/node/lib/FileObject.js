@@ -118,7 +118,6 @@ export default class FileObject extends FS {
 
       if(Data.isType(parent, "DirectoryObject")) {
         const parentPath = parent.path
-        const parentParts = FS.pathParts(parentPath)
         const resolved = FS.resolvePath(parentPath, absOrRelPath)
         const parts = FS.pathParts(resolved)
 
