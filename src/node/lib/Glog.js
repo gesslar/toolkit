@@ -107,36 +107,77 @@ class Glog {
 
   // === STATIC CONFIGURATION (for global usage) ===
 
+  /**
+   * Set the log prefix for global usage
+   *
+   * @param {string} prefix - Prefix to prepend to all log messages
+   * @returns {typeof Glog} The Glog class for chaining
+   */
   static setLogPrefix(prefix) {
     this.logPrefix = prefix
 
     return this
   }
 
+  /**
+   * Set the log level for global usage (0-5)
+   *
+   * @param {number} level - Log level (0 = off, 1-5 = increasing verbosity)
+   * @returns {typeof Glog} The Glog class for chaining
+   */
   static setLogLevel(level) {
     this.logLevel = Data.clamp(level, 0, 5)
 
     return this
   }
 
+  /**
+   * Set the logger name for global usage
+   *
+   * @param {string} name - Logger name to display in output
+   * @returns {typeof Glog} The Glog class for chaining
+   */
   static withName(name) {
     this.name = name
 
     return this
   }
 
+  /**
+   * Enable colors for global usage
+   * Merges with existing color configuration (can pass partial config)
+   * Shape: {debug?: string[], info?: string, warn?: string, error?: string, reset?: string}
+   * - debug: Array of 5 color codes [level0, level1, level2, level3, level4]
+   * - info, warn, error, reset: Single color code strings
+   * Uses @gesslar/colours format like "{F196}"
+   *
+   * @param {object} [colors=loggerColours] - Color configuration object (partial or complete)
+   * @returns {typeof Glog} The Glog class for chaining
+   */
   static withColors(colors = loggerColours) {
-    this.colors = colors
+    this.colors = Object.assign({}, this.colors ?? loggerColours, colors)
 
     return this
   }
 
+  /**
+   * Enable stack trace extraction for global usage
+   *
+   * @param {boolean} [enabled=true] - Whether to enable stack traces
+   * @returns {typeof Glog} The Glog class for chaining
+   */
   static withStackTrace(enabled = true) {
     this.stackTrace = enabled
 
     return this
   }
 
+  /**
+   * Use tag names as strings instead of symbols for global usage
+   *
+   * @param {boolean} [enabled=false] - Whether to use string tags
+   * @returns {typeof Glog} The Glog class for chaining
+   */
   static withTagsAsStrings(enabled = false) {
     this.tagsAsStrings = enabled
 
@@ -145,6 +186,12 @@ class Glog {
 
   // === FLUENT INSTANCE CREATION ===
 
+  /**
+   * Create a new Glog instance with fluent configuration
+   *
+   * @param {object} [options={}] - Initial options
+   * @returns {Glog} New Glog instance
+   */
   static create(options = {}) {
     return new this(options)
   }
@@ -167,8 +214,19 @@ class Glog {
     return this
   }
 
+  /**
+   * Enable colors for this logger instance
+   * Merges with existing color configuration (can pass partial config)
+   * Shape: {debug?: string[], info?: string, warn?: string, error?: string, reset?: string}
+   * - debug: Array of 5 color codes [level0, level1, level2, level3, level4]
+   * - info, warn, error, reset: Single color code strings
+   * Uses @gesslar/colours format like "{F196}"
+   *
+   * @param {object} [colors=loggerColours] - Color configuration object (partial or complete)
+   * @returns {Glog} This Glog instance for chaining
+   */
   withColors(colors = loggerColours) {
-    this.#colors = colors
+    this.#colors = Object.assign({}, this.#colors ?? loggerColours, colors)
 
     return this
   }
@@ -319,7 +377,12 @@ class Glog {
     this.#vscodeError?.(JSON.stringify(message))
   }
 
-  // Core execute method for simple usage
+  /**
+   * Core execute method for simple static usage
+   * Can be called as: Glog(data) or Glog(level, data)
+   *
+   * @param {...unknown} args - Arguments (optional level number, then data)
+   */
   static execute(...args) {
     // Use static properties for global calls
     let level, rest
@@ -662,7 +725,7 @@ class Glog {
 
 // Wrap in proxy for dual usage
 export default new Proxy(Glog, {
-  apply(target, thisArg, argumentsList) {
+  apply(target, _thisArg, argumentsList) {
     return target.execute(...argumentsList)
   },
   construct(target, argumentsList) {
