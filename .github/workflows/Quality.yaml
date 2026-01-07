@@ -14,6 +14,6 @@ jobs:
     uses: gesslar/Maint/.github/workflows/Quality.yaml@main
     secrets: inherit
     with:
-      package_manager: "auto"
+      package_manager: auto
       perform_linting: "${{ vars.PERFORM_LINTING || 'yes' }}"
       perform_testing: "${{ vars.PERFORM_TESTING || 'yes' }}"

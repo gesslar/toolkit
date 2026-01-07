@@ -5,7 +5,7 @@
     "name": "gesslar",
     "url": "https://gesslar.dev"
   },
-  "version": "3.18.0",
+  "version": "3.19.0",
   "license": "Unlicense",
   "homepage": "https://github.com/gesslar/toolkit#readme",
   "repository": {
@@ -77,7 +77,7 @@
   "devDependencies": {
     "@gesslar/uglier": "^0.6.0",
     "eslint": "^9.39.2",
-    "happy-dom": "^20.0.11",
+    "happy-dom": "^20.1.0",
     "typescript": "^5.9.3"
   }
 }
