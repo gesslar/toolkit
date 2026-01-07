@@ -93,7 +93,12 @@ export default class FileObject extends FS {
      * @returns {DirectoryObject} The parent directory object
      */
     get parent(): DirectoryObject;
-    get parentPath(): any;
+    /**
+     * Returns the absolute path of the parent directory.
+     *
+     * @returns {string} The parent directory path
+     */
+    get parentPath(): string;
     /**
      * Check if a file can be read. Returns true if the file can be read, false
      *

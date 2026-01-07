@@ -105,7 +105,7 @@ export default class FileObject extends FS {
         return [
           parent.path === dir
             ? parent
-            : new DirectoryObject(dir),
+            : new parent.constructor(dir, parent),
           joined,
         ]
       }
@@ -236,6 +236,11 @@ export default class FileObject extends FS {
     return this.#meta.parent
   }
 
+  /**
+   * Returns the absolute path of the parent directory.
+   *
+   * @returns {string} The parent directory path
+   */
   get parentPath() {
     return this.#meta.parentPath
   }

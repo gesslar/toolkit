@@ -163,6 +163,30 @@ export default class DirectoryObject extends FS {
         directories: Array<DirectoryObject | VDirectoryObject>;
     }>;
     /**
+     * Recursively searches directory tree for files and directories matching a glob pattern.
+     * Unlike read(), this method searches recursively through subdirectories.
+     *
+     * Returns FileObject and DirectoryObject instances for regular directories.
+     * Returns VFileObject and VDirectoryObject instances when called on virtual directories.
+     *
+     * @async
+     * @param {string} [pat=""] - Glob pattern to filter results
+     * @returns {Promise<{files: Array<FileObject|VFileObject>, directories: Array<DirectoryObject|VDirectoryObject>}>} Object containing arrays of matching files and directories
+     * @throws {Sass} If an entry is neither a file nor directory
+     * @example
+     * const dir = new DirectoryObject("./src")
+     * const {files} = await dir.glob("**\/*.test.js")
+     * console.log(files) // All .test.js files in ./src and subdirectories
+     *
+     * @example
+     * // Find all package.json files recursively
+     * const {files} = await dir.glob("**\/package.json")
+     */
+    glob(pat?: string): Promise<{
+        files: Array<FileObject | VFileObject>;
+        directories: Array<DirectoryObject | VDirectoryObject>;
+    }>;
+    /**
      * Ensures a directory exists, creating it if necessary.
      * Gracefully handles the case where the directory already exists.
      *
