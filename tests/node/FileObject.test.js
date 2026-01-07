@@ -5,6 +5,7 @@ import {URL} from "node:url"
 import {afterEach, beforeEach, describe, it} from "node:test"
 
 import {DirectoryObject,FileObject,Sass} from "../../src/node/index.js"
+import {VDirectoryObject} from "../../src/node/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
 
 describe("FileObject", () => {
@@ -219,6 +220,17 @@ describe("FileObject", () => {
       const parentPath = file.parent.path
 
       assert.equal(parentPath, expectedParent)
+    })
+
+    it("uses parent's constructor for intermediate directories (inheritance)", () => {
+      const vdir = new VDirectoryObject("/home/user/projects")
+      const file = new FileObject("subdir/nested/test.js", vdir)
+
+      // Parent should be an instance of VDirectoryObject, not plain DirectoryObject
+      assert.ok(file.parent instanceof VDirectoryObject)
+      assert.ok(file.parent instanceof DirectoryObject)
+      assert.equal(file.parent.constructor.name, "VDirectoryObject")
+      assert.ok(file.parent.path.includes("nested"))
     })
   })
 

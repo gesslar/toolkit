@@ -283,6 +283,139 @@ describe("DirectoryObject", () => {
     })
   })
 
+  describe("glob method", () => {
+    let testDirObj
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("dir-glob-test")
+      testDirObj = new DirectoryObject(testDir)
+
+      // Create nested directory structure for testing
+      const nested1 = path.join(testDir, "src")
+      const nested2 = path.join(testDir, "src", "lib")
+      const nested3 = path.join(testDir, "tests")
+      await fs.mkdir(nested1)
+      await fs.mkdir(nested2)
+      await fs.mkdir(nested3)
+
+      // Create various files at different levels
+      await fs.writeFile(path.join(testDir, "README.md"), "readme")
+      await fs.writeFile(path.join(testDir, "package.json"), "{}")
+      await fs.writeFile(path.join(nested1, "index.js"), "code")
+      await fs.writeFile(path.join(nested1, "utils.js"), "code")
+      await fs.writeFile(path.join(nested2, "helper.js"), "code")
+      await fs.writeFile(path.join(nested2, "data.json"), "{}")
+      await fs.writeFile(path.join(nested3, "test.js"), "test")
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("finds all files recursively with ** pattern", async () => {
+      const {files} = await testDirObj.glob("**/*.js")
+
+      assert.ok(Array.isArray(files))
+      assert.equal(files.length, 4) // index.js, utils.js, helper.js, test.js
+      assert.ok(files.every(f => f.name.endsWith(".js")))
+    })
+
+    it("finds files in specific subdirectory", async () => {
+      const {files} = await testDirObj.glob("src/*.js")
+
+      assert.ok(Array.isArray(files))
+      assert.equal(files.length, 2) // index.js, utils.js (not helper.js in src/lib)
+      assert.ok(files.every(f => f.path.includes("src")))
+    })
+
+    it("finds nested files with deep pattern", async () => {
+      const {files} = await testDirObj.glob("src/**/*.js")
+
+      assert.ok(Array.isArray(files))
+      assert.equal(files.length, 3) // index.js, utils.js, helper.js
+    })
+
+    it("finds directories recursively", async () => {
+      const {directories} = await testDirObj.glob("**/*")
+
+      assert.ok(Array.isArray(directories))
+      assert.ok(directories.length >= 3) // src, lib, tests
+      assert.ok(directories.every(d => d instanceof DirectoryObject))
+    })
+
+    it("returns FileObject instances for regular directories", async () => {
+      const {files} = await testDirObj.glob("**/*.json")
+
+      assert.ok(files.every(f => f instanceof FileObject))
+      assert.ok(files.every(f => f.constructor.name === "FileObject"))
+    })
+
+    it("returns DirectoryObject instances", async () => {
+      const {directories} = await testDirObj.glob("src/*")
+
+      assert.ok(directories.every(d => d instanceof DirectoryObject))
+    })
+
+    it("handles empty pattern", async () => {
+      const {files, directories} = await testDirObj.glob("")
+
+      assert.ok(Array.isArray(files))
+      assert.ok(Array.isArray(directories))
+      // Empty pattern should return empty arrays (unlike read which returns immediate children)
+      assert.equal(files.length, 0)
+      assert.equal(directories.length, 0)
+    })
+
+    it("handles pattern with no matches", async () => {
+      const {files, directories} = await testDirObj.glob("**/*.xyz")
+
+      assert.equal(files.length, 0)
+      assert.equal(directories.length, 0)
+    })
+
+    it("finds files at root level only", async () => {
+      const {files} = await testDirObj.glob("*.md")
+
+      assert.equal(files.length, 1)
+      assert.equal(files[0].name, "README.md")
+    })
+
+    it("finds multiple file types with pattern", async () => {
+      const {files} = await testDirObj.glob("**/*.{js,json}")
+
+      assert.ok(files.length >= 5) // All .js and .json files
+      assert.ok(files.some(f => f.name.endsWith(".js")))
+      assert.ok(files.some(f => f.name.endsWith(".json")))
+    })
+
+    it("returns both files and directories in single call", async () => {
+      const result = await testDirObj.glob("src/**/*")
+
+      assert.ok(result.files)
+      assert.ok(result.directories)
+      assert.ok(result.files.length > 0)
+      assert.ok(result.directories.length > 0)
+    })
+
+    it("file paths are correctly resolved", async () => {
+      const {files} = await testDirObj.glob("src/lib/*.js")
+
+      assert.equal(files.length, 1)
+      assert.ok(files[0].path.includes("src"))
+      assert.ok(files[0].path.includes("lib"))
+      assert.ok(files[0].path.includes("helper.js"))
+    })
+
+    it("handles complex glob patterns", async () => {
+      const {files} = await testDirObj.glob("**/test*.js")
+
+      assert.ok(files.length >= 1)
+      assert.ok(files.every(f => f.name.startsWith("test")))
+    })
+  })
+
   describe("assureExists method", () => {
     let testDirPath, testDirObj
 

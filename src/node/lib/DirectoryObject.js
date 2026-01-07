@@ -318,13 +318,6 @@ export default class DirectoryObject extends FS {
         glob(pat, {
           cwd: this.isVirtual ? this.real?.path : this.path,
           withFileTypes,
-          // exclude: candidate => {
-          // // Only allow entries within this directory's URL
-          //   const candidateHref = candidate.url.href
-
-          //   // Must start with our URL + path separator, or be exactly our URL
-          //   return !candidateHref.startsWith(href + "/") && candidateHref !== href
-          // }
         })
       )
 
@@ -339,6 +332,62 @@ export default class DirectoryObject extends FS {
 
         return new this.constructor(dirPath, this)
       })
+
+    return {files, directories}
+  }
+
+  /**
+   * Recursively searches directory tree for files and directories matching a glob pattern.
+   * Unlike read(), this method searches recursively through subdirectories.
+   *
+   * Returns FileObject and DirectoryObject instances for regular directories.
+   * Returns VFileObject and VDirectoryObject instances when called on virtual directories.
+   *
+   * @async
+   * @param {string} [pat=""] - Glob pattern to filter results
+   * @returns {Promise<{files: Array<FileObject|VFileObject>, directories: Array<DirectoryObject|VDirectoryObject>}>} Object containing arrays of matching files and directories
+   * @throws {Sass} If an entry is neither a file nor directory
+   * @example
+   * const dir = new DirectoryObject("./src")
+   * const {files} = await dir.glob("**\/*.test.js")
+   * console.log(files) // All .test.js files in ./src and subdirectories
+   *
+   * @example
+   * // Find all package.json files recursively
+   * const {files} = await dir.glob("**\/package.json")
+   */
+  async glob(pat="") {
+    const withFileTypes = true
+    const found = await Array.fromAsync(
+      glob(pat, {
+        cwd: this.isVirtual ? this.real?.path : this.path,
+        withFileTypes,
+      })
+    )
+
+    const files = [], directories = []
+    const virtual = this.isVirtual
+
+    found.forEach(e => {
+      if(e.isFile()) {
+        const {name, parentPath} = e
+        const resolved = FS.resolvePath(parentPath, name)
+
+        const file = virtual
+          ? new VFileObject(resolved, this)
+          : new FileObject(resolved, this)
+
+        files.push(file)
+      } else if(e.isDirectory()) {
+        const {name, parentPath} = e
+        const resolved = FS.resolvePath(parentPath, name)
+        const directory = new this.constructor(resolved, this)
+
+        directories.push(directory)
+      } else {
+        throw Sass.new(`wtf is this? ${e}`)
+      }
+    })
 
     return {files, directories}
   }
