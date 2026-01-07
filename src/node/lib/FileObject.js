@@ -70,6 +70,24 @@ export default class FileObject extends FS {
   })
 
   /**
+   * Strip root from absolute path to make it relative.
+   * Used for virtual filesystem path resolution.
+   *
+   * @private
+   * @static
+   * @param {string} pathName - The path to convert
+   * @returns {string} Path with root stripped, or original if already relative
+   */
+  static #absoluteToRelative(pathName) {
+    if(!path.isAbsolute(pathName))
+      return pathName
+
+    const {root} = FS.pathParts(pathName)
+
+    return Data.chopLeft(pathName, root)
+  }
+
+  /**
    * Constructs a FileObject instance.
    *
    * @param {string} submitted - The file path
@@ -82,40 +100,42 @@ export default class FileObject extends FS {
     Valid.type(parent, "Null|String|DirectoryObject", {allowEmpty: false})
 
     const normalizedFile = FS.fixSlashes(submitted)
-    const absOrRel = path.isAbsolute(normalizedFile) && parent
-      ? FS.absoluteToRelative(normalizedFile, true)
+    const absOrRelPath = path.isAbsolute(normalizedFile) && parent
+      ? FileObject.#absoluteToRelative(normalizedFile)
       : normalizedFile
-    const {dir, base, ext, name} = FS.pathParts(absOrRel)
+    const {dir, base, ext, name} = FS.pathParts(absOrRelPath)
 
     const [parentObject, fullPath] = (() => {
       if(Data.isType(parent, "String")) {
-        const joined = FS.resolvePath(parent, absOrRel)
-        const {dir} = FS.pathParts(joined)
+        const resolved = FS.resolvePath(parent, absOrRelPath)
+        const {dir} = FS.pathParts(resolved)
 
         return [
           new DirectoryObject(dir),
-          joined,
+          resolved,
         ]
       }
 
       if(Data.isType(parent, "DirectoryObject")) {
-        const joined = FS.resolvePath(parent.path, absOrRel)
-        const {dir} = FS.pathParts(joined)
+        const parentPath = parent.path
+        const parentParts = FS.pathParts(parentPath)
+        const resolved = FS.resolvePath(parentPath, absOrRelPath)
+        const parts = FS.pathParts(resolved)
 
         return [
-          parent.path === dir
+          parent.path === parts.dir
             ? parent
-            : new parent.constructor(dir, parent),
-          joined,
+            : new parent.constructor(parts.dir, parent),
+          resolved,
         ]
       }
 
       const directory = new DirectoryObject(dir)
-      const joined = FS.resolvePath(directory.path, absOrRel)
+      const resolved = FS.resolvePath(directory.path, absOrRelPath)
 
       return [
         directory,
-        joined,
+        resolved,
       ]
     })()
 

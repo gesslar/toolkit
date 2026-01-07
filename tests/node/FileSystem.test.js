@@ -75,30 +75,66 @@ describe("FS", () => {
   })
 
   describe("path resolution and merging", () => {
-    it("relativeOrAbsolutePath returns absolute path for upward paths", () => {
+    it("relativeOrAbsolute returns absolute path for upward paths", () => {
       const from = new FileObject("/home/user/project/src/index.js")
       const to = new FileObject("/home/user/project/lib/utils.js")
 
-      const result = FileSystem.relativeOrAbsolutePath(from, to)
+      const result = FileSystem.relativeOrAbsolute(from, to)
       // Returns absolute path because relative would start with "../"
       assert.equal(result, path.resolve("/home/user/project/lib/utils.js"))
     })
 
-    it("relativeOrAbsolutePath uses containing directory for files", () => {
+    it("relativeOrAbsolute uses containing directory for files", () => {
       const from = new FileObject("/home/user/project/src/index.js")
       const to = new FileObject("/home/user/project/src/utils/helper.js")
+
+      const result = FileSystem.relativeOrAbsolute(from, to)
+
+      assert.equal(result, path.join("utils", "helper.js"))
+    })
+
+    it("relativeOrAbsolute returns absolute path when outside scope", () => {
+      const from = new FileObject("/home/user/project/src/index.js")
+      const to = new FileObject("/etc/config.txt")
+
+      const result = FileSystem.relativeOrAbsolute(from, to)
+      assert.equal(result, path.resolve("/etc/config.txt"))
+    })
+
+    it("relativeOrAbsolutePath returns relative path for strings within scope", () => {
+      const from = "/home/user/project/src"
+      const to = "/home/user/project/src/utils/helper.js"
 
       const result = FileSystem.relativeOrAbsolutePath(from, to)
 
       assert.equal(result, path.join("utils", "helper.js"))
     })
 
-    it("relativeOrAbsolutePath returns absolute path when outside scope", () => {
-      const from = new FileObject("/home/user/project/src/index.js")
-      const to = new FileObject("/etc/config.txt")
+    it("relativeOrAbsolutePath returns absolute path for strings with upward navigation", () => {
+      const from = "/home/user/project/src"
+      const to = "/home/user/project/lib/utils.js"
 
       const result = FileSystem.relativeOrAbsolutePath(from, to)
+
+      assert.equal(result, path.resolve("/home/user/project/lib/utils.js"))
+    })
+
+    it("relativeOrAbsolutePath returns absolute path for completely different paths", () => {
+      const from = "/home/user/project"
+      const to = "/etc/config.txt"
+
+      const result = FileSystem.relativeOrAbsolutePath(from, to)
+
       assert.equal(result, path.resolve("/etc/config.txt"))
+    })
+
+    it("relativeOrAbsolutePath handles same path", () => {
+      const from = "/home/user/project"
+      const to = "/home/user/project"
+
+      const result = FileSystem.relativeOrAbsolutePath(from, to)
+
+      assert.equal(result, "")
     })
 
     it("relativeTo returns relative path for FileObject within scope", () => {
@@ -212,11 +248,11 @@ describe("FS", () => {
       assert.equal(result, ".")
     })
 
-    it("relativeOrAbsolutePath returns absolute path for upward navigation", () => {
+    it("relativeOrAbsolute returns absolute path for upward navigation", () => {
       const from = new FileObject("/home/user/project/file1.txt")
       const to = new FileObject("/home/user/file2.txt")
 
-      const result = FileSystem.relativeOrAbsolutePath(from, to)
+      const result = FileSystem.relativeOrAbsolute(from, to)
       // Returns absolute path because relative would start with "../"
       assert.equal(result, path.resolve("/home/user/file2.txt"))
     })

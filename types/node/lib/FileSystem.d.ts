@@ -40,7 +40,19 @@ export default class FileSystem {
      * @param {FileObject|DirectoryObject} to - The target file or directory object
      * @returns {string} The relative path from `from` to `to`, or the absolute path if not reachable
      */
-    static relativeOrAbsolutePath(from: FileObject | DirectoryObject, to: FileObject | DirectoryObject): string;
+    static relativeOrAbsolute(from: FileObject | DirectoryObject, to: FileObject | DirectoryObject): string;
+    /**
+     * Computes the relative path from one file or directory to another.
+     *
+     * If the target is outside the source (i.e., the relative path starts with
+     * ".."), returns the absolute path to the target instead.
+     *
+     * @static
+     * @param {string} from - The source file or directory object
+     * @param {string} to - The target file or directory object
+     * @returns {string} The relative path from `from` to `to`, or the absolute path if not reachable
+     */
+    static relativeOrAbsolutePath(from: string, to: string): string;
     /**
      * Merge two paths by finding overlapping segments and combining them
      * efficiently
@@ -156,21 +168,6 @@ export default class FileSystem {
      * FS.virtualToRealPath(regular) // "/home/user/file.txt"
      */
     static virtualToRealPath(fileOrDirectoryObject: FileObject | DirectoryObject): string;
-    /**
-     * Convert an absolute path to a relative format by removing the root component.
-     * By default, keeps a leading separator (making it "absolute-like relative").
-     * Use forceActuallyRelative to get a truly relative path without leading separator.
-     *
-     * @static
-     * @param {string} pathToCheck - The path to convert (returned unchanged if already relative)
-     * @param {boolean} [forceActuallyRelative=false] - If true, removes leading separator for truly relative path
-     * @returns {string} The relative path (with or without leading separator based on forceActuallyRelative)
-     * @example
-     * FS.absoluteToRelative("/home/user/docs") // "/home/user/docs" (with leading /)
-     * FS.absoluteToRelative("/home/user/docs", true) // "home/user/docs" (truly relative)
-     * FS.absoluteToRelative("relative/path") // "relative/path" (unchanged)
-     */
-    static absoluteToRelative(pathToCheck: string, forceActuallyRelative?: boolean): string;
     /**
      * Compute the relative path from another file or directory to this instance.
      *
