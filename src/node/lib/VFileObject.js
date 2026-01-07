@@ -44,11 +44,10 @@ export default class VFileObject extends FileObject {
     super(fileName, parent)
 
     const parentRealPath = this.parent.real.path
-    const relative = FS.absoluteToRelative(this.path, true)
-    const resolved = FS.resolvePath(parentRealPath, relative)
-    const {base, dir} = FS.pathParts(resolved)
+    const resolved = FS.resolvePath(this.parent.path, fileName)
+    const {base} = FS.pathParts(resolved)
 
-    this.#real = new FileObject(base, dir)
+    this.#real = new FileObject(base, parentRealPath)
   }
 
   get isVirtual() {

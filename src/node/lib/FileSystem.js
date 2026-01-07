@@ -49,7 +49,7 @@ export default class FileSystem {
       1
     )
 
-    return FileSystem.relativeOrAbsolutePath(fileOrDirectoryObject, this)
+    return FileSystem.relativeOrAbsolute(fileOrDirectoryObject, this)
   }
 
   /**
@@ -104,7 +104,7 @@ export default class FileSystem {
    * @param {FileObject|DirectoryObject} to - The target file or directory object
    * @returns {string} The relative path from `from` to `to`, or the absolute path if not reachable
    */
-  static relativeOrAbsolutePath(from, to) {
+  static relativeOrAbsolute(from, to) {
     const fromBasePath = from.isDirectory
       ? from.path
       : from.parent?.path ?? path.dirname(from.path)
@@ -113,6 +113,25 @@ export default class FileSystem {
 
     return relative.startsWith("..")
       ? to.path
+      : relative
+  }
+
+  /**
+   * Computes the relative path from one file or directory to another.
+   *
+   * If the target is outside the source (i.e., the relative path starts with
+   * ".."), returns the absolute path to the target instead.
+   *
+   * @static
+   * @param {string} from - The source file or directory object
+   * @param {string} to - The target file or directory object
+   * @returns {string} The relative path from `from` to `to`, or the absolute path if not reachable
+   */
+  static relativeOrAbsolutePath(from, to) {
+    const relative = path.relative(from, to)
+
+    return relative.startsWith("..")
+      ? to
       : relative
   }
 
@@ -355,33 +374,5 @@ export default class FileSystem {
     }
 
     return this.resolvePath(cap, target)
-  }
-
-  /**
-   * Convert an absolute path to a relative format by removing the root component.
-   * By default, keeps a leading separator (making it "absolute-like relative").
-   * Use forceActuallyRelative to get a truly relative path without leading separator.
-   *
-   * @static
-   * @param {string} pathToCheck - The path to convert (returned unchanged if already relative)
-   * @param {boolean} [forceActuallyRelative=false] - If true, removes leading separator for truly relative path
-   * @returns {string} The relative path (with or without leading separator based on forceActuallyRelative)
-   * @example
-   * FS.absoluteToRelative("/home/user/docs") // "/home/user/docs" (with leading /)
-   * FS.absoluteToRelative("/home/user/docs", true) // "home/user/docs" (truly relative)
-   * FS.absoluteToRelative("relative/path") // "relative/path" (unchanged)
-   */
-  static absoluteToRelative(pathToCheck, forceActuallyRelative=false) {
-    if(!path.isAbsolute(pathToCheck))
-      return pathToCheck
-
-    const {root} = this.pathParts(pathToCheck)
-    const sep = path.sep
-    const chopped = Data.chopLeft(pathToCheck, root)
-    const absolute = forceActuallyRelative
-      ? chopped
-      : Data.prepend(chopped, sep)
-
-    return absolute
   }
 }
