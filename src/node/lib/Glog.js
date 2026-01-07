@@ -30,6 +30,7 @@ export const loggerColours = {
   info: "{F036}",    // Medium Spring Green
   warn: "{F214}",    // Orange1
   error: "{F196}",   // Red1
+  success: "{F046}", // Green (Bright Green)
   reset: "{/}",      // Reset
 }
 
@@ -446,16 +447,7 @@ class Glog {
    * @param {...unknown} args - Additional arguments
    */
   success(message, ...args) {
-    const name = this.#name || Glog.name || "Log"
-    const useStrings = this.#tagsAsStrings || Glog.tagsAsStrings
-    const showName = this.#displayName
-    const tag = useStrings ? "Success" : logSymbols.success
-    const namePrefix = showName ? `[${name}] ` : ""
-    const formatted = useStrings
-      ? c`${namePrefix}{success}${tag}{/}: ${message}`
-      : c`${namePrefix}{success}${tag}{/} ${message}`
-
-    Term.log(formatted, ...args)
+    Term.log(this.#compose("success", message), ...args)
   }
 
   /**
@@ -465,12 +457,14 @@ class Glog {
    * @param {...unknown} args - Additional arguments to log
    */
   static success(message, ...args) {
+    const colors = this.colors || loggerColours
     const name = this.name || "Log"
     const useStrings = this.tagsAsStrings
     const tag = useStrings ? "Success" : logSymbols.success
+    const colorCode = colors.success || "{F046}"
     const formatted = useStrings
-      ? c`[${name}] {success}${tag}{/}: ${message}`
-      : c`[${name}] {success}${tag}{/} ${message}`
+      ? c`[${name}] ${colorCode}${tag}{/}: ${message}`
+      : c`[${name}] ${colorCode}${tag}{/} ${message}`
 
     Term.log(formatted, ...args)
   }

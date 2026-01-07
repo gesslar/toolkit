@@ -3,6 +3,7 @@ export namespace loggerColours {
     let info: string;
     let warn: string;
     let error: string;
+    let success: string;
     let reset: string;
 }
 export namespace logSymbols {
@@ -14,7 +15,8 @@ export namespace logSymbols {
     export { warn_1 as warn };
     let error_1: string;
     export { error_1 as error };
-    export let success: string;
+    let success_1: string;
+    export { success_1 as success };
 }
 declare const _default: typeof Glog;
 export default _default;
@@ -268,7 +270,7 @@ declare class Glog {
      *
      * @returns {import('@gesslar/colours')} The colours template function from \@gesslar/colours
      */
-    get colours(): typeof import("@gesslar/colours");
+    get colours(): any;
     /**
      * Get a raw logger that outputs without name/tag formatting
      *
