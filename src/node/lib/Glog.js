@@ -79,6 +79,7 @@ class Glog {
   static stackTrace = false
   static name = ""
   static tagsAsStrings = false
+  static symbols = null
 
   // Instance properties (for configured loggers)
   #logLevel = 0
@@ -88,6 +89,7 @@ class Glog {
   #name = ""
   #tagsAsStrings = false
   #displayName = true
+  #symbols = null
   #vscodeError = null
   #vscodeWarn = null
   #vscodeInfo = null
@@ -101,6 +103,7 @@ class Glog {
    * @param {number} [options.logLevel] - Alias for debugLevel
    * @param {string} [options.prefix] - Prefix to prepend to all log messages
    * @param {object} [options.colours] - Colour configuration object
+   * @param {object} [options.symbols] - Custom log level symbols (e.g., {info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
    * @param {boolean} [options.stackTrace=false] - Enable stack trace extraction
    * @param {boolean} [options.tagsAsStrings=false] - Use string tags instead of symbols
    * @param {boolean} [options.displayName=true] - Display logger name in output
@@ -135,6 +138,7 @@ class Glog {
    * @param {number} [options.logLevel] - Alias for debugLevel
    * @param {string} [options.prefix] - Prefix to prepend to all log messages
    * @param {object} [options.colours] - Colour configuration object
+   * @param {object} [options.symbols] - Custom log level symbols (e.g., {info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
    * @param {boolean} [options.stackTrace] - Enable stack trace extraction
    * @param {boolean} [options.tagsAsStrings] - Use string tags instead of symbols
    * @param {boolean} [options.displayName] - Display logger name in output
@@ -145,6 +149,7 @@ class Glog {
     this.#logLevel = options.debugLevel ?? options.logLevel ?? this.#logLevel
     this.#logPrefix = options.prefix ?? this.#logPrefix
     this.#colours = options.colours ?? this.#colours
+    this.#symbols = options.symbols ?? this.#symbols
     this.#stackTrace = options.stackTrace ?? this.#stackTrace
     this.#tagsAsStrings = options.tagsAsStrings ?? this.#tagsAsStrings
     this.#displayName = options.displayName ?? this.#displayName
@@ -227,6 +232,23 @@ class Glog {
    */
   static withTagsAsStrings(enabled = false) {
     this.tagsAsStrings = enabled
+
+    return this
+  }
+
+  /**
+   * Customize log level symbols for global usage
+   * Merges with existing symbols (can pass partial config)
+   * Only affects output when tagsAsStrings is false
+   * Shape: {debug?: string, info?: string, warn?: string, error?: string, success?: string}
+   *
+   * @param {object} [symbols=logSymbols] - Symbol configuration object (partial or complete)
+   * @returns {typeof Glog} The Glog class for chaining
+   * @example
+   * Glog.withSymbols({info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
+   */
+  static withSymbols(symbols = logSymbols) {
+    this.symbols = Object.assign({}, this.symbols ?? logSymbols, symbols)
 
     return this
   }
@@ -369,6 +391,23 @@ class Glog {
   }
 
   /**
+   * Customize log level symbols for this logger instance
+   * Merges with existing symbols (can pass partial config)
+   * Only affects output when tagsAsStrings is false
+   * Shape: {debug?: string, info?: string, warn?: string, error?: string, success?: string}
+   *
+   * @param {object} [symbols=logSymbols] - Symbol configuration object (partial or complete)
+   * @returns {Glog} This Glog instance for chaining
+   * @example
+   * logger.withSymbols({info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
+   */
+  withSymbols(symbols = logSymbols) {
+    this.#symbols = Object.assign({}, this.#symbols ?? logSymbols, symbols)
+
+    return this
+  }
+
+  /**
    * Disable displaying the logger name in output for this instance
    *
    * @returns {Glog} This Glog instance for chaining
@@ -474,7 +513,8 @@ class Glog {
     const name = this.#name || Glog.name || "Log"
     const useStrings = this.#tagsAsStrings || Glog.tagsAsStrings
     const showName = this.#displayName
-    const tag = useStrings ? Util.capitalize(level) : logSymbols[level]
+    const symbols = this.#symbols || Glog.symbols || logSymbols
+    const tag = useStrings ? Util.capitalize(level) : symbols[level]
     const namePrefix = showName ? `[${name}] ` : ""
 
     if(!colours) {
@@ -693,7 +733,8 @@ class Glog {
     const colours = this.colours || loggerColours
     const name = this.name || "Log"
     const useStrings = this.tagsAsStrings
-    const tag = useStrings ? "Success" : logSymbols.success
+    const symbols = this.symbols || logSymbols
+    const tag = useStrings ? "Success" : symbols.success
     const colourCode = colours.success || "{F046}"
     const formatted = useStrings
       ? c`[${name}] ${colourCode}${tag}{/}: ${message}`
@@ -731,7 +772,8 @@ class Glog {
     const colours = this.colours || loggerColours
     const name = this.name || "Log"
     const useStrings = this.tagsAsStrings
-    const tag = useStrings ? "Debug" : logSymbols.debug
+    const symbols = this.symbols || logSymbols
+    const tag = useStrings ? "Debug" : symbols.debug
     const colourCode = colours.debug[level] || colours.debug[0]
     const label = useStrings
       ? c`[${name}] ${colourCode}${tag}{/}: ${message}`
@@ -749,7 +791,8 @@ class Glog {
     const colours = this.colours || loggerColours
     const name = this.name || "Log"
     const useStrings = this.tagsAsStrings
-    const tag = useStrings ? "Info" : logSymbols.info
+    const symbols = this.symbols || logSymbols
+    const tag = useStrings ? "Info" : symbols.info
     const label = useStrings
       ? c`[${name}] ${colours.info}${tag}{/}: ${message}`
       : c`[${name}] ${colours.info}${tag}{/} ${message}`
@@ -765,7 +808,8 @@ class Glog {
   static groupSuccess(message) {
     const name = this.name || "Log"
     const useStrings = this.tagsAsStrings
-    const tag = useStrings ? "Success" : logSymbols.success
+    const symbols = this.symbols || logSymbols
+    const tag = useStrings ? "Success" : symbols.success
     const label = useStrings
       ? c`[${name}] {success}${tag}{/}: ${message}`
       : c`[${name}] {success}${tag}{/} ${message}`
@@ -822,7 +866,8 @@ class Glog {
     const name = this.#name || Glog.name || "Log"
     const useStrings = this.#tagsAsStrings || Glog.tagsAsStrings
     const showName = this.#displayName
-    const tag = useStrings ? "Success" : logSymbols.success
+    const symbols = this.#symbols || Glog.symbols || logSymbols
+    const tag = useStrings ? "Success" : symbols.success
     const namePrefix = showName ? `[${name}] ` : ""
     const label = useStrings
       ? c`${namePrefix}{success}${tag}{/}: ${message}`
