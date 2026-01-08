@@ -22,8 +22,8 @@ importers:
         version: 2.8.2
     devDependencies:
       '@gesslar/uglier':
-        specifier: ^0.6.0
-        version: 0.6.0(eslint@9.39.2)
+        specifier: ^1.0.0
+        version: 1.0.0(eslint@9.39.2)
       eslint:
         specifier: ^9.39.2
         version: 9.39.2
@@ -96,8 +96,8 @@ packages:
     resolution: {integrity: sha512-XMBzRc933a2nb+XMrrZGx8xLekFf3SBXlxpeX1hPHKOAZOyCT2g6vve/xnAZ47CsTWfeqWD5Qg9ZQpGZMlsquw==}
     engines: {node: '>=22'}
 
-  '@gesslar/uglier@0.6.0':
-    resolution: {integrity: sha512-Ui4SVV3JZmT4TVTMyBn7ck7KnxW2RvJYg+Ti9L9WFo9CiGquc+zIa/NfHL/mbTR5yu8JEG8RNZzaHk4cK2OTPQ==}
+  '@gesslar/uglier@1.0.0':
+    resolution: {integrity: sha512-jh+rsmSWQFGeoTlkgWQi/weo4wPbxCGGM0bs1i0BJz+4SUZbtSEOdqFl7r6COuNkTSng8lMP7LHzTf73bs3elg==}
     engines: {node: '>=22'}
     hasBin: true
     peerDependencies:
@@ -605,7 +605,7 @@ snapshots:
       json5: 2.2.3
       yaml: 2.8.2
 
-  '@gesslar/uglier@0.6.0(eslint@9.39.2)':
+  '@gesslar/uglier@1.0.0(eslint@9.39.2)':
     dependencies:
       '@gesslar/colours': 0.7.1
       '@gesslar/toolkit': 3.19.0
