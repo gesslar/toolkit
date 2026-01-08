@@ -12,6 +12,14 @@ export default class Promised {
      */
     static await(promises: Array<Promise<unknown>>): Promise<Array<unknown>>;
     /**
+     * Returns the first promise to resolve or reject from an array of promises.
+     * Wrapper around Promise.race for consistency with other utility methods.
+     *
+     * @param {Array<Promise<unknown>>} promises - Array of promises to race
+     * @returns {Promise<unknown>} Result of the first settled promise
+     */
+    static race(promises: Array<Promise<unknown>>): Promise<unknown>;
+    /**
      * Settles all promises (both fulfilled and rejected) in parallel.
      * Wrapper around Promise.allSettled for consistency with other utility methods.
      *
@@ -107,13 +115,5 @@ export default class Promised {
         value?: unknown;
         reason?: unknown;
     }>): void;
-    /**
-     * Returns the first promise to resolve or reject from an array of promises.
-     * Wrapper around Promise.race for consistency with other utility methods.
-     *
-     * @param {Array<Promise<unknown>>} promises - Array of promises to race
-     * @returns {Promise<unknown>} Result of the first settled promise
-     */
-    static race(promises: Array<Promise<unknown>>): Promise<unknown>;
 }
 //# sourceMappingURL=Promised.d.ts.map

@@ -1,4 +1,5 @@
 import Tantrum from "./Tantrum.js"
+import Valid from "./Valid.js"
 
 /**
  * Utility class providing helper functions for working with Promises,
@@ -13,7 +14,22 @@ export default class Promised {
    * @returns {Promise<Array<unknown>>} Results of all promises
    */
   static async await(promises) {
+    Valid.type(promises, "Promise[]")
+
     return await Promise.all(promises)
+  }
+
+  /**
+   * Returns the first promise to resolve or reject from an array of promises.
+   * Wrapper around Promise.race for consistency with other utility methods.
+   *
+   * @param {Array<Promise<unknown>>} promises - Array of promises to race
+   * @returns {Promise<unknown>} Result of the first settled promise
+   */
+  static async race(promises) {
+    Valid.type(promises, "Promise[]")
+
+    return await Promise.race(promises)
   }
 
   /**
@@ -24,6 +40,8 @@ export default class Promised {
    * @returns {Promise<Array<{status: 'fulfilled'|'rejected', value?: unknown, reason?: unknown}>>} Results of all settled promises with status and value/reason
    */
   static async settle(promises) {
+    Valid.type(promises, "Promise[]")
+
     return await Promise.allSettled(promises)
   }
 
@@ -101,20 +119,12 @@ export default class Promised {
    * @throws {Tantrum} Throws a Tantrum error with rejection reasons
    */
   static throw(message="GIGO", settled) {
+    Valid.type(message, "String", {allowEmpty: false})
+    Valid.type(settled, "Array")
+
     const rejected = this.rejected(settled)
     const reasons = this.reasons(rejected)
 
     throw Tantrum.new(message, reasons)
-  }
-
-  /**
-   * Returns the first promise to resolve or reject from an array of promises.
-   * Wrapper around Promise.race for consistency with other utility methods.
-   *
-   * @param {Array<Promise<unknown>>} promises - Array of promises to race
-   * @returns {Promise<unknown>} Result of the first settled promise
-   */
-  static async race(promises) {
-    return await Promise.race(promises)
   }
 }

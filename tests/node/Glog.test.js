@@ -230,19 +230,19 @@ describe('Glog', () => {
       Glog.name = ''
     })
 
-    it('withColors static method works', () => {
-      const customColors = { debug: ['{F001}'], info: '{F002}' }
-      Glog.withColors(customColors)
+    it('withColours static method works', () => {
+      const customColours = { debug: ['{F001}'], info: '{F002}' }
+      Glog.withColours(customColours)
 
       // Should merge with defaults, not replace
-      assert.equal(Glog.colors.debug, customColors.debug)
-      assert.equal(Glog.colors.info, customColors.info)
-      assert.equal(typeof Glog.colors.warn, 'string')
-      assert.equal(typeof Glog.colors.error, 'string')
-      assert.equal(typeof Glog.colors.reset, 'string')
+      assert.equal(Glog.colours.debug, customColours.debug)
+      assert.equal(Glog.colours.info, customColours.info)
+      assert.equal(typeof Glog.colours.warn, 'string')
+      assert.equal(typeof Glog.colours.error, 'string')
+      assert.equal(typeof Glog.colours.reset, 'string')
 
       // Reset
-      Glog.colors = null
+      Glog.colours = null
     })
 
     it('withStackTrace static method works', () => {
@@ -272,8 +272,8 @@ describe('Glog', () => {
       assert.equal(consoleOutput.length, 1)
     })
 
-    it('static colorize method is accessible', () => {
-      assert.equal(typeof Glog.colorize, 'function')
+    it('static colourize method is accessible', () => {
+      assert.equal(typeof Glog.colourize, 'function')
     })
 
     it('static setAlias method is accessible and functional', () => {
@@ -288,8 +288,8 @@ describe('Glog', () => {
       assert.equal(typeof Glog.logLevel, 'number')
       assert.equal(typeof Glog.logPrefix, 'string')
 
-      // colors, stackTrace, and name can be various types
-      assert.ok('colors' in Glog)
+      // colours, stackTrace, and name can be various types
+      assert.ok('colours' in Glog)
       assert.ok('stackTrace' in Glog)
       assert.ok('name' in Glog)
     })
@@ -388,12 +388,172 @@ describe('Glog', () => {
       )
     })
   })
+
+  describe('use() method for temporary prefixes', () => {
+    let originalConsoleInfo, originalConsoleWarn, originalConsoleError
+    let infoOutput, warnOutput, errorOutput
+
+    beforeEach(() => {
+      // Mock console methods for different log types
+      infoOutput = []
+      warnOutput = []
+      errorOutput = []
+
+      originalConsoleInfo = console.info
+      originalConsoleWarn = console.warn
+      originalConsoleError = console.error
+
+      console.info = (...args) => infoOutput.push(args)
+      console.warn = (...args) => warnOutput.push(args)
+      console.error = (...args) => errorOutput.push(args)
+    })
+
+    afterEach(() => {
+      console.info = originalConsoleInfo
+      console.warn = originalConsoleWarn
+      console.error = originalConsoleError
+    })
+
+    it('creates a temporary scoped logger with custom prefix', () => {
+      const logger = Glog.create({name: 'Test'})
+
+      logger.use("=>").info("Indented message")
+
+      assert.equal(infoOutput.length, 1)
+      assert.equal(infoOutput[0][0], "=>Indented message")
+    })
+
+    it('does not affect subsequent regular logger calls', () => {
+      const logger = Glog.create({name: 'Test'})
+
+      logger.use("=>").info("With prefix")
+      logger.info("Normal message")
+
+      assert.equal(infoOutput.length, 2)
+      assert.equal(infoOutput[0][0], "=>With prefix")
+      // Second call should have formatted output with name/tags
+      assert.ok(infoOutput[1][0].includes('Test'))
+    })
+
+    it('works with static Glog.use()', () => {
+      Glog.use("-->").info("Arrow prefix")
+
+      assert.equal(infoOutput.length, 1)
+      assert.equal(infoOutput[0][0], "-->Arrow prefix")
+    })
+
+    it('supports all log methods (info, warn, error)', () => {
+      const logger = Glog.create({name: 'Test'})
+
+      logger.use("=>").info("Info message")
+      logger.use("=>").warn("Warning message")
+      logger.use("=>").error("Error message")
+
+      assert.equal(infoOutput.length, 1)
+      assert.equal(infoOutput[0][0], "=>Info message")
+
+      assert.equal(warnOutput.length, 1)
+      assert.equal(warnOutput[0][0], "=>Warning message")
+
+      assert.equal(errorOutput.length, 1)
+      assert.equal(errorOutput[0][0], "=>Error message")
+    })
+
+    it('handles different prefix patterns', () => {
+      const logger = Glog.create()
+
+      logger.use("  ").info("Two spaces")
+      logger.use("\t").info("Tab character")
+      logger.use(">>").info("Arrows")
+
+      assert.equal(infoOutput.length, 3)
+      assert.equal(infoOutput[0][0], "  Two spaces")
+      assert.equal(infoOutput[1][0], "\tTab character")
+      assert.equal(infoOutput[2][0], ">>Arrows")
+    })
+
+    it('supports success method with custom prefix', () => {
+      const logger = Glog.create()
+
+      logger.use("✓ ").success("Success message")
+
+      assert.equal(consoleOutput.length, 1)
+      assert.equal(consoleOutput[0][0], "✓ Success message")
+    })
+
+    it('is truly scoped - cannot be reused', () => {
+      const logger = Glog.create()
+
+      // First use
+      logger.use("=>").info("First")
+      // Second use requires new .use() call
+      logger.use("=>").info("Second")
+
+      assert.equal(infoOutput.length, 2)
+      assert.equal(infoOutput[0][0], "=>First")
+      assert.equal(infoOutput[1][0], "=>Second")
+    })
+
+    it('handles debug method with level filtering', () => {
+      let debugOutput = []
+      const originalConsoleDebug = console.debug
+
+      console.debug = (...args) => debugOutput.push(args)
+
+      try {
+        const logger = Glog.create({logLevel: 2})
+
+        logger.use("=>").debug("Level 1", 1)  // Should show
+        logger.use("=>").debug("Level 2", 2)  // Should show
+        logger.use("=>").debug("Level 3", 3)  // Should NOT show
+
+        assert.equal(debugOutput.length, 2)
+        assert.equal(debugOutput[0][0], "=>Level 1")
+        assert.equal(debugOutput[1][0], "=>Level 2")
+      } finally {
+        console.debug = originalConsoleDebug
+      }
+    })
+
+    it('works inside groups for indentation', () => {
+      const logger = Glog.create({name: 'Test'})
+
+      logger.group("Processing")
+      logger.use("  ").info("Item 1")
+      logger.use("  ").info("Item 2")
+      logger.groupEnd()
+
+      assert.equal(infoOutput.length, 2)
+      assert.equal(infoOutput[0][0], "  Item 1")
+      assert.equal(infoOutput[1][0], "  Item 2")
+    })
+
+    it('static use() respects static logLevel', () => {
+      let debugOutput = []
+      const originalConsoleDebug = console.debug
+
+      console.debug = (...args) => debugOutput.push(args)
+
+      try {
+        Glog.setLogLevel(1)
+
+        Glog.use("=>").debug("Should show", 1)
+        Glog.use("=>").debug("Should not show", 2)
+
+        assert.equal(debugOutput.length, 1)
+        assert.equal(debugOutput[0][0], "=>Should show")
+      } finally {
+        console.debug = originalConsoleDebug
+        Glog.setLogLevel(0)
+      }
+    })
+  })
 })
 
-// TODO: Add tests for new Glog features (enhanced color functionality)
+// TODO: Add tests for new Glog features (enhanced colour functionality)
 // - Instance usage: new Glog(options)
-// - Fluent instance methods: withName(), withLogLevel(), withColors(), withStackTrace()
+// - Fluent instance methods: withName(), withLogLevel(), withColours(), withStackTrace()
 // - Logger-style methods: debug(), info(), warn(), error()
-// - Color features: colorize(), success(), setAlias()
+// - Colour features: colourize(), success(), setAlias()
 // - @gesslar/colours integration and loggerColours configuration
 // - VSCode integration (vscodeError, vscodeWarn, vscodeInfo)

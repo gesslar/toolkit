@@ -458,9 +458,8 @@ export default class FileObject extends FS {
       any: [JSON5,YAML]
     }[normalizedType]
 
-    if(!toTry) {
+    if(!toTry)
       throw Sass.new(`Unsupported data type '${type}'. Supported types: json, json5, yaml.`)
-    }
 
     for(const format of toTry) {
       try {
