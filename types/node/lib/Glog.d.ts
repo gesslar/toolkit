@@ -1,29 +1,32 @@
-export namespace loggerColours {
-    let debug: string[];
-    let info: string;
-    let warn: string;
-    let error: string;
-    let success: string;
-    let reset: string;
-}
-export namespace logSymbols {
-    let debug_1: string;
-    export { debug_1 as debug };
-    let info_1: string;
-    export { info_1 as info };
-    let warn_1: string;
-    export { warn_1 as warn };
-    let error_1: string;
-    export { error_1 as error };
-    let success_1: string;
-    export { success_1 as success };
-}
+/**
+ * Default colour configuration for logger output using @gesslar/colours format
+ *
+ * @type {object}
+ * @property {string[]} debug - Array of 5 colour codes for debug levels 0-4
+ * @property {string} info - Colour code for info messages
+ * @property {string} warn - Colour code for warning messages
+ * @property {string} error - Colour code for error messages
+ * @property {string} success - Colour code for success messages
+ * @property {string} reset - Colour reset code
+ */
+export const loggerColours: object;
+/**
+ * Symbol characters used for log level tags when colours are disabled or tagsAsStrings is false
+ *
+ * @type {object}
+ * @property {string} debug - Symbol for debug messages
+ * @property {string} info - Symbol for info messages
+ * @property {string} warn - Symbol for warning messages
+ * @property {string} error - Symbol for error messages
+ * @property {string} success - Symbol for success messages
+ */
+export const logSymbols: object;
 declare const _default: typeof Glog;
 export default _default;
 declare class Glog {
     static logLevel: number;
     static logPrefix: string;
-    static colors: any;
+    static colours: any;
     static stackTrace: boolean;
     static name: string;
     static tagsAsStrings: boolean;
@@ -49,17 +52,17 @@ declare class Glog {
      */
     static withName(name: string): typeof Glog;
     /**
-     * Enable colors for global usage
-     * Merges with existing color configuration (can pass partial config)
+     * Enable colours for global usage
+     * Merges with existing colour configuration (can pass partial config)
      * Shape: {debug?: string[], info?: string, warn?: string, error?: string, reset?: string}
-     * - debug: Array of 5 color codes [level0, level1, level2, level3, level4]
-     * - info, warn, error, reset: Single color code strings
+     * - debug: Array of 5 colour codes [level0, level1, level2, level3, level4]
+     * - info, warn, error, reset: Single colour code strings
      * Uses @gesslar/colours format like "{F196}"
      *
-     * @param {object} [colors=loggerColours] - Color configuration object (partial or complete)
+     * @param {object} [colours=loggerColours] - Colour configuration object (partial or complete)
      * @returns {typeof Glog} The Glog class for chaining
      */
-    static withColors(colors?: object): typeof Glog;
+    static withColours(colours?: object): typeof Glog;
     /**
      * Enable stack trace extraction for global usage
      *
@@ -75,6 +78,17 @@ declare class Glog {
      */
     static withTagsAsStrings(enabled?: boolean): typeof Glog;
     /**
+     * Create a temporary scoped logger with a custom prefix for a single chain (static version)
+     * The prefix replaces all formatting (name, tags) with just the prefix + message
+     *
+     * @param {string} prefix - Temporary prefix to use (e.g., "=>", "  ", "-->")
+     * @returns {object} Temporary logger with all standard methods
+     * @example
+     * Glog.use("=>").info("Indented message")  // => Indented message
+     * Glog.info("Back to normal")               // [Log] i Back to normal
+     */
+    static use(prefix: string): object;
+    /**
      * Create a new Glog instance with fluent configuration
      *
      * @param {object} [options={}] - Initial options
@@ -89,12 +103,12 @@ declare class Glog {
      */
     static execute(...args: unknown[]): void;
     /**
-     * Static version of colorize for global usage
+     * Static version of colourize for global usage
      *
      * @param {Array<string>} strings - Template strings
      * @param {...unknown} values - Template values
      */
-    static colorize(strings: Array<string>, ...values: unknown[]): void;
+    static colourize(strings: Array<string>, ...values: unknown[]): void;
     /**
      * Static success method
      *
@@ -147,50 +161,178 @@ declare class Glog {
         quotedStrings?: boolean;
     }): void;
     /**
-     * Set a color alias for convenient usage
+     * Set a colour alias for convenient usage
      *
      * @param {string} alias - Alias name
-     * @param {string} colorCode - Color code (e.g., "{F196}" or "{<B}")
+     * @param {string} colourCode - Colour code (e.g., "{F196}" or "{<B}")
      * @returns {Glog} The Glog class for chaining.
      */
-    static setAlias(alias: string, colorCode: string): Glog;
+    static setAlias(alias: string, colourCode: string): Glog;
     /**
      * Static raw logger that outputs without name/tag formatting
      *
      * @returns {object} Raw logger interface
+     * @returns {Function} return.debug - Raw debug output function
+     * @returns {Function} return.info - Raw info output function
+     * @returns {Function} return.warn - Raw warning output function
+     * @returns {Function} return.error - Raw error output function
+     * @returns {Function} return.log - Raw log output function
+     * @returns {Function} return.success - Raw success output function
+     * @returns {Function} return.table - Raw table output function
+     * @returns {Function} return.group - Raw group start function
+     * @returns {Function} return.groupEnd - Raw group end function
      */
     static get raw(): object;
-    constructor(options?: {});
-    setOptions(options: any): this;
-    withName(name: any): this;
-    withLogLevel(level: any): this;
-    withPrefix(prefix: any): this;
     /**
-     * Enable colors for this logger instance
-     * Merges with existing color configuration (can pass partial config)
-     * Shape: {debug?: string[], info?: string, warn?: string, error?: string, reset?: string}
-     * - debug: Array of 5 color codes [level0, level1, level2, level3, level4]
-     * - info, warn, error, reset: Single color code strings
-     * Uses @gesslar/colours format like "{F196}"
+     * Create a new Glog logger instance with optional configuration
      *
-     * @param {object} [colors=loggerColours] - Color configuration object (partial or complete)
+     * @param {object} [options={}] - Configuration options
+     * @param {string} [options.name] - Logger name to display in output
+     * @param {number} [options.debugLevel] - Debug verbosity level (0-5, default: 0)
+     * @param {number} [options.logLevel] - Alias for debugLevel
+     * @param {string} [options.prefix] - Prefix to prepend to all log messages
+     * @param {object} [options.colours] - Colour configuration object
+     * @param {boolean} [options.stackTrace=false] - Enable stack trace extraction
+     * @param {boolean} [options.tagsAsStrings=false] - Use string tags instead of symbols
+     * @param {boolean} [options.displayName=true] - Display logger name in output
+     * @param {string} [options.env] - Environment mode ("extension" for VSCode integration)
+     */
+    constructor(options?: {
+        name?: string;
+        debugLevel?: number;
+        logLevel?: number;
+        prefix?: string;
+        colours?: object;
+        stackTrace?: boolean;
+        tagsAsStrings?: boolean;
+        displayName?: boolean;
+        env?: string;
+    });
+    /**
+     * Set configuration options for this logger instance
+     *
+     * @param {object} options - Configuration options
+     * @param {string} [options.name] - Logger name to display in output
+     * @param {number} [options.debugLevel] - Debug verbosity level (0-5)
+     * @param {number} [options.logLevel] - Alias for debugLevel
+     * @param {string} [options.prefix] - Prefix to prepend to all log messages
+     * @param {object} [options.colours] - Colour configuration object
+     * @param {boolean} [options.stackTrace] - Enable stack trace extraction
+     * @param {boolean} [options.tagsAsStrings] - Use string tags instead of symbols
+     * @param {boolean} [options.displayName] - Display logger name in output
      * @returns {Glog} This Glog instance for chaining
      */
-    withColors(colors?: object): Glog;
-    withStackTrace(enabled?: boolean): this;
-    withTagsAsStrings(enabled?: boolean): this;
-    noDisplayName(): this;
+    setOptions(options: {
+        name?: string;
+        debugLevel?: number;
+        logLevel?: number;
+        prefix?: string;
+        colours?: object;
+        stackTrace?: boolean;
+        tagsAsStrings?: boolean;
+        displayName?: boolean;
+    }): Glog;
+    /**
+     * Set the logger name for this instance
+     *
+     * @param {string} name - Logger name to display in output
+     * @returns {Glog} This Glog instance for chaining
+     */
+    withName(name: string): Glog;
+    /**
+     * Set the log level for this instance (0-5)
+     *
+     * @param {number} level - Log level (0 = off, 1-5 = increasing verbosity)
+     * @returns {Glog} This Glog instance for chaining
+     */
+    withLogLevel(level: number): Glog;
+    /**
+     * Set the log prefix for this instance
+     *
+     * @param {string} prefix - Prefix to prepend to all log messages
+     * @returns {Glog} This Glog instance for chaining
+     */
+    withPrefix(prefix: string): Glog;
+    /**
+     * Enable colours for this logger instance
+     * Merges with existing colour configuration (can pass partial config)
+     * Shape: {debug?: string[], info?: string, warn?: string, error?: string, reset?: string}
+     * - debug: Array of 5 colour codes [level0, level1, level2, level3, level4]
+     * - info, warn, error, reset: Single colour code strings
+     * Uses @gesslar/colours format like "{F196}"
+     *
+     * @param {object} [colours=loggerColours] - Colour configuration object (partial or complete)
+     * @returns {Glog} This Glog instance for chaining
+     */
+    withColours(colours?: object): Glog;
+    /**
+     * Enable or disable stack trace extraction for this instance
+     *
+     * @param {boolean} [enabled=true] - Whether to enable stack traces
+     * @returns {Glog} This Glog instance for chaining
+     */
+    withStackTrace(enabled?: boolean): Glog;
+    /**
+     * Use tag names as strings instead of symbols for this instance
+     *
+     * @param {boolean} [enabled=false] - Whether to use string tags
+     * @returns {Glog} This Glog instance for chaining
+     */
+    withTagsAsStrings(enabled?: boolean): Glog;
+    /**
+     * Disable displaying the logger name in output for this instance
+     *
+     * @returns {Glog} This Glog instance for chaining
+     */
+    noDisplayName(): Glog;
+    /**
+     * Create a temporary scoped logger with a custom prefix for a single chain
+     * The prefix replaces all formatting (name, tags) with just the prefix + message
+     *
+     * @param {string} prefix - Temporary prefix to use (e.g., "=>", "  ", "-->")
+     * @returns {object} Temporary logger with all standard methods
+     * @example
+     * logger.use("=>").info("Indented message")  // => Indented message
+     * logger.info("Back to normal")               // [MyApp] i Back to normal
+     */
+    use(prefix: string): object;
+    /**
+     * Get the current logger name
+     *
+     * @returns {string} The logger name
+     */
     get name(): string;
+    /**
+     * Get the current debug level
+     *
+     * @returns {number} The debug level (0-5)
+     */
     get debugLevel(): number;
-    get options(): {
-        name: string;
-        debugLevel: number;
-        prefix: string;
-        colors: any;
-        stackTrace: boolean;
-    };
-    extractFileFunction(): string;
-    newDebug(tag: any): any;
+    /**
+     * Get the current logger options configuration
+     *
+     * @returns {object} The logger options
+     * @returns {string} return.name - Logger name
+     * @returns {number} return.debugLevel - Debug level
+     * @returns {string} return.prefix - Log prefix
+     * @returns {object} return.colours - Colour configuration
+     * @returns {boolean} return.stackTrace - Stack trace enabled
+     */
+    get options(): object;
+    /**
+     * Extract file and function information from stack trace
+     *
+     * @private
+     * @returns {string} Caller tag
+     */
+    private extractFileFunction;
+    /**
+     * Create a new debug function with a specific tag
+     *
+     * @param {string} tag - Tag to prepend to debug messages
+     * @returns {Function} Debug function with the tag
+     */
+    newDebug(tag: string): Function;
     /**
      * Log a debug message with specified verbosity level.
      * Level 0 means debug OFF - use levels 1-4 for actual debug output.
@@ -202,20 +344,44 @@ declare class Glog {
      * @throws {Error} If level < 1 (level 0 = debug OFF)
      */
     debug(message: string, level?: number, ...arg: unknown[]): void;
-    info(message: any, ...arg: any[]): void;
-    warn(message: any, ...arg: any[]): void;
-    error(message: any, ...arg: any[]): void;
-    execute(...args: any[]): void;
     /**
-     * Log a colorized message using template literals
+     * Log an informational message
+     *
+     * @param {string} message - Info message to log
+     * @param {...unknown} arg - Additional arguments to log
+     */
+    info(message: string, ...arg: unknown[]): void;
+    /**
+     * Log a warning message
+     *
+     * @param {string} message - Warning message to log
+     * @param {...unknown} arg - Additional arguments to log
+     */
+    warn(message: string, ...arg: unknown[]): void;
+    /**
+     * Log an error message
+     *
+     * @param {string} message - Error message to log
+     * @param {...unknown} arg - Additional arguments to log
+     */
+    error(message: string, ...arg: unknown[]): void;
+    /**
+     * Instance execute method for configured loggers
+     * Can be called as: logger(data) or logger(level, data)
+     *
+     * @param {...unknown} args - Arguments (optional level number, then data)
+     */
+    execute(...args: unknown[]): void;
+    /**
+     * Log a colourized message using template literals
      *
      * @param {Array<string>} strings - Template strings
      * @param {...unknown} values - Template values
-     * @example logger.colorize`{success}Operation completed{/} in {bold}${time}ms{/}`
+     * @example logger.colourize`{success}Operation completed{/} in {bold}${time}ms{/}`
      */
-    colorize(strings: Array<string>, ...values: unknown[]): void;
+    colourize(strings: Array<string>, ...values: unknown[]): void;
     /**
-     * Log a success message with green color
+     * Log a success message with green colour
      *
      * @param {string} message - Success message
      * @param {...unknown} args - Additional arguments
@@ -275,6 +441,15 @@ declare class Glog {
      * Get a raw logger that outputs without name/tag formatting
      *
      * @returns {object} Raw logger interface
+     * @returns {Function} return.debug - Raw debug output function
+     * @returns {Function} return.info - Raw info output function
+     * @returns {Function} return.warn - Raw warning output function
+     * @returns {Function} return.error - Raw error output function
+     * @returns {Function} return.log - Raw log output function
+     * @returns {Function} return.success - Raw success output function
+     * @returns {Function} return.table - Raw table output function
+     * @returns {Function} return.group - Raw group start function
+     * @returns {Function} return.groupEnd - Raw group end function
      */
     get raw(): object;
     #private;
