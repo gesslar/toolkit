@@ -3,7 +3,7 @@ import path from "node:path"
 import {afterEach,beforeEach,describe,it} from "node:test"
 import fs from "node:fs/promises"
 
-import {VDirectoryObject,VFileObject,DirectoryObject,FileObject,Sass,TempDirectoryObject} from "../../src/node/index.js"
+import {VDirectoryObject,VFileObject,DirectoryObject,FileObject,Sass,TempDirectoryObject,FileSystem} from "../../src/node/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
 
 describe("VDirectoryObject", () => {
@@ -411,23 +411,25 @@ describe("VDirectoryObject", () => {
       assert.ok(child.real.path.startsWith(parent.real.path))
     })
 
-    it("treats absolute path as cap-relative with parent", () => {
+    it("treats absolute path as cap-relative with parent", async () => {
       const parent = new TempDirectoryObject("test-abs-parent")
 
       cappedDirs.push(parent)
 
-      // Absolute paths with parent: leading "/" is stripped, becomes cap-relative
-      // "/etc/config" becomes "etc/config" - but this has separator so should fail
-      assert.throws(
-        () => parent.getDirectory("/etc/config"),
-        /out of bounds/
-      )
-
-      // But single-segment absolute paths work
-      const child = parent.getDirectory("/etc")
+      // Absolute paths resolve from cap root and are now allowed
+      // Create intermediate directory first
+      await parent.getDirectory("/etc").assureExists({recursive: true})
+      const child = parent.getDirectory("/etc/config")
 
       assert.ok(child instanceof TempDirectoryObject)
-      assert.ok(child.path.includes("etc"))
+      assert.ok(child.path.includes("etc/config"))
+      assert.ok(child.real.path.includes(parent.real.path))
+
+      // Single-segment absolute paths also work
+      const child2 = parent.getDirectory("/etc")
+
+      assert.ok(child2 instanceof TempDirectoryObject)
+      assert.ok(child2.path.includes("etc"))
     })
 
     it("rejects paths with separators (must chain)", () => {
@@ -793,16 +795,21 @@ describe("VDirectoryObject", () => {
   })
 
   describe("security and cap enforcement", () => {
-    it("rejects absolute paths (security)", () => {
+    it("allows absolute paths but enforces cap boundary", async () => {
       const temp = new TempDirectoryObject("test-security")
 
       cappedDirs.push(temp)
 
-      // Absolute paths are rejected to prevent cap escaping
-      assert.throws(
-        () => temp.getDirectory("/etc/passwd"),
-        /out of bounds/
-      )
+      // Absolute paths are now allowed and resolve from cap root
+      // They stay within the cap boundary
+      // Create intermediate directory first
+      await temp.getDirectory("/etc").assureExists({recursive: true})
+      const dir = temp.getDirectory("/etc/passwd")
+
+      assert.ok(dir instanceof TempDirectoryObject)
+      assert.ok(dir.path.includes("etc/passwd"))
+      assert.ok(dir.real.path.startsWith(temp.real.path))
+      assert.ok(FileSystem.pathContains(temp.real.path, dir.real.path))
     })
 
     it("rejects path traversal (security)", () => {

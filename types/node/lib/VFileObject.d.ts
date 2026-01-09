@@ -21,10 +21,10 @@ export default class VFileObject extends FileObject {
     /**
      * Constructs a VFileObject instance.
      *
-     * @param {string} fileName - The file path
-     * @param {VDirectoryObject} parent - The parent virtual directory (required)
+     * @param {string} virtualPath - The virtual file path (already resolved, can be nested like "/path/to/file.ext")
+     * @param {VDirectoryObject} parent - The parent virtual directory (required, used for cap reference)
      */
-    constructor(fileName: string, parent: VDirectoryObject);
+    constructor(virtualPath: string, parent: VDirectoryObject);
     get isVirtual(): boolean;
     get real(): FileObject;
     #private;
