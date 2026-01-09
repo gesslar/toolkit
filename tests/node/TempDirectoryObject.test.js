@@ -121,15 +121,19 @@ describe("TempDirectoryObject", () => {
       )
     })
 
-    it("rejects absolute paths", async () => {
+    it("allows absolute directory paths from cap root", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
-      // Absolute paths are rejected
-      assert.throws(
-        () => temp.getDirectory("/home/user/documents"),
-        /out of bounds/
-      )
+      // Absolute paths are now allowed and resolve from cap root
+      // Create intermediate directories first
+      await temp.getDirectory("/home").assureExists({recursive: true})
+      await temp.getDirectory("/home/user").assureExists({recursive: true})
+      const dir = temp.getDirectory("/home/user/documents")
+
+      assert.ok(dir instanceof TempDirectoryObject)
+      assert.ok(dir.path.includes("home/user/documents"))
+      assert.ok(dir.real.path.startsWith(temp.real.path))
     })
 
     it("allows explicit chaining for nested directories", async () => {
@@ -189,15 +193,16 @@ describe("TempDirectoryObject", () => {
       assert.notEqual(file.path, file.real.path)
     })
 
-    it("rejects absolute file paths", async () => {
+    it("allows absolute file paths from cap root", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
-      // Absolute paths are rejected
-      assert.throws(
-        () => temp.getFile("/config/settings.json"),
-        /out of bounds/
-      )
+      // Absolute paths are now allowed and resolve from cap root
+      const file = temp.getFile("/config/settings.json")
+
+      assert.ok(file instanceof VFileObject)
+      assert.ok(file.path.includes("config/settings.json"))
+      assert.ok(file.real.path.includes(temp.real.path))
     })
 
     it("rejects file path traversal", async () => {

@@ -276,21 +276,27 @@ export default class DirectoryObject extends FS {
      * duplication. The resulting FileObject can be used for reading, writing,
      * and other file operations.
      *
+     * For regular DirectoryObject: only allows direct children (local only).
+     * For VDirectoryObject: supports absolute virtual paths (starting with "/")
+     * which resolve from cap root, and relative paths from current directory.
+     *
      * When called on a VDirectoryObject, returns a VFileObject to maintain
      * virtual path semantics.
      *
-     * @param {string} file - The filename to append (can include subdirectories like "src/index.js")
+     * @param {string} file - The filename to append
      * @returns {FileObject|VFileObject} A new FileObject (or VFileObject if virtual)
      * @throws {Sass} If filename is not a string
+     * @throws {Sass} If path would be out of bounds
      * @example
      * const dir = new DirectoryObject("/projects/git/toolkit")
      * const file = dir.getFile("package.json")
      * console.log(file.path) // "/projects/git/toolkit/package.json"
      *
      * @example
-     * // Can include nested paths
-     * const file = dir.getFile("src/index.js")
-     * const data = await file.read()
+     * // VDirectoryObject with absolute virtual path
+     * const vdo = new TempDirectoryObject("myapp")
+     * const file = vdo.getFile("/config/settings.json")
+     * // Virtual path: /config/settings.json, Real path: {vdo.real.path}/config/settings.json
      */
     getFile(file: string): FileObject | VFileObject;
     #private;

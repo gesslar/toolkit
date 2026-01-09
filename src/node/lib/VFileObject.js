@@ -4,6 +4,7 @@
  * Extends FileObject with virtual path support and real filesystem mapping.
  */
 
+import DirectoryObject from "./DirectoryObject.js"
 import FileObject from "./FileObject.js"
 import FS from "./FileSystem.js"
 import Valid from "./Valid.js"
@@ -34,20 +35,69 @@ export default class VFileObject extends FileObject {
   /**
    * Constructs a VFileObject instance.
    *
-   * @param {string} fileName - The file path
-   * @param {VDirectoryObject} parent - The parent virtual directory (required)
+   * @param {string} virtualPath - The virtual file path (can be absolute like "/path/to/file.ext" or relative like "file.txt")
+   * @param {VDirectoryObject} parent - The parent virtual directory (required, used for cap reference)
    */
-  constructor(fileName, parent) {
-    Valid.type(fileName, "String", {allowEmpty: false})
+  constructor(virtualPath, parent) {
+    Valid.type(virtualPath, "String", {allowEmpty: false})
     Valid.type(parent, "VDirectoryObject")
 
-    super(fileName, parent)
+    // Normalize the virtual path
+    const normalizedVirtual = FS.fixSlashes(virtualPath)
+    const isAbsolute = normalizedVirtual.startsWith("/")
 
-    const parentRealPath = this.parent.real.path
-    const resolved = FS.resolvePath(this.parent.path, fileName)
-    const {base} = FS.pathParts(resolved)
+    // If absolute path, it's already resolved from cap root (from getFile())
+    // If relative path, resolve from parent directory (from hasFile(), read(), etc.)
+    let resolvedVirtualPath
+    if(isAbsolute) {
+      // Absolute path is already resolved - use as-is
+      resolvedVirtualPath = normalizedVirtual
+    } else {
+      // Relative path: resolve from parent directory (not cap root!)
+      resolvedVirtualPath = FS.resolvePath(parent.path, normalizedVirtual)
+    }
 
-    this.#real = new FileObject(base, parentRealPath)
+    const normalized = FS.fixSlashes(resolvedVirtualPath)
+
+    // Extract the directory and filename from the resolved virtual path
+    const {dir: virtualDir, base} = FS.pathParts(normalized)
+
+    // Determine the virtual parent directory
+    // If virtualDir is "/" or empty or equals cap path, use the cap root
+    // Otherwise, construct the parent directory path relative to cap
+    let virtualParent
+    if(!virtualDir || virtualDir === "/" || virtualDir === parent.cap.path) {
+      virtualParent = parent.cap
+    } else {
+      // virtualDir is something like "/path/to" - we need to create a VDirectoryObject for it
+      // Strip leading "/" if present to make it relative to cap
+      const dirRelativeToCap = virtualDir.startsWith("/") ? virtualDir.slice(1) : virtualDir
+      // Use the VDirectoryObject constructor to create the parent directory
+      virtualParent = new parent.constructor(dirRelativeToCap, parent.cap)
+    }
+
+    // Call super with just the filename and the virtual parent
+    // This ensures FileObject sets up the virtual path correctly
+    super(base, virtualParent)
+
+    // Convert virtual path to real path
+    // The resolved virtual path is relative to the cap root, so we resolve it relative to cap's real path
+    const capRealPath = parent.cap.real.path
+
+    // Strip leading "/" from resolved virtual path if present to make it relative
+    const relativeFromCap = normalized.startsWith("/")
+      ? normalized.slice(1)
+      : normalized
+
+    // Resolve the real filesystem path
+    const realPath = FS.resolvePath(capRealPath, relativeFromCap)
+
+    // Create FileObject with the full real path
+    // Extract directory and filename parts
+    const {dir: realDir, base: realBase} = FS.pathParts(realPath)
+    const realParentDir = new DirectoryObject(realDir)
+
+    this.#real = new FileObject(realBase, realParentDir)
   }
 
   get isVirtual() {

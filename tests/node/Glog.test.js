@@ -548,6 +548,218 @@ describe('Glog', () => {
       }
     })
   })
+
+  describe('withSymbols() - custom log symbols', () => {
+    let originalConsoleInfo, originalConsoleWarn, originalConsoleError, originalConsoleDebug
+    let infoOutput, warnOutput, errorOutput, debugOutput
+
+    beforeEach(() => {
+      // Mock console methods for different log types
+      infoOutput = []
+      warnOutput = []
+      errorOutput = []
+      debugOutput = []
+
+      originalConsoleInfo = console.info
+      originalConsoleWarn = console.warn
+      originalConsoleError = console.error
+      originalConsoleDebug = console.debug
+
+      console.info = (...args) => infoOutput.push(args)
+      console.warn = (...args) => warnOutput.push(args)
+      console.error = (...args) => errorOutput.push(args)
+      console.debug = (...args) => debugOutput.push(args)
+
+      // Reset Glog static symbols
+      Glog.symbols = null
+    })
+
+    afterEach(() => {
+      console.info = originalConsoleInfo
+      console.warn = originalConsoleWarn
+      console.error = originalConsoleError
+      console.debug = originalConsoleDebug
+      Glog.symbols = null
+    })
+
+    it('customizes symbols for instance logger', () => {
+      const logger = Glog.create({name: 'Test'})
+        .withSymbols({info: '🚒', warn: '🚨', error: '🔥', success: '💧'})
+        .withColours()
+
+      logger.info("Fire truck info")
+      logger.warn("Siren warning")
+      logger.error("Fire error")
+      logger.success("Water success")
+
+      assert.equal(infoOutput.length, 1)
+      assert.ok(infoOutput[0][0].includes('🚒'), 'Should use fire truck emoji')
+
+      assert.equal(warnOutput.length, 1)
+      assert.ok(warnOutput[0][0].includes('🚨'), 'Should use siren emoji')
+
+      assert.equal(errorOutput.length, 1)
+      assert.ok(errorOutput[0][0].includes('🔥'), 'Should use fire emoji')
+
+      assert.equal(consoleOutput.length, 1)
+      assert.ok(consoleOutput[0][0].includes('💧'), 'Should use water droplet emoji')
+    })
+
+    it('customizes symbols for static logger', () => {
+      Glog.withSymbols({info: '🏃', warn: '⚠️', error: '❌', success: '✅'})
+        .withColours()
+
+      Glog.create({name: 'Static'}).info("Running info")
+
+      assert.equal(infoOutput.length, 1)
+      assert.ok(infoOutput[0][0].includes('🏃'), 'Should use running emoji')
+    })
+
+    it('allows partial symbol override', () => {
+      const logger = Glog.create({name: 'Test'})
+        .withSymbols({error: '🔥'}) // Only override error symbol
+        .withColours()
+
+      logger.info("Normal info")
+      logger.error("Fire error")
+
+      assert.equal(infoOutput.length, 1)
+      assert.ok(infoOutput[0][0].includes('i'), 'Should use default info symbol')
+
+      assert.equal(errorOutput.length, 1)
+      assert.ok(errorOutput[0][0].includes('🔥'), 'Should use fire emoji for error')
+    })
+
+    it('does not affect tagsAsStrings mode', () => {
+      const logger = Glog.create({name: 'Test'})
+        .withSymbols({info: '🚒'})
+        .withTagsAsStrings(true)
+        .withColours()
+
+      logger.info("Info message")
+
+      assert.equal(infoOutput.length, 1)
+      // Should use "Info:" not "🚒" because tagsAsStrings is enabled
+      // The output should look like: "[Test] Info: Info message"
+      assert.ok(infoOutput[0][0].includes('Info'), 'Should use string tag')
+      assert.ok(!infoOutput[0][0].includes('🚒'), 'Should not use custom symbol')
+    })
+
+    it('symbols only affect output when tagsAsStrings is false', () => {
+      const logger = Glog.create({name: 'Test'})
+        .withSymbols({info: '📢'})
+        .withTagsAsStrings(false)
+        .withColours()
+
+      logger.info("Announcement")
+
+      assert.equal(infoOutput.length, 1)
+      assert.ok(infoOutput[0][0].includes('📢'), 'Should use megaphone emoji')
+    })
+
+    it('is chainable with other fluent methods', () => {
+      const logger = Glog.create()
+        .withName('Fire')
+        .withSymbols({error: '🔥', warn: '🚨'})
+        .withLogLevel(3)
+        .withColours()
+
+      assert.equal(logger.name, 'Fire')
+      assert.equal(logger.debugLevel, 3)
+
+      logger.error("Chained error")
+      assert.equal(errorOutput.length, 1)
+      assert.ok(errorOutput[0][0].includes('🔥'), 'Should use custom symbol')
+    })
+
+    it('supports debug symbol customization', () => {
+      const logger = Glog.create({name: 'Test', logLevel: 2})
+        .withSymbols({debug: '🧯'})
+        .withColours()
+
+      logger.debug("Fire extinguisher", 1)
+
+      assert.equal(debugOutput.length, 1)
+      assert.ok(debugOutput[0][0].includes('🧯'), 'Should use fire extinguisher emoji')
+    })
+
+    it('handles group methods with custom symbols', () => {
+      const logger = Glog.create({name: 'Test'})
+        .withSymbols({success: '🎉'})
+        .withColours()
+
+      logger.groupSuccess("Party time")
+
+      // Check that consoleOutput contains the success symbol
+      // The group call happens via Term.group which uses console.log
+      assert.ok(consoleOutput.length > 0, 'Should have console output')
+      assert.ok(consoleOutput[0][0].includes('🎉'), 'Should use party emoji')
+    })
+
+    it('instance symbols do not affect other instances', () => {
+      const logger1 = Glog.create({name: 'Fire'})
+        .withSymbols({info: '🚒'})
+        .withColours()
+
+      const logger2 = Glog.create({name: 'Police'})
+        .withSymbols({info: '🚓'})
+        .withColours()
+
+      logger1.info("Fire truck")
+      logger2.info("Police car")
+
+      assert.equal(infoOutput.length, 2)
+      assert.ok(infoOutput[0][0].includes('🚒'), 'First logger uses fire truck')
+      assert.ok(infoOutput[1][0].includes('🚓'), 'Second logger uses police car')
+    })
+
+    it('static symbols persist across calls', () => {
+      Glog.withSymbols({info: '🌟'})
+        .withColours()
+
+      const logger1 = Glog.create({name: 'Test1'})
+      const logger2 = Glog.create({name: 'Test2'})
+
+      logger1.info("Star info 1")
+      logger2.info("Star info 2")
+
+      assert.equal(infoOutput.length, 2)
+      assert.ok(infoOutput[0][0].includes('🌟'), 'First logger inherits static symbol')
+      assert.ok(infoOutput[1][0].includes('🌟'), 'Second logger inherits static symbol')
+    })
+
+    it('constructor merges partial symbols with defaults', () => {
+      const logger = Glog.create({
+        name: 'Test',
+        symbols: {error: '🔥'},
+        colours: {}
+      })
+
+      logger.info("Normal info")
+      logger.error("Fire error")
+
+      assert.equal(infoOutput.length, 1)
+      assert.ok(infoOutput[0][0].includes('i'), 'Should use default info symbol')
+
+      assert.equal(errorOutput.length, 1)
+      assert.ok(errorOutput[0][0].includes('🔥'), 'Should use custom fire emoji for error')
+    })
+
+    it('setOptions merges partial symbols with defaults', () => {
+      const logger = Glog.create({name: 'Test'})
+
+      logger.setOptions({symbols: {warn: '⚠️'}, colours: {}})
+
+      logger.info("Normal info")
+      logger.warn("Custom warning")
+
+      assert.equal(infoOutput.length, 1)
+      assert.ok(infoOutput[0][0].includes('i'), 'Should use default info symbol')
+
+      assert.equal(warnOutput.length, 1)
+      assert.ok(warnOutput[0][0].includes('⚠️'), 'Should use custom warning emoji')
+    })
+  })
 })
 
 // TODO: Add tests for new Glog features (enhanced colour functionality)

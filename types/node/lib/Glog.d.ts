@@ -30,6 +30,7 @@ declare class Glog {
     static stackTrace: boolean;
     static name: string;
     static tagsAsStrings: boolean;
+    static symbols: any;
     /**
      * Set the log prefix for global usage
      *
@@ -77,6 +78,18 @@ declare class Glog {
      * @returns {typeof Glog} The Glog class for chaining
      */
     static withTagsAsStrings(enabled?: boolean): typeof Glog;
+    /**
+     * Customize log level symbols for global usage
+     * Merges with existing symbols (can pass partial config)
+     * Only affects output when tagsAsStrings is false
+     * Shape: {debug?: string, info?: string, warn?: string, error?: string, success?: string}
+     *
+     * @param {object} [symbols=logSymbols] - Symbol configuration object (partial or complete)
+     * @returns {typeof Glog} The Glog class for chaining
+     * @example
+     * Glog.withSymbols({info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
+     */
+    static withSymbols(symbols?: object): typeof Glog;
     /**
      * Create a temporary scoped logger with a custom prefix for a single chain (static version)
      * The prefix replaces all formatting (name, tags) with just the prefix + message
@@ -192,6 +205,7 @@ declare class Glog {
      * @param {number} [options.logLevel] - Alias for debugLevel
      * @param {string} [options.prefix] - Prefix to prepend to all log messages
      * @param {object} [options.colours] - Colour configuration object
+     * @param {object} [options.symbols] - Custom log level symbols (e.g., {info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
      * @param {boolean} [options.stackTrace=false] - Enable stack trace extraction
      * @param {boolean} [options.tagsAsStrings=false] - Use string tags instead of symbols
      * @param {boolean} [options.displayName=true] - Display logger name in output
@@ -203,6 +217,7 @@ declare class Glog {
         logLevel?: number;
         prefix?: string;
         colours?: object;
+        symbols?: object;
         stackTrace?: boolean;
         tagsAsStrings?: boolean;
         displayName?: boolean;
@@ -217,6 +232,7 @@ declare class Glog {
      * @param {number} [options.logLevel] - Alias for debugLevel
      * @param {string} [options.prefix] - Prefix to prepend to all log messages
      * @param {object} [options.colours] - Colour configuration object
+     * @param {object} [options.symbols] - Custom log level symbols (e.g., {info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
      * @param {boolean} [options.stackTrace] - Enable stack trace extraction
      * @param {boolean} [options.tagsAsStrings] - Use string tags instead of symbols
      * @param {boolean} [options.displayName] - Display logger name in output
@@ -228,6 +244,7 @@ declare class Glog {
         logLevel?: number;
         prefix?: string;
         colours?: object;
+        symbols?: object;
         stackTrace?: boolean;
         tagsAsStrings?: boolean;
         displayName?: boolean;
@@ -279,6 +296,18 @@ declare class Glog {
      * @returns {Glog} This Glog instance for chaining
      */
     withTagsAsStrings(enabled?: boolean): Glog;
+    /**
+     * Customize log level symbols for this logger instance
+     * Merges with existing symbols (can pass partial config)
+     * Only affects output when tagsAsStrings is false
+     * Shape: {debug?: string, info?: string, warn?: string, error?: string, success?: string}
+     *
+     * @param {object} [symbols=logSymbols] - Symbol configuration object (partial or complete)
+     * @returns {Glog} This Glog instance for chaining
+     * @example
+     * logger.withSymbols({info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
+     */
+    withSymbols(symbols?: object): Glog;
     /**
      * Disable displaying the logger name in output for this instance
      *
