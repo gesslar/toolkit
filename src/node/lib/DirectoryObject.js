@@ -613,7 +613,8 @@ export default class DirectoryObject extends FS {
     if(this.isVirtual && dir.startsWith(this.sep)) {
       const normalized = this.#resolveAndValidateFromCap(dir)
 
-      return new this.constructor(normalized, this)
+      // Pass cap as parent so it resolves from cap root, not current directory
+      return new this.constructor(normalized, this.cap)
     }
 
     // Regular resolution

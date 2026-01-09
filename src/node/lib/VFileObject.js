@@ -35,7 +35,7 @@ export default class VFileObject extends FileObject {
   /**
    * Constructs a VFileObject instance.
    *
-   * @param {string} virtualPath - The virtual file path (already resolved, can be nested like "/path/to/file.ext")
+   * @param {string} virtualPath - The virtual file path (can be absolute like "/path/to/file.ext" or relative like "file.txt")
    * @param {VDirectoryObject} parent - The parent virtual directory (required, used for cap reference)
    */
   constructor(virtualPath, parent) {
@@ -44,9 +44,23 @@ export default class VFileObject extends FileObject {
 
     // Normalize the virtual path
     const normalizedVirtual = FS.fixSlashes(virtualPath)
+    const isAbsolute = normalizedVirtual.startsWith("/")
 
-    // Extract the directory and filename from the virtual path
-    const {dir: virtualDir, base} = FS.pathParts(normalizedVirtual)
+    // If absolute path, it's already resolved from cap root (from getFile())
+    // If relative path, resolve from parent directory (from hasFile(), read(), etc.)
+    let resolvedVirtualPath
+    if(isAbsolute) {
+      // Absolute path is already resolved - use as-is
+      resolvedVirtualPath = normalizedVirtual
+    } else {
+      // Relative path: resolve from parent directory (not cap root!)
+      resolvedVirtualPath = FS.resolvePath(parent.path, normalizedVirtual)
+    }
+
+    const normalized = FS.fixSlashes(resolvedVirtualPath)
+
+    // Extract the directory and filename from the resolved virtual path
+    const {dir: virtualDir, base} = FS.pathParts(normalized)
 
     // Determine the virtual parent directory
     // If virtualDir is "/" or empty or equals cap path, use the cap root
@@ -67,13 +81,13 @@ export default class VFileObject extends FileObject {
     super(base, virtualParent)
 
     // Convert virtual path to real path
-    // The virtual path is relative to the cap root, so we resolve it relative to cap's real path
+    // The resolved virtual path is relative to the cap root, so we resolve it relative to cap's real path
     const capRealPath = parent.cap.real.path
 
-    // Strip leading "/" from virtual path if present to make it relative
-    const relativeFromCap = normalizedVirtual.startsWith("/")
-      ? normalizedVirtual.slice(1)
-      : normalizedVirtual
+    // Strip leading "/" from resolved virtual path if present to make it relative
+    const relativeFromCap = normalized.startsWith("/")
+      ? normalized.slice(1)
+      : normalized
 
     // Resolve the real filesystem path
     const realPath = FS.resolvePath(capRealPath, relativeFromCap)
