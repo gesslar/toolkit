@@ -93,16 +93,17 @@ export default class DirectoryObject extends FS {
    * Constructs a DirectoryObject instance.
    *
    * @param {string?} [supplied="."] - The directory path (defaults to current directory)
+   * @param {DirectoryObject?} [parent] - Optional parent directory (ignored by DirectoryObject, used by subclasses)
    */
   constructor(supplied) {
+    super()
+
     const fixedDir = supplied || "."
 
     Valid.type(fixedDir, "String")
 
-    super()
-
     const normalizedDir = FS.fixSlashes(fixedDir)
-    const resolved = path.resolve(normalizedDir)
+    const resolved = FS.resolvePath(DirectoryObject.cwd, normalizedDir)
     const {dir, name, root} = FS.pathParts(resolved)
     const url = new URL(FS.pathToUrl(resolved))
     const trail = resolved.split(path.sep)
@@ -131,7 +132,7 @@ export default class DirectoryObject extends FS {
    * console.log(projectRoot.path) // process.cwd()
    */
   static fromCwd() {
-    return new this(process.cwd())
+    return new this(FS.cwd)
   }
 
   /**
@@ -561,6 +562,26 @@ export default class DirectoryObject extends FS {
   }
 
   /**
+   * Gets the parent directory object for a given virtual path.
+   * Returns the cap if the path is at the cap root.
+   *
+   * @private
+   * @param {string} virtualPath - The virtual path
+   * @returns {VDirectoryObject} The parent directory object
+   */
+  #getParentDirectoryForPath(virtualPath) {
+    const {dir} = FS.pathParts(virtualPath)
+
+    // If at cap root, return cap
+    if(dir === this.cap.path || dir === this.sep) {
+      return this.cap
+    }
+
+    // Create parent directory object (recursive - it will get its own parent)
+    return new this.constructor(dir, this.cap)
+  }
+
+  /**
    * Validates that a resolved virtual path stays within the cap boundary.
    *
    * @private
@@ -578,7 +599,12 @@ export default class DirectoryObject extends FS {
       relativeFromCap
     )
 
-    if(!FS.pathContains(this.cap.real.path, resolvedRealPath)) {
+    // Check if resolved path is within cap (handles case where path equals cap root)
+    const capRealPath = this.cap.real.path
+    const isWithinCap = resolvedRealPath === capRealPath
+      || FS.pathContains(capRealPath, resolvedRealPath)
+
+    if(!isWithinCap) {
       throw Sass.new(`${normalized} would be out of bounds (cap: ${this.cap.path}).`)
     }
 
@@ -609,35 +635,28 @@ export default class DirectoryObject extends FS {
   getDirectory(dir) {
     Valid.type(dir, "String", {allowEmpty: false})
 
-    // Handle VDirectoryObject with absolute virtual paths (starting with "/")
-    if(this.isVirtual && dir.startsWith(this.sep)) {
-      const normalized = this.#resolveAndValidateFromCap(dir)
+    // Validate boundaries before passing raw input to constructor
+    if(this.isVirtual) {
+      // VDO: validate cap boundary, then pass raw input to constructor
+      if(dir.startsWith(this.sep)) {
+      // Absolute path: validate from cap root
+        this.#resolveAndValidateFromCap(dir)
+      } else {
+      // Relative path: resolve and validate stays within cap
+        const newPath = FS.resolvePath(this.path, dir)
+        this.#validateCapBoundary(newPath)
+      }
 
-      // Pass cap as parent so it resolves from cap root, not current directory
-      return new this.constructor(normalized, this.cap)
+      // Pass raw input; constructor handles resolution and parent determination
+      return new this.constructor(dir, this)
     }
 
-    // Regular resolution
+    // Regular DO: validate local-only constraint
     const newPath = FS.resolvePath(this.path, dir)
+    Valid.assert(this.#isLocal(newPath), `${newPath} would be out of bounds.`)
 
-    // Validate bounds
-    if(!this.isVirtual) {
-      // Regular DO: enforce local-only constraint
-      Valid.assert(this.#isLocal(newPath), `${newPath} would be out of bounds.`)
-
-      return new this.constructor(newPath, this)
-    }
-
-    // VDO relative paths: only allow nested if explicitly prefixed with ./
-    // This maintains security while allowing explicit relative navigation
-    if(dir.includes(this.sep) && !dir.startsWith(`.${this.sep}`)) {
-      throw Sass.new(`${dir} would be out of bounds. Use "./${dir}" for nested paths or chain getDirectory() calls.`)
-    }
-
-    // VDO relative paths: validate cap boundary and pass resolved path
-    const normalized = this.#validateCapBoundary(newPath)
-
-    return new this.constructor(normalized, this)
+    // Pass raw input; constructor will resolve it to cwd
+    return new this.constructor(newPath)
   }
 
   /**
@@ -672,33 +691,24 @@ export default class DirectoryObject extends FS {
   getFile(file) {
     Valid.type(file, "String", {allowEmpty: false})
 
-    // Handle VDirectoryObject with absolute virtual paths (starting with "/")
-    if(this.isVirtual && file.startsWith(this.sep)) {
-      const normalized = this.#resolveAndValidateFromCap(file)
-
-      return new VFileObject(normalized, this)
-    }
-
-    // Regular resolution
-    const resolvedPath = FS.resolvePath(this.path, file)
-
-    // Validate bounds
+    // Validate boundaries - check what the resolved path would be
     if(!this.isVirtual) {
-      // Regular DO: enforce local-only constraint
+      // Regular DO: validate local-only constraint
+      const resolvedPath = FS.resolvePath(this.path, file)
       Valid.assert(this.#isLocal(resolvedPath), `${resolvedPath} would be out of bounds.`)
-
-      return new FileObject(file, this)
+    } else {
+      // VDO: validate cap boundary
+      if(file.startsWith(this.sep)) {
+        this.#resolveAndValidateFromCap(file)
+      } else {
+        const resolvedPath = FS.resolvePath(this.path, file)
+        this.#validateCapBoundary(resolvedPath)
+      }
     }
 
-    // VDO relative paths: only allow nested if explicitly prefixed with ./
-    // This maintains security while allowing explicit relative navigation
-    if(file.includes(this.sep) && !file.startsWith(`.${this.sep}`)) {
-      throw Sass.new(`${file} would be out of bounds. Use "./${file}" for nested paths or chain getFile() calls.`)
-    }
-
-    // VDO relative paths: validate cap boundary and pass resolved path
-    const normalized = this.#validateCapBoundary(resolvedPath)
-
-    return new VFileObject(normalized, this)
+    // Pass raw input to constructor - it handles resolution and parent determination
+    return this.isVirtual
+      ? new VFileObject(file, this)
+      : new FileObject(file, this)
   }
 }
