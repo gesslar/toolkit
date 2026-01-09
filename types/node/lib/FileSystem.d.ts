@@ -169,6 +169,12 @@ export default class FileSystem {
      */
     static virtualToRealPath(fileOrDirectoryObject: FileObject | DirectoryObject): string;
     /**
+     * Returns the current working directory as a string.
+     *
+     * @returns {string} The current working directory
+     */
+    static get cwd(): string;
+    /**
      * Compute the relative path from another file or directory to this instance.
      *
      * If the target is outside the source (i.e., the relative path starts with ".."),

@@ -432,18 +432,20 @@ describe("VDirectoryObject", () => {
       assert.ok(child2.path.includes("etc"))
     })
 
-    it("rejects paths with separators (must chain)", () => {
+    it("allows paths with separators", async () => {
       const parent = new TempDirectoryObject("test-rel-parent")
 
       cappedDirs.push(parent)
 
-      // Paths with separators are rejected - must chain instead
-      assert.throws(
-        () => parent.getDirectory("data/cache"),
-        /out of bounds/
-      )
+      // Paths with separators are now allowed
+      // Create intermediate directory first
+      await parent.getDirectory("data").assureExists({recursive: true})
+      const nested = parent.getDirectory("data/cache")
 
-      // Must chain: parent -> data -> cache
+      assert.ok(nested instanceof TempDirectoryObject)
+      assert.ok(nested.path.includes("data/cache"))
+
+      // Chaining also works: parent -> data -> cache
       const data = parent.getDirectory("data")
       const cache = data.getDirectory("cache")
 
@@ -812,18 +814,24 @@ describe("VDirectoryObject", () => {
       assert.ok(FileSystem.pathContains(temp.real.path, dir.real.path))
     })
 
-    it("rejects path traversal (security)", () => {
+    it("allows path traversal within cap boundary", async () => {
       const temp = new TempDirectoryObject("test-cap-boundary")
 
       cappedDirs.push(temp)
 
       const child = temp.getDirectory("safe")
 
-      // Path traversal is rejected
-      assert.throws(
-        () => child.getDirectory("../../etc/passwd"),
-        /out of bounds/
-      )
+      // Path traversal works like a real filesystem - goes up to cap root
+      const upToRoot = child.getDirectory("..")
+      assert.equal(upToRoot.path, temp.path)
+
+      // Going up and then down stays within cap
+      // Create intermediate directory first (both virtual and real)
+      const etcDir = temp.getDirectory("/etc")
+      await etcDir.assureExists({recursive: true})
+      const deepPath = child.getDirectory("../etc/passwd")
+      // This resolves to /etc/passwd (from cap root), which is within cap
+      assert.ok(deepPath.real.path.startsWith(temp.real.path))
     })
 
     it("real path access is explicit", () => {

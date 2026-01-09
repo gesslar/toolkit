@@ -206,8 +206,8 @@ export default class FileSystem {
     if(path.isAbsolute(to))
       return path.resolve(to)
 
-    // Strategy 2: If 'to' contains relative navigation
-    if(to.startsWith(this.fixSlashes("../")))
+    // Strategy 2: If 'to' contains relative navigation (../ or ..)
+    if(to.startsWith(this.fixSlashes("../")) || to === "..")
       return path.resolve(from, to)
 
     // Strategy 3: Try overlap-based merging, which will default to a basic
@@ -374,5 +374,14 @@ export default class FileSystem {
     }
 
     return this.resolvePath(cap, target)
+  }
+
+  /**
+   * Returns the current working directory as a string.
+   *
+   * @returns {string} The current working directory
+   */
+  static get cwd() {
+    return process.cwd()
   }
 }

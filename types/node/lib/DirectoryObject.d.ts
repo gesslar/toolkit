@@ -60,6 +60,7 @@ export default class DirectoryObject extends FS {
      * Constructs a DirectoryObject instance.
      *
      * @param {string?} [supplied="."] - The directory path (defaults to current directory)
+     * @param {DirectoryObject?} [parent] - Optional parent directory (ignored by DirectoryObject, used by subclasses)
      */
     constructor(supplied?: string | null);
     /**

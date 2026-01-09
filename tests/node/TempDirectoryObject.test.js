@@ -108,17 +108,24 @@ describe("TempDirectoryObject", () => {
       assert.ok(child.path.includes("subdir"))
     })
 
-    it("rejects path traversal attempts", async () => {
+    it("allows path traversal within cap boundary", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
       const child = temp.getDirectory("data").getDirectory("nested")
 
-      // Path traversal is rejected
-      assert.throws(
-        () => child.getDirectory("../../../../../../../etc/passwd"),
-        /out of bounds/
-      )
+      // Path traversal works like a real filesystem - goes up to cap root
+      const upOne = child.getDirectory("..")
+      assert.ok(upOne.path.includes("data"))
+
+      const upToRoot = child.getDirectory("../..")
+      assert.equal(upToRoot.path, temp.path)
+
+      // Going up and then down - create intermediate directory first
+      await temp.getDirectory("/etc").assureExists({recursive: true})
+      const deepPath = child.getDirectory("../../etc/passwd")
+      // This resolves to /etc/passwd (from cap root), which is within cap
+      assert.ok(deepPath.real.path.startsWith(temp.real.path))
     })
 
     it("allows absolute directory paths from cap root", async () => {
@@ -154,19 +161,22 @@ describe("TempDirectoryObject", () => {
       assert.equal(await level3.exists, true)
     })
 
-    it("rejects nested paths with separators", async () => {
+    it("allows nested paths with separators", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
-      // Paths with separators are rejected
-      assert.throws(
-        () => temp.getDirectory("data/cache/images"),
-        /out of bounds/
-      )
+      // Paths with separators are now allowed
+      // Create intermediate directories first
+      await temp.getDirectory("data").assureExists({recursive: true})
+      await temp.getDirectory("data/cache").assureExists({recursive: true})
+      const nested1 = temp.getDirectory("data/cache/images")
 
-      // Must chain instead
-      const nested = temp.getDirectory("data").getDirectory("cache").getDirectory("images")
-      assert.ok(nested.path.includes("images"))
+      assert.ok(nested1 instanceof TempDirectoryObject)
+      assert.ok(nested1.path.includes("data/cache/images"))
+
+      // Chaining also works
+      const nested2 = temp.getDirectory("data").getDirectory("cache").getDirectory("images")
+      assert.ok(nested2.path.includes("images"))
     })
   })
 
@@ -205,18 +215,24 @@ describe("TempDirectoryObject", () => {
       assert.ok(file.real.path.includes(temp.real.path))
     })
 
-    it("rejects file path traversal", async () => {
+    it("allows file path traversal within cap boundary", async () => {
       const temp = new TempDirectoryObject("test-temp")
       tempDirs.push(temp)
 
       const child = temp.getDirectory("data")
       const child2 = child.getDirectory("nested")
 
-      // Path traversal is rejected
-      assert.throws(
-        () => child2.getFile("../../../../../../../etc/passwd"),
-        /out of bounds/
-      )
+      // Path traversal works like a real filesystem
+      // Going up to root and then down to etc/passwd
+      // Create intermediate directory first (both virtual and real)
+      const etcDir = temp.getDirectory("/etc")
+      await etcDir.assureExists({recursive: true})
+      // Also create the real /etc directory
+      await etcDir.real.assureExists({recursive: true})
+      const file = child2.getFile("../../etc/passwd")
+      // This resolves to /etc/passwd (from cap root), which is within cap
+      assert.ok(file.real.path.startsWith(temp.real.path))
+      assert.ok(file.path.includes("etc/passwd"))
     })
   })
 
