@@ -9,8 +9,8 @@ import path from "node:path"
 import {URL} from "node:url"
 
 import Data from "../../browser/lib/Data.js"
-import FS from "./FileSystem.js"
 import FileObject from "./FileObject.js"
+import FS from "./FileSystem.js"
 import Sass from "./Sass.js"
 import Valid from "./Valid.js"
 import VFileObject from "./VFileObject.js"
@@ -532,6 +532,60 @@ export default class DirectoryObject extends FS {
   }
 
   /**
+   * Resolves an absolute virtual path from cap root and validates it stays within cap boundary.
+   *
+   * @private
+   * @param {string} absolutePath - Absolute virtual path starting with separator
+   * @returns {string} Normalized resolved virtual path
+   * @throws {Sass} If path would be out of bounds
+   */
+  #resolveAndValidateFromCap(absolutePath) {
+    const relativeFromCap = Data.chopLeft(absolutePath, this.sep)
+    const resolvedVirtualPath = FS.resolvePath(this.cap.path, relativeFromCap)
+    const normalized = FS.fixSlashes(resolvedVirtualPath)
+
+    // Validate cap boundary using real paths
+    const relativeFromCapForReal = normalized.startsWith(this.sep)
+      ? Data.chopLeft(normalized, this.sep)
+      : normalized
+    const resolvedRealPath = FS.resolvePath(
+      this.cap.real.path,
+      relativeFromCapForReal
+    )
+
+    if(!FS.pathContains(this.cap.real.path, resolvedRealPath)) {
+      throw Sass.new(`${normalized} would be out of bounds (cap: ${this.cap.path}).`)
+    }
+
+    return normalized
+  }
+
+  /**
+   * Validates that a resolved virtual path stays within the cap boundary.
+   *
+   * @private
+   * @param {string} virtualPath - Resolved virtual path
+   * @returns {string} Normalized virtual path
+   * @throws {Sass} If path would be out of bounds
+   */
+  #validateCapBoundary(virtualPath) {
+    const normalized = FS.fixSlashes(virtualPath)
+    const relativeFromCap = normalized.startsWith(this.sep)
+      ? Data.chopLeft(normalized, this.sep)
+      : normalized
+    const resolvedRealPath = FS.resolvePath(
+      this.cap.real.path,
+      relativeFromCap
+    )
+
+    if(!FS.pathContains(this.cap.real.path, resolvedRealPath)) {
+      throw Sass.new(`${normalized} would be out of bounds (cap: ${this.cap.path}).`)
+    }
+
+    return normalized
+  }
+
+  /**
    * Creates a new DirectoryObject by extending this directory's path.
    *
    * Uses intelligent path merging that detects overlapping segments to avoid
@@ -555,11 +609,34 @@ export default class DirectoryObject extends FS {
   getDirectory(dir) {
     Valid.type(dir, "String", {allowEmpty: false})
 
+    // Handle VDirectoryObject with absolute virtual paths (starting with "/")
+    if(this.isVirtual && dir.startsWith(this.sep)) {
+      const normalized = this.#resolveAndValidateFromCap(dir)
+
+      return new this.constructor(normalized, this)
+    }
+
+    // Regular resolution
     const newPath = FS.resolvePath(this.path, dir)
 
-    Valid.assert(this.#isLocal(newPath), `${newPath} would be out of bounds.`)
+    // Validate bounds
+    if(!this.isVirtual) {
+      // Regular DO: enforce local-only constraint
+      Valid.assert(this.#isLocal(newPath), `${newPath} would be out of bounds.`)
 
-    return new this.constructor(newPath, this)
+      return new this.constructor(newPath, this)
+    }
+
+    // VDO relative paths: only allow nested if explicitly prefixed with ./
+    // This maintains security while allowing explicit relative navigation
+    if(dir.includes(this.sep) && !dir.startsWith(`.${this.sep}`)) {
+      throw Sass.new(`${dir} would be out of bounds. Use "./${dir}" for nested paths or chain getDirectory() calls.`)
+    }
+
+    // VDO relative paths: validate cap boundary and pass resolved path
+    const normalized = this.#validateCapBoundary(newPath)
+
+    return new this.constructor(normalized, this)
   }
 
   /**
@@ -569,31 +646,58 @@ export default class DirectoryObject extends FS {
    * duplication. The resulting FileObject can be used for reading, writing,
    * and other file operations.
    *
+   * For regular DirectoryObject: only allows direct children (local only).
+   * For VDirectoryObject: supports absolute virtual paths (starting with "/")
+   * which resolve from cap root, and relative paths from current directory.
+   *
    * When called on a VDirectoryObject, returns a VFileObject to maintain
    * virtual path semantics.
    *
-   * @param {string} file - The filename to append (can include subdirectories like "src/index.js")
+   * @param {string} file - The filename to append
    * @returns {FileObject|VFileObject} A new FileObject (or VFileObject if virtual)
    * @throws {Sass} If filename is not a string
+   * @throws {Sass} If path would be out of bounds
    * @example
    * const dir = new DirectoryObject("/projects/git/toolkit")
    * const file = dir.getFile("package.json")
    * console.log(file.path) // "/projects/git/toolkit/package.json"
    *
    * @example
-   * // Can include nested paths
-   * const file = dir.getFile("src/index.js")
-   * const data = await file.read()
+   * // VDirectoryObject with absolute virtual path
+   * const vdo = new TempDirectoryObject("myapp")
+   * const file = vdo.getFile("/config/settings.json")
+   * // Virtual path: /config/settings.json, Real path: {vdo.real.path}/config/settings.json
    */
   getFile(file) {
     Valid.type(file, "String", {allowEmpty: false})
 
-    const newPath = FS.resolvePath(this.path, file)
+    // Handle VDirectoryObject with absolute virtual paths (starting with "/")
+    if(this.isVirtual && file.startsWith(this.sep)) {
+      const normalized = this.#resolveAndValidateFromCap(file)
 
-    Valid.assert(this.#isLocal(newPath), `${newPath} would be out of bounds.`)
+      return new VFileObject(normalized, this)
+    }
 
-    return this.isVirtual
-      ? new VFileObject(file, this)
-      : new FileObject(file, this)
+    // Regular resolution
+    const resolvedPath = FS.resolvePath(this.path, file)
+
+    // Validate bounds
+    if(!this.isVirtual) {
+      // Regular DO: enforce local-only constraint
+      Valid.assert(this.#isLocal(resolvedPath), `${resolvedPath} would be out of bounds.`)
+
+      return new FileObject(file, this)
+    }
+
+    // VDO relative paths: only allow nested if explicitly prefixed with ./
+    // This maintains security while allowing explicit relative navigation
+    if(file.includes(this.sep) && !file.startsWith(`.${this.sep}`)) {
+      throw Sass.new(`${file} would be out of bounds. Use "./${file}" for nested paths or chain getFile() calls.`)
+    }
+
+    // VDO relative paths: validate cap boundary and pass resolved path
+    const normalized = this.#validateCapBoundary(resolvedPath)
+
+    return new VFileObject(normalized, this)
   }
 }

@@ -727,6 +727,38 @@ describe('Glog', () => {
       assert.ok(infoOutput[0][0].includes('🌟'), 'First logger inherits static symbol')
       assert.ok(infoOutput[1][0].includes('🌟'), 'Second logger inherits static symbol')
     })
+
+    it('constructor merges partial symbols with defaults', () => {
+      const logger = Glog.create({
+        name: 'Test',
+        symbols: {error: '🔥'},
+        colours: {}
+      })
+
+      logger.info("Normal info")
+      logger.error("Fire error")
+
+      assert.equal(infoOutput.length, 1)
+      assert.ok(infoOutput[0][0].includes('i'), 'Should use default info symbol')
+
+      assert.equal(errorOutput.length, 1)
+      assert.ok(errorOutput[0][0].includes('🔥'), 'Should use custom fire emoji for error')
+    })
+
+    it('setOptions merges partial symbols with defaults', () => {
+      const logger = Glog.create({name: 'Test'})
+
+      logger.setOptions({symbols: {warn: '⚠️'}, colours: {}})
+
+      logger.info("Normal info")
+      logger.warn("Custom warning")
+
+      assert.equal(infoOutput.length, 1)
+      assert.ok(infoOutput[0][0].includes('i'), 'Should use default info symbol')
+
+      assert.equal(warnOutput.length, 1)
+      assert.ok(warnOutput[0][0].includes('⚠️'), 'Should use custom warning emoji')
+    })
   })
 })
 

@@ -149,7 +149,13 @@ class Glog {
     this.#logLevel = options.debugLevel ?? options.logLevel ?? this.#logLevel
     this.#logPrefix = options.prefix ?? this.#logPrefix
     this.#colours = options.colours ?? this.#colours
-    this.#symbols = options.symbols ?? this.#symbols
+
+    if(options.symbols) {
+      const base = this.#symbols ?? logSymbols
+
+      this.#symbols = Object.assign({}, base, options.symbols)
+    }
+
     this.#stackTrace = options.stackTrace ?? this.#stackTrace
     this.#tagsAsStrings = options.tagsAsStrings ?? this.#tagsAsStrings
     this.#displayName = options.displayName ?? this.#displayName
