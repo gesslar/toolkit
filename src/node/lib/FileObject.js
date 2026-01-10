@@ -70,24 +70,6 @@ export default class FileObject extends FS {
   })
 
   /**
-   * Strip root from absolute path to make it relative.
-   * Used for virtual filesystem path resolution.
-   *
-   * @private
-   * @static
-   * @param {string} pathName - The path to convert
-   * @returns {string} Path with root stripped, or original if already relative
-   */
-  static #absoluteToRelative(pathName) {
-    if(!path.isAbsolute(pathName))
-      return pathName
-
-    const {root} = FS.pathParts(pathName)
-
-    return Data.chopLeft(pathName, root)
-  }
-
-  /**
    * Constructs a FileObject instance.
    *
    * @param {string} submitted - The file path
@@ -100,9 +82,7 @@ export default class FileObject extends FS {
     Valid.type(parent, "Null|String|DirectoryObject", {allowEmpty: false})
 
     const normalizedFile = FS.fixSlashes(submitted)
-    const absOrRelPath = path.isAbsolute(normalizedFile) && parent
-      ? FileObject.#absoluteToRelative(normalizedFile)
-      : normalizedFile
+    const absOrRelPath = normalizedFile
     const {dir, base, ext, name} = FS.pathParts(absOrRelPath)
 
     const [parentObject, fullPath] = (() => {
@@ -160,9 +140,7 @@ export default class FileObject extends FS {
    * @returns {string} String representation of the FileObject
    */
   toString() {
-    return this.isVirtual
-      ?`[${this.constructor.name}: ${this.path} → ${this.real.path}]`
-      :`[${this.constructor.name}: ${this.path}]`
+    return `[${this.constructor.name}: ${this.path}]`
   }
 
   /**
