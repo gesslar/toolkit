@@ -349,13 +349,6 @@ declare class Glog {
      */
     get options(): object;
     /**
-     * Extract file and function information from stack trace
-     *
-     * @private
-     * @returns {string} Caller tag
-     */
-    private extractFileFunction;
-    /**
      * Create a new debug function with a specific tag
      *
      * @param {string} tag - Tag to prepend to debug messages

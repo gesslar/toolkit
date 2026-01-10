@@ -150,25 +150,6 @@ export default class FileSystem {
         ext: string;
     };
     /**
-     * Convert a virtual capped path to its real filesystem path.
-     * For capped objects, resolves the virtual path relative to the cap's real path.
-     * For uncapped objects, returns the path unchanged.
-     *
-     * @static
-     * @param {FileObject|DirectoryObject} fileOrDirectoryObject - The file or directory object to convert
-     * @returns {string} The real filesystem path
-     * @throws {Sass} If parameter is not a FileObject or DirectoryObject
-     * @example
-     * const temp = new TempDirectoryObject("myapp")
-     * const file = temp.getFile("/config.json")
-     * FS.virtualToRealPath(file) // "/tmp/myapp-ABC123/config.json"
-     *
-     * @example
-     * const regular = new FileObject("/home/user/file.txt")
-     * FS.virtualToRealPath(regular) // "/home/user/file.txt"
-     */
-    static virtualToRealPath(fileOrDirectoryObject: FileObject | DirectoryObject): string;
-    /**
      * Returns the current working directory as a string.
      *
      * @returns {string} The current working directory

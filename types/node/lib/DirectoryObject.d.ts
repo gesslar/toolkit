@@ -251,55 +251,30 @@ export default class DirectoryObject extends FS {
     /**
      * Creates a new DirectoryObject by extending this directory's path.
      *
-     * Uses intelligent path merging that detects overlapping segments to avoid
-     * duplication (e.g., "/projects/toolkit" + "toolkit/src" = "/projects/toolkit/src").
-     * The temporary flag is preserved from the parent directory.
+     * Uses overlapping path segment detection to intelligently combine paths.
+     * Preserves the temporary flag from the current directory.
      *
-     * @param {string} dir - The subdirectory path to append (can be nested like "src/lib")
-     * @returns {DirectoryObject} A new DirectoryObject instance with the combined path
-     * @throws {Sass} If newPath is not a string
+     * @param {string} newPath - The path to append to this directory's path.
+     * @returns {DirectoryObject} A new DirectoryObject with the extended path.
      * @example
      * const dir = new DirectoryObject("/projects/git/toolkit")
-     * const subDir = dir.getDirectory("src/lib")
+     * const subDir = dir.addDirectory("src/lib")
      * console.log(subDir.path) // "/projects/git/toolkit/src/lib"
-     *
-     * @example
-     * // Handles overlapping segments intelligently
-     * const dir = new DirectoryObject("/projects/toolkit")
-     * const subDir = dir.getDirectory("toolkit/src")
-     * console.log(subDir.path) // "/projects/toolkit/src" (not /projects/toolkit/toolkit/src)
      */
-    getDirectory(dir: string): DirectoryObject;
+    getDirectory(newPath: string): DirectoryObject;
     /**
      * Creates a new FileObject by extending this directory's path.
      *
-     * Uses intelligent path merging that detects overlapping segments to avoid
-     * duplication. The resulting FileObject can be used for reading, writing,
-     * and other file operations.
+     * Uses overlapping path segment detection to intelligently combine paths.
      *
-     * For regular DirectoryObject: only allows direct children (local only).
-     * For VDirectoryObject: supports absolute virtual paths (starting with "/")
-     * which resolve from cap root, and relative paths from current directory.
-     *
-     * When called on a VDirectoryObject, returns a VFileObject to maintain
-     * virtual path semantics.
-     *
-     * @param {string} file - The filename to append
-     * @returns {FileObject|VFileObject} A new FileObject (or VFileObject if virtual)
-     * @throws {Sass} If filename is not a string
-     * @throws {Sass} If path would be out of bounds
+     * @param {string} filename - The filename to append to this directory's path.
+     * @returns {FileObject} A new FileObject with the extended path.
      * @example
      * const dir = new DirectoryObject("/projects/git/toolkit")
-     * const file = dir.getFile("package.json")
+     * const file = dir.addFile("package.json")
      * console.log(file.path) // "/projects/git/toolkit/package.json"
-     *
-     * @example
-     * // VDirectoryObject with absolute virtual path
-     * const vdo = new TempDirectoryObject("myapp")
-     * const file = vdo.getFile("/config/settings.json")
-     * // Virtual path: /config/settings.json, Real path: {vdo.real.path}/config/settings.json
      */
-    getFile(file: string): FileObject | VFileObject;
+    getFile(filename: string): FileObject;
     #private;
 }
 import FS from "./FileSystem.js";
