@@ -10,6 +10,13 @@ import Data from "../../browser/lib/Data.js"
 import Collection from "../../browser/lib/Collection.js"
 
 /**
+ * Options for type validation methods.
+ *
+ * @typedef {object} TypeValidationOptions
+ * @property {boolean} [allowEmpty=true] - Whether empty values are allowed
+ */
+
+/**
  * Validation utility class providing type checking and assertion methods.
  */
 export default class Valid {
@@ -20,7 +27,7 @@ export default class Valid {
    *
    * @param {unknown} value - The value to validate
    * @param {string} type - The expected type in the form of "object", "object[]", "object|object[]"
-   * @param {object} [options] - Additional options for validation.
+   * @param {TypeValidationOptions} [options] - Additional options for validation.
    */
   static type(value, type, options) {
     const expected = [type]
