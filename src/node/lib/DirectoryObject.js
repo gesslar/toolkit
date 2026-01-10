@@ -548,7 +548,7 @@ export default class DirectoryObject extends FS {
     const thisPath = this.path
     const merged = FS.mergeOverlappingPaths(thisPath, newPath)
 
-    return new this.constructor(merged, this.temporary)
+    return new this.constructor(merged)
   }
 
   /**
