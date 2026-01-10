@@ -118,9 +118,11 @@ export default class Promised {
    * @param {Array<{status: 'fulfilled'|'rejected', value?: unknown, reason?: unknown}>} settled - Array of settled promise results
    * @throws {Tantrum} Throws a Tantrum error with rejection reasons
    */
-  static throw(message="GIGO", settled) {
-    Valid.type(message, "String", {allowEmpty: false})
+  static throw(message, settled) {
+    Valid.type(message, "Null|Undefined|String", {allowEmpty: false})
     Valid.type(settled, "Array")
+
+    message ??= "GIGO"
 
     const rejected = this.rejected(settled)
     const reasons = this.reasons(rejected)
