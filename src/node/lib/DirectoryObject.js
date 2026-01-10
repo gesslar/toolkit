@@ -13,7 +13,6 @@ import FileObject from "./FileObject.js"
 import FS from "./FileSystem.js"
 import Sass from "./Sass.js"
 import Valid from "./Valid.js"
-import VFileObject from "./VFileObject.js"
 
 /**
  * DirectoryObject encapsulates metadata and operations for a directory,
@@ -290,7 +289,7 @@ export default class DirectoryObject extends FS {
    *
    * @async
    * @param {string} [pat=""] - Optional glob pattern to filter results (e.g., "*.txt", "test-*")
-   * @returns {Promise<{files: Array<FileObject|VFileObject>, directories: Array<DirectoryObject|VDirectoryObject>}>} Object containing arrays of files and directories
+   * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject|VDirectoryObject>}>} Object containing arrays of files and directories
    * @example
    * const dir = new DirectoryObject("./src")
    * const {files, directories} = await dir.read()
@@ -340,7 +339,7 @@ export default class DirectoryObject extends FS {
    *
    * @async
    * @param {string} [pat=""] - Glob pattern to filter results
-   * @returns {Promise<{files: Array<FileObject|VFileObject>, directories: Array<DirectoryObject|VDirectoryObject>}>} Object containing arrays of matching files and directories
+   * @returns {Promise<{files: Array<FileObject|FileObject>, directories: Array<DirectoryObject|VDirectoryObject>}>} Object containing arrays of matching files and directories
    * @throws {Sass} If an entry is neither a file nor directory
    * @example
    * const dir = new DirectoryObject("./src")
