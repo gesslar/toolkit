@@ -2,16 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Test ActionBuilder",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/work/test-it.mjs",
-      "console": "integratedTerminal"
-    },
-    {
       "name": "Run cap.mjs",
       "type": "node",
       "request": "launch",
