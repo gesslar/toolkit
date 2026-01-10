@@ -1,4 +1,10 @@
 /**
+ * Options for type validation methods.
+ *
+ * @typedef {object} TypeValidationOptions
+ * @property {boolean} [allowEmpty=true] - Whether empty values are allowed
+ */
+/**
  * Validation utility class providing type checking and assertion methods.
  */
 export default class Valid {
@@ -8,9 +14,9 @@ export default class Valid {
      *
      * @param {unknown} value - The value to validate
      * @param {string} type - The expected type in the form of "object", "object[]", "object|object[]"
-     * @param {object} [options] - Additional options for validation.
+     * @param {TypeValidationOptions} [options] - Additional options for validation.
      */
-    static type(value: unknown, type: string, options?: object): void;
+    static type(value: unknown, type: string, options?: TypeValidationOptions): void;
     /**
      * Asserts a condition
      *
@@ -32,4 +38,13 @@ export default class Valid {
      */
     static prototypePollutionProtection(keys: Array<string>): void;
 }
+/**
+ * Options for type validation methods.
+ */
+export type TypeValidationOptions = {
+    /**
+     * - Whether empty values are allowed
+     */
+    allowEmpty?: boolean;
+};
 //# sourceMappingURL=Valid.d.ts.map
