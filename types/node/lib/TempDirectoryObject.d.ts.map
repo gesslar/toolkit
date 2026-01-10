@@ -1,1 +1,1 @@
-{"version":3,"file":"TempDirectoryObject.d.ts","sourceRoot":"","sources":["../../../src/node/lib/TempDirectoryObject.js"],"names":[],"mappings":"AAiBA;;;;;;;;;GASG;AACH;IAgIE;;;;;OAKG;IACH,uBAEC;IA1ED,2BAEC;IAwBD,eAEC;IAED;;;;;;;;;;;;;;;;OAgBG;IACH,UATa,OAAO,CAAC,IAAI,CAAC,CAWzB;;CA0BF;6BAzJ4B,uBAAuB"}
+{"version":3,"file":"TempDirectoryObject.d.ts","sourceRoot":"","sources":["../../../src/node/lib/TempDirectoryObject.js"],"names":[],"mappings":"AAEA;CACC;6BAH4B,uBAAuB"}

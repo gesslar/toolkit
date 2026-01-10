@@ -524,191 +524,46 @@ export default class DirectoryObject extends FS {
     return await directory.exists
   }
 
-  #isLocal = candidate => {
-    Valid.type(candidate, "String", {allowEmpty: false})
-
-    const {dir: candidateDir} = FS.pathParts(candidate)
-
-    return candidateDir === this.path
-  }
-
-  /**
-   * Resolves an absolute virtual path from cap root and validates it stays within cap boundary.
-   *
-   * @private
-   * @param {string} absolutePath - Absolute virtual path starting with separator
-   * @returns {string} Normalized resolved virtual path
-   * @throws {Sass} If path would be out of bounds
-   */
-  #resolveAndValidateFromCap(absolutePath) {
-    const relativeFromCap = Data.chopLeft(absolutePath, this.sep)
-    const resolvedVirtualPath = FS.resolvePath(this.cap.path, relativeFromCap)
-    const normalized = FS.fixSlashes(resolvedVirtualPath)
-
-    // Validate cap boundary using real paths
-    const relativeFromCapForReal = normalized.startsWith(this.sep)
-      ? Data.chopLeft(normalized, this.sep)
-      : normalized
-    const resolvedRealPath = FS.resolvePath(
-      this.cap.real.path,
-      relativeFromCapForReal
-    )
-
-    if(!FS.pathContains(this.cap.real.path, resolvedRealPath)) {
-      throw Sass.new(`${normalized} would be out of bounds (cap: ${this.cap.path}).`)
-    }
-
-    return normalized
-  }
-
-  /**
-   * Gets the parent directory object for a given virtual path.
-   * Returns the cap if the path is at the cap root.
-   *
-   * @private
-   * @param {string} virtualPath - The virtual path
-   * @returns {VDirectoryObject} The parent directory object
-   */
-  #getParentDirectoryForPath(virtualPath) {
-    const {dir} = FS.pathParts(virtualPath)
-
-    // If at cap root, return cap
-    if(dir === this.cap.path || dir === this.sep) {
-      return this.cap
-    }
-
-    // Create parent directory object (recursive - it will get its own parent)
-    return new this.constructor(dir, this.cap)
-  }
-
-  /**
-   * Validates that a resolved virtual path stays within the cap boundary.
-   *
-   * @private
-   * @param {string} virtualPath - Resolved virtual path
-   * @returns {string} Normalized virtual path
-   * @throws {Sass} If path would be out of bounds
-   */
-  #validateCapBoundary(virtualPath) {
-    const normalized = FS.fixSlashes(virtualPath)
-    const relativeFromCap = normalized.startsWith(this.sep)
-      ? Data.chopLeft(normalized, this.sep)
-      : normalized
-    const resolvedRealPath = FS.resolvePath(
-      this.cap.real.path,
-      relativeFromCap
-    )
-
-    // Check if resolved path is within cap (handles case where path equals cap root)
-    const capRealPath = this.cap.real.path
-    const isWithinCap = resolvedRealPath === capRealPath
-      || FS.pathContains(capRealPath, resolvedRealPath)
-
-    if(!isWithinCap) {
-      throw Sass.new(`${normalized} would be out of bounds (cap: ${this.cap.path}).`)
-    }
-
-    return normalized
-  }
-
   /**
    * Creates a new DirectoryObject by extending this directory's path.
    *
-   * Uses intelligent path merging that detects overlapping segments to avoid
-   * duplication (e.g., "/projects/toolkit" + "toolkit/src" = "/projects/toolkit/src").
-   * The temporary flag is preserved from the parent directory.
+   * Uses overlapping path segment detection to intelligently combine paths.
+   * Preserves the temporary flag from the current directory.
    *
-   * @param {string} dir - The subdirectory path to append (can be nested like "src/lib")
-   * @returns {DirectoryObject} A new DirectoryObject instance with the combined path
-   * @throws {Sass} If newPath is not a string
+   * @param {string} newPath - The path to append to this directory's path.
+   * @returns {DirectoryObject} A new DirectoryObject with the extended path.
    * @example
    * const dir = new DirectoryObject("/projects/git/toolkit")
-   * const subDir = dir.getDirectory("src/lib")
+   * const subDir = dir.addDirectory("src/lib")
    * console.log(subDir.path) // "/projects/git/toolkit/src/lib"
-   *
-   * @example
-   * // Handles overlapping segments intelligently
-   * const dir = new DirectoryObject("/projects/toolkit")
-   * const subDir = dir.getDirectory("toolkit/src")
-   * console.log(subDir.path) // "/projects/toolkit/src" (not /projects/toolkit/toolkit/src)
    */
-  getDirectory(dir) {
-    Valid.type(dir, "String", {allowEmpty: false})
+  getDirectory(newPath) {
+    Valid.type(newPath, "String")
 
-    // Validate boundaries before passing raw input to constructor
-    if(this.isVirtual) {
-      // VDO: validate cap boundary, then pass raw input to constructor
-      if(dir.startsWith(this.sep)) {
-      // Absolute path: validate from cap root
-        this.#resolveAndValidateFromCap(dir)
-      } else {
-      // Relative path: resolve and validate stays within cap
-        const newPath = FS.resolvePath(this.path, dir)
-        this.#validateCapBoundary(newPath)
-      }
+    const thisPath = this.path
+    const merged = FS.mergeOverlappingPaths(thisPath, newPath)
 
-      // Pass raw input; constructor handles resolution and parent determination
-      return new this.constructor(dir, this)
-    }
-
-    // Regular DO: validate local-only constraint
-    const newPath = FS.resolvePath(this.path, dir)
-    Valid.assert(this.#isLocal(newPath), `${newPath} would be out of bounds.`)
-
-    // Pass raw input; constructor will resolve it to cwd
-    return new this.constructor(newPath)
+    return new this.constructor(merged, this.temporary)
   }
 
   /**
    * Creates a new FileObject by extending this directory's path.
    *
-   * Uses intelligent path merging that detects overlapping segments to avoid
-   * duplication. The resulting FileObject can be used for reading, writing,
-   * and other file operations.
+   * Uses overlapping path segment detection to intelligently combine paths.
    *
-   * For regular DirectoryObject: only allows direct children (local only).
-   * For VDirectoryObject: supports absolute virtual paths (starting with "/")
-   * which resolve from cap root, and relative paths from current directory.
-   *
-   * When called on a VDirectoryObject, returns a VFileObject to maintain
-   * virtual path semantics.
-   *
-   * @param {string} file - The filename to append
-   * @returns {FileObject|VFileObject} A new FileObject (or VFileObject if virtual)
-   * @throws {Sass} If filename is not a string
-   * @throws {Sass} If path would be out of bounds
+   * @param {string} filename - The filename to append to this directory's path.
+   * @returns {FileObject} A new FileObject with the extended path.
    * @example
    * const dir = new DirectoryObject("/projects/git/toolkit")
-   * const file = dir.getFile("package.json")
+   * const file = dir.addFile("package.json")
    * console.log(file.path) // "/projects/git/toolkit/package.json"
-   *
-   * @example
-   * // VDirectoryObject with absolute virtual path
-   * const vdo = new TempDirectoryObject("myapp")
-   * const file = vdo.getFile("/config/settings.json")
-   * // Virtual path: /config/settings.json, Real path: {vdo.real.path}/config/settings.json
    */
-  getFile(file) {
-    Valid.type(file, "String", {allowEmpty: false})
+  getFile(filename) {
+    Valid.type(filename, "String")
 
-    // Validate boundaries - check what the resolved path would be
-    if(!this.isVirtual) {
-      // Regular DO: validate local-only constraint
-      const resolvedPath = FS.resolvePath(this.path, file)
-      Valid.assert(this.#isLocal(resolvedPath), `${resolvedPath} would be out of bounds.`)
-    } else {
-      // VDO: validate cap boundary
-      if(file.startsWith(this.sep)) {
-        this.#resolveAndValidateFromCap(file)
-      } else {
-        const resolvedPath = FS.resolvePath(this.path, file)
-        this.#validateCapBoundary(resolvedPath)
-      }
-    }
+    const thisPath = this.path
+    const merged = FS.mergeOverlappingPaths(thisPath, filename)
 
-    // Pass raw input to constructor - it handles resolution and parent determination
-    return this.isVirtual
-      ? new VFileObject(file, this)
-      : new FileObject(file, this)
+    return new FileObject(merged)
   }
 }

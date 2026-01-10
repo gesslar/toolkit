@@ -543,17 +543,6 @@ class Glog {
   }
 
   /**
-   * Extract file and function information from stack trace
-   *
-   * @private
-   * @returns {string} Caller tag
-   */
-  extractFileFunction() {
-    // Simple fallback - just return a basic tag
-    return "caller"
-  }
-
-  /**
    * Create a new debug function with a specific tag
    *
    * @param {string} tag - Tag to prepend to debug messages

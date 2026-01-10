@@ -1,1 +1,1 @@
-{"version":3,"file":"VFileObject.d.ts","sourceRoot":"","sources":["../../../src/node/lib/VFileObject.js"],"names":[],"mappings":"AAWA;;;;;;;;;;;;;;;;;;GAkBG;AAEH;IAGE;;;;;OAKG;IACH,yBAHW,MAAM,UACN,gBAAgB,EA8D1B;IAED,yBAEC;IAED,uBAEC;;CACF;uBAtGsB,iBAAiB"}
+{"version":3,"file":"VFileObject.d.ts","sourceRoot":"","sources":["../../../src/node/lib/VFileObject.js"],"names":[],"mappings":"AAEA;CACC;uBAHsB,iBAAiB"}
