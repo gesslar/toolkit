@@ -551,7 +551,8 @@ class Glog {
   newDebug(tag) {
     return function(message, level, ...arg) {
       if(this.#stackTrace || Glog.stackTrace) {
-        tag = this.extractFileFunction()
+        // extractFileFunction was removed - use original tag as fallback
+        // Stack trace extraction is not available in Glog (use Logger for full stack trace support)
       }
 
       this.debug(`[${tag}] ${message}`, level, ...arg)
