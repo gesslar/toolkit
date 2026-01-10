@@ -181,11 +181,25 @@ export default class Data {
   }
 
   /**
+   * Options for creating a new TypeSpec.
+   *
+   * @typedef {object} TypeSpecOptions
+   * @property {string} [delimiter="|"] - The delimiter for union types
+   */
+
+  /**
+   * Options for type validation methods.
+   *
+   * @typedef {object} TypeValidationOptions
+   * @property {boolean} [allowEmpty=true] - Whether empty values are allowed
+   */
+
+  /**
    * Creates a type spec from a string. A type spec is an array of objects
    * defining the type of a value and whether an array is expected.
    *
    * @param {string} string - The string to parse into a type spec.
-   * @param {object} options - Additional options for parsing.
+   * @param {TypeSpecOptions} [options] - Additional options for parsing.
    * @returns {Array<object>} An array of type specs.
    */
   static newTypeSpec(string, options) {
@@ -197,7 +211,7 @@ export default class Data {
    *
    * @param {unknown} value The value to check
    * @param {string|TypeSpec} type The type to check for
-   * @param {object} options Additional options for checking
+   * @param {TypeValidationOptions} [options] Additional options for checking
    * @returns {boolean} Whether the value is of the specified type
    */
   static isType(value, type, options = {}) {

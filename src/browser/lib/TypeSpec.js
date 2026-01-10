@@ -10,6 +10,20 @@ import Sass from "./Sass.js"
 import Util from "./Util.js"
 
 /**
+ * Options for creating a new TypeSpec.
+ *
+ * @typedef {object} TypeSpecOptions
+ * @property {string} [delimiter="|"] - The delimiter for union types
+ */
+
+/**
+ * Options for type validation methods.
+ *
+ * @typedef {object} TypeValidationOptions
+ * @property {boolean} [allowEmpty=true] - Whether empty values are allowed
+ */
+
+/**
  * Type specification class for parsing and validating complex type definitions.
  * Supports union types, array types, and validation options.
  */
@@ -20,7 +34,7 @@ export default class TypeSpec {
    * Creates a new TypeSpec instance.
    *
    * @param {string} string - The type specification string (e.g., "string|number", "object[]")
-   * @param {unknown} options - Additional parsing options
+   * @param {TypeSpecOptions} [options] - Additional parsing options
    */
   constructor(string, options) {
     this.#specs = []
@@ -134,14 +148,20 @@ export default class TypeSpec {
    * Handles array types, union types, and empty value validation.
    *
    * @param {unknown} value - The value to test against the type specifications
-   * @param {unknown} options - Validation options
-   * @param {boolean} options.allowEmpty - Whether empty values are allowed
+   * @param {TypeValidationOptions} [options] - Validation options
    * @returns {boolean} True if the value matches any type specification
    */
   matches(value, options) {
     return this.match(value, options).length > 0
   }
 
+  /**
+   * Returns matching type specifications for a value.
+   *
+   * @param {unknown} value - The value to test against the type specifications
+   * @param {TypeValidationOptions} [options] - Validation options
+   * @returns {Array<object>} Array of matching type specifications
+   */
   match(value, options) {
     const allowEmpty = options?.allowEmpty ?? true
 
@@ -211,8 +231,7 @@ export default class TypeSpec {
    *
    * @private
    * @param {string} string - The type specification string to parse
-   * @param {unknown} options - Parsing options
-   * @param {string} options.delimiter - The delimiter for union types
+   * @param {TypeSpecOptions} [options] - Parsing options
    * @throws {Sass} If the type specification is invalid
    */
   #parse(string, options={delimiter: "|"}) {

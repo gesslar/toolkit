@@ -146,9 +146,7 @@ export default class DirectoryObject extends FS {
    * @returns {string} string representation of the DirectoryObject
    */
   toString() {
-    return this.isVirtual
-      ?`[${this.constructor.name}: ${this.path} → ${this.real.path}]`
-      :`[${this.constructor.name}: ${this.path}]`
+    return `[${this.constructor.name}: ${this.path}]`
   }
 
   /**
@@ -564,7 +562,7 @@ export default class DirectoryObject extends FS {
    * console.log(file.path) // "/projects/git/toolkit/package.json"
    */
   getFile(filename) {
-    Valid.type(filename, "String")
+    Valid.type(filename, "String", {allowEmpty: false})
 
     const thisPath = this.path
     const merged = FS.mergeOverlappingPaths(thisPath, filename)
