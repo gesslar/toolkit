@@ -287,7 +287,6 @@ export default class DirectoryObject extends FS {
    * Lists the contents of a directory, optionally filtered by a glob pattern.
    *
    * Returns FileObject and DirectoryObject instances for regular directories.
-   * Returns VFileObject and VDirectoryObject instances when called on virtual directories.
    *
    * @async
    * @param {string} [pat=""] - Optional glob pattern to filter results (e.g., "*.txt", "test-*")
@@ -304,9 +303,7 @@ export default class DirectoryObject extends FS {
    */
   async read(pat="") {
     const withFileTypes = true
-    const url = this.isVirtual
-      ? this.real?.url
-      : this.url
+    const url = this.url
 
     Valid.type(url, "URL")
     // const href = url.href
@@ -315,7 +312,7 @@ export default class DirectoryObject extends FS {
       ? await readdir(url, {withFileTypes})
       : await Array.fromAsync(
         glob(pat, {
-          cwd: this.isVirtual ? this.real?.path : this.path,
+          cwd: this.path,
           withFileTypes,
         })
       )
@@ -340,7 +337,6 @@ export default class DirectoryObject extends FS {
    * Unlike read(), this method searches recursively through subdirectories.
    *
    * Returns FileObject and DirectoryObject instances for regular directories.
-   * Returns VFileObject and VDirectoryObject instances when called on virtual directories.
    *
    * @async
    * @param {string} [pat=""] - Glob pattern to filter results
@@ -359,31 +355,26 @@ export default class DirectoryObject extends FS {
     const withFileTypes = true
     const found = await Array.fromAsync(
       glob(pat, {
-        cwd: this.isVirtual ? this.real?.path : this.path,
+        cwd: this.path,
         withFileTypes,
       })
     )
 
     const files = [], directories = []
-    const virtual = this.isVirtual
 
     for(const e of found) {
       if(e.isFile()) {
         const {name, parentPath} = e
         const resolved = FS.resolvePath(parentPath, name)
 
-        const file = virtual
-          ? new VFileObject(path.relative(this.real.path, resolved), this)
-          : new FileObject(resolved, this)
+        const file = new FileObject(resolved, this)
 
         files.push(file)
       } else if(e.isDirectory()) {
         const {name, parentPath} = e
         const resolved = FS.resolvePath(parentPath, name)
-        const relativePath = virtual
-          ? path.relative(this.real.path, resolved)
-          : resolved
-        const directory = new this.constructor(relativePath, this)
+        const relativePath = resolved
+        const directory = new this.constructor(relativePath)
 
         directories.push(directory)
       } else {
@@ -502,9 +493,7 @@ export default class DirectoryObject extends FS {
    * @returns {Promise<boolean>} True if the file exists, false otherwise
    */
   async hasFile(filename) {
-    const file = this.isVirtual
-      ? new VFileObject(filename, this)
-      : new FileObject(filename, this)
+    const file = new FileObject(filename, this)
 
     return await file.exists
   }
@@ -536,7 +525,7 @@ export default class DirectoryObject extends FS {
    * console.log(subDir.path) // "/projects/git/toolkit/src/lib"
    */
   getDirectory(newPath) {
-    Valid.type(newPath, "String")
+    Valid.type(newPath, "String", {allowEmpty: false})
 
     const thisPath = this.path
     const merged = FS.mergeOverlappingPaths(thisPath, newPath)
