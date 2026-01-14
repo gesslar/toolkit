@@ -1,5 +1,5 @@
+import Sass from "./Sass.js"
 import Valid from "./Valid.js"
-
 /**
  * Utility class for timing operations and promise-based delays.
  * Provides methods for creating cancellable timeout promises.
