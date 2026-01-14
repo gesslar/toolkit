@@ -4,6 +4,7 @@
  * Extends FileObject with virtual path support and real filesystem mapping.
  */
 
+import VDirectoryObject from "./VDirectoryObject.js"
 import DirectoryObject from "./DirectoryObject.js"
 import FileObject from "./FileObject.js"
 import FS from "./FileSystem.js"

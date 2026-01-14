@@ -7,6 +7,7 @@
 import {glob, mkdir, opendir, readdir, rmdir} from "node:fs/promises"
 import path from "node:path"
 import {URL} from "node:url"
+import AsyncGenerator from "typescript"
 
 import Data from "../../browser/lib/Data.js"
 import FileObject from "./FileObject.js"
@@ -14,6 +15,7 @@ import FS from "./FileSystem.js"
 import Sass from "./Sass.js"
 import Valid from "./Valid.js"
 import VFileObject from "./VFileObject.js"
+import VDirectoryObject from "./VDirectoryObject.js"
 
 /**
  * DirectoryObject encapsulates metadata and operations for a directory,
@@ -37,7 +39,7 @@ import VFileObject from "./VFileObject.js"
  * @property {boolean} isDirectory - Always true
  * @property {DirectoryObject|null} parent - The parent directory (null if root)
  * @property {Promise<boolean>} exists - Whether the directory exists (async getter)
- * @property {Generator<DirectoryObject>} walkUp - Generator yielding parent directories up to root
+ * @property {AsyncGenerator<DirectoryObject, void, unknown>} walkUp - Generator yielding parent directories up to root
  *
  * @example
  * // Basic usage
