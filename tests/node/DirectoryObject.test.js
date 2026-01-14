@@ -5,7 +5,6 @@ import path from "node:path"
 import {URL} from "node:url"
 import {afterEach,beforeEach,describe,it} from "node:test"
 
-import {Time} from "../../src/browser/index.js"
 import {DirectoryObject, FileObject, Sass} from "../../src/node/index.js"
 import {TempDirectoryObject, VDirectoryObject, VFileObject} from "../../src/node/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
