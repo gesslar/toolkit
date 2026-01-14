@@ -4,6 +4,10 @@
  * resolution and existence checks.
  */
 
+/**
+ * @typedef {import("./VDirectoryObject.js").default} VDirectoryObject
+ */
+
 import {glob, mkdir, opendir, readdir, rmdir} from "node:fs/promises"
 import path from "node:path"
 import {URL} from "node:url"
@@ -15,7 +19,6 @@ import FS from "./FileSystem.js"
 import Sass from "./Sass.js"
 import Valid from "./Valid.js"
 import VFileObject from "./VFileObject.js"
-import VDirectoryObject from "./VDirectoryObject.js"
 
 /**
  * DirectoryObject encapsulates metadata and operations for a directory,
