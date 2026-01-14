@@ -6,9 +6,9 @@
 
 import JSON5 from "json5"
 import fs from "node:fs/promises"
-import path from "node:path"
 import YAML from "yaml"
 import {URL} from "node:url"
+import {Buffer} from "node:buffer"
 
 import Data from "../../browser/lib/Data.js"
 import DirectoryObject from "./DirectoryObject.js"
@@ -47,7 +47,6 @@ export default class FileObject extends FS {
 
   /**
    * @type {object}
-   * @private
    * @property {string|null} supplied - User-supplied path
    * @property {string|null} path - The absolute file path
    * @property {URL|null} url - The file URL
@@ -67,6 +66,7 @@ export default class FileObject extends FS {
     isFile: true,
     parent: null,
     parentPath: null,
+    real: null,
   })
 
   /**
@@ -83,11 +83,14 @@ export default class FileObject extends FS {
 
     const normalizedFile = FS.fixSlashes(submitted)
     const absOrRelPath = normalizedFile
-    const {dir, base, ext, name} = FS.pathParts(absOrRelPath)
+    const pathParts = FS.pathParts(absOrRelPath)
+    const {dir, base, ext} = pathParts
+    const name = base.slice(0, base.length - ext.length)
 
     const [parentObject, fullPath] = (() => {
       if(Data.isType(parent, "String")) {
-        const resolved = FS.resolvePath(parent, absOrRelPath)
+        const parentPath = /** @type {string} */ (parent)
+        const resolved = FS.resolvePath(parentPath, absOrRelPath)
         const {dir} = FS.pathParts(resolved)
 
         return [
@@ -96,15 +99,16 @@ export default class FileObject extends FS {
         ]
       }
 
-      if(Data.isType(parent, "DirectoryObject")) {
-        const parentPath = parent.path
+      if(Data.isType(parent, "DirectoryObject") && parent !== null) {
+        const parentDir = /** @type {DirectoryObject} */ (parent)
+        const parentPath = parentDir.path
         const resolved = FS.resolvePath(parentPath, absOrRelPath)
         const parts = FS.pathParts(resolved)
 
         return [
-          parent.path === parts.dir
-            ? parent
-            : new parent.constructor(parts.dir, parent),
+          parentDir.path === parts.dir
+            ? parentDir
+            : new DirectoryObject(parts.dir),
           resolved,
         ]
       }
@@ -240,6 +244,16 @@ export default class FileObject extends FS {
    */
   get parentPath() {
     return this.#meta.parentPath
+  }
+
+  /**
+   * Returns the real path of the file (resolving symlinks).
+   * Currently returns null as symlink resolution is not implemented.
+   *
+   * @returns {FileObject|null} The real file object or null
+   */
+  get real() {
+    return this.#meta.real
   }
 
   /**
