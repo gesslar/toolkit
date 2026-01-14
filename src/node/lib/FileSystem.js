@@ -14,6 +14,7 @@ import url from "node:url"
 import Collection from "../../browser/lib/Collection.js"
 import Data from "../../browser/lib/Data.js"
 import Valid from "./Valid.js"
+import Sass from "./Sass.js"
 
 /** @typedef {import("./FileObject.js").default} FileObject */
 /** @typedef {import("./DirectoryObject.js").default} DirectoryObject */

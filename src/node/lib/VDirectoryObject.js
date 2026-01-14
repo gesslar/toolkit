@@ -10,6 +10,7 @@
 
 import path from "node:path"
 
+import Sass from "./Sass.js"
 import DirectoryObject from "./DirectoryObject.js"
 import FileSystem from "./FileSystem.js"
 import Valid from "./Valid.js"
