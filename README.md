@@ -98,8 +98,7 @@ import { Data, Collection, Util } from '@gesslar/toolkit/browser'
 
 The browser version includes: Collection, Data, Disposer, HTML, Notify, Sass,
 Tantrum, Type (TypeSpec), Util, and Valid. Node-only modules (Cache,
-DirectoryObject, FileObject, FileSystem, Glog, TempDirectoryObject, Term,
-VDirectoryObject, VFileObject) are not available in the browser version.
+DirectoryObject, FileObject, FileSystem, Glog, Term) are not available in the browser version.
 
 ## Post Partum
 

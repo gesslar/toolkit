@@ -126,6 +126,8 @@ export default class FileSystem {
      * @property {string} base - The file name with extension
      * @property {string} dir - The directory path
      * @property {string} ext - The file extension (including dot)
+     * @property {string} root - The root of the path
+     * @property {string} name - The file name without extension
      */
     /**
      * Deconstruct a file or directory name into parts.
@@ -148,6 +150,14 @@ export default class FileSystem {
          * - The file extension (including dot)
          */
         ext: string;
+        /**
+         * - The root of the path
+         */
+        root: string;
+        /**
+         * - The file name without extension
+         */
+        name: string;
     };
     /**
      * Returns the current working directory as a string.
