@@ -4,14 +4,9 @@
  * resolution and existence checks.
  */
 
-/**
- * @typedef {import("./VDirectoryObject.js").default} VDirectoryObject
- */
-
 import {glob, mkdir, opendir, readdir, rmdir} from "node:fs/promises"
 import path from "node:path"
 import {URL} from "node:url"
-import AsyncGenerator from "typescript"
 
 import Data from "../../browser/lib/Data.js"
 import FileObject from "./FileObject.js"
@@ -20,7 +15,28 @@ import Sass from "./Sass.js"
 import Valid from "./Valid.js"
 
 /**
- * DirectoryObject encapsulates metadata and operations for a directory,
+ * @typedef {object} GeneratorType
+ * @property {function(): {value: DirectoryObject, done: boolean}} next
+ * @property {function(): GeneratorType} [Symbol.iterator]
+ */
+
+/**
+ * @typedef {object} DirectoryMeta
+ *
+ * @property {boolean} isDirectory - Always true for directories
+ * @property {string|null} extension - The directory extension (if any)
+ * @property {string|null} module - The directory name without extension
+ * @property {string|null} name - The directory name
+ * @property {DirectoryObject|undefined} parent - The parent DirectoryObject
+ * @property {string|null} parentPath - The parent directory path
+ * @property {string|null} path - The absolute directory path
+ * @property {string|null} sep - Path separator
+ * @property {string|null} supplied - User-supplied path
+ * @property {Array<string>|null} trail - Path segments
+ * @property {URL|null} url - The directory URL
+ */
+
+/** * DirectoryObject encapsulates metadata and operations for a directory,
  * providing immutable path resolution, existence checks, and content enumeration.
  *
  * Features:
@@ -41,7 +57,6 @@ import Valid from "./Valid.js"
  * @property {boolean} isDirectory - Always true
  * @property {DirectoryObject|null} parent - The parent directory (null if root)
  * @property {Promise<boolean>} exists - Whether the directory exists (async getter)
- * @property {AsyncGenerator<DirectoryObject, void, unknown>} walkUp - Generator yielding parent directories up to root
  *
  * @example
  * // Basic usage
@@ -67,21 +82,15 @@ import Valid from "./Valid.js"
  */
 export default class DirectoryObject extends FS {
   /**
-   * @type {object}
-   * @private
-   * @property {string|null} supplied - User-supplied path
-   * @property {string|null} path - The absolute file path
-   * @property {URL|null} url - The file URL
-   * @property {string|null} name - The file name
-   * @property {string|null} module - The file name without extension
-   * @property {string|null} extension - The file extension
-   * @property {boolean} isDirectory - Always true
+   * @type {DirectoryMeta}
    */
   #meta = Object.seal({
     isDirectory: true,
+    extension: null,
+    module: null,
     name: null,
     parent: undefined,
-    parentPath: undefined,
+    parentPath: null,
     path: null,
     sep: null,
     supplied: null,
@@ -97,7 +106,6 @@ export default class DirectoryObject extends FS {
    * Constructs a DirectoryObject instance.
    *
    * @param {string?} [supplied="."] - The directory path (defaults to current directory)
-   * @param {DirectoryObject?} [parent] - Optional parent directory (ignored by DirectoryObject, used by subclasses)
    */
   constructor(supplied) {
     super()
@@ -108,17 +116,19 @@ export default class DirectoryObject extends FS {
 
     const normalizedDir = FS.fixSlashes(fixedDir)
     const resolved = FS.resolvePath(DirectoryObject.cwd, normalizedDir)
-    const {dir, name, root} = FS.pathParts(resolved)
+    const {dir, ext, name, root} = FS.pathParts(resolved)
     const url = new URL(FS.pathToUrl(resolved))
     const trail = resolved.split(path.sep)
 
-    this.#meta.name = name
+    this.#meta.extension = ext
+    this.#meta.module = name
+    this.#meta.name = name + ext
     this.#meta.parentPath = dir == root
       ? null
       : dir
     this.#meta.path = resolved
     this.#meta.sep = path.sep
-    this.#meta.supplied = supplied
+    this.#meta.supplied = supplied ?? null
     this.#meta.trail = trail
     this.#meta.url = url
 
@@ -194,7 +204,7 @@ export default class DirectoryObject extends FS {
   }
 
   /**
-   * Returns the directory name without the path or extension.
+   * Returns the directory name without extension.
    *
    * @returns {string} The directory name without extension
    */
@@ -203,9 +213,9 @@ export default class DirectoryObject extends FS {
   }
 
   /**
-   * Returns the directory extension. Will be an empty string if unavailable.
+   * Returns the directory extension (if any).
    *
-   * @returns {string} The directory extension
+   * @returns {string} The directory extension including the dot (e.g., '.git')
    */
   get extension() {
     return this.#meta.extension
@@ -276,7 +286,7 @@ export default class DirectoryObject extends FS {
    * @returns {Promise<boolean>} Whether the directory exists
    */
   async #directoryExists() {
-    const path = this.real?.path ?? this.path
+    const path = this.path
 
     try {
       (await opendir(path)).close()
@@ -294,7 +304,7 @@ export default class DirectoryObject extends FS {
    *
    * @async
    * @param {string} [pat=""] - Optional glob pattern to filter results (e.g., "*.txt", "test-*")
-   * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject|VDirectoryObject>}>} Object containing arrays of files and directories
+   * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} Object containing arrays of files and directories
    * @example
    * const dir = new DirectoryObject("./src")
    * const {files, directories} = await dir.read()
@@ -344,7 +354,7 @@ export default class DirectoryObject extends FS {
    *
    * @async
    * @param {string} [pat=""] - Glob pattern to filter results
-   * @returns {Promise<{files: Array<FileObject|FileObject>, directories: Array<DirectoryObject|VDirectoryObject>}>} Object containing arrays of matching files and directories
+   * @returns {Promise<{files: Array<FileObject|FileObject>, directories: Array<DirectoryObject>}>} Object containing arrays of matching files and directories
    * @throws {Sass} If an entry is neither a file nor directory
    * @example
    * const dir = new DirectoryObject("./src")
@@ -406,26 +416,26 @@ export default class DirectoryObject extends FS {
     if(await this.exists)
       return
 
-    const path = this.real?.path ?? this.path
+    const path = this.path
 
     try {
       await mkdir(path, options)
-    } catch(e) {
-      if(e.code === "EEXIST") {
+    } catch(error) {
+      if(error.code === "EEXIST") {
         // Directory already exists, ignore
         return
       }
 
-      throw Sass.new(`Unable to create directory '${path}': ${e.message}`)
+      throw Sass.new(`Unable to create directory '${path}': ${error.message}`)
     }
   }
 
   /**
    * Private generator that walks up the directory tree.
    *
-   * @private
    * @generator
    * @yields {DirectoryObject} Parent directory objects from current to root
+   * @returns {GeneratorType}
    */
   *#walkUp() {
     const {root, base, dir} = FS.pathParts(this.path)
@@ -438,7 +448,7 @@ export default class DirectoryObject extends FS {
       return yield this
 
     do
-      yield new this.constructor(path.join(root, ...trail), this.cap)
+      yield new this.constructor(path.join(root, ...trail))
 
     while(trail.pop())
   }
@@ -479,7 +489,7 @@ export default class DirectoryObject extends FS {
    * await dir.delete() // Only works if directory is empty
    */
   async delete() {
-    const dirPath = this.real?.path ?? this.path
+    const dirPath = this.path
 
     if(!dirPath)
       throw Sass.new("This object does not represent a valid resource.")
@@ -509,7 +519,7 @@ export default class DirectoryObject extends FS {
    * @returns {Promise<boolean>} True if the directory exists, false otherwise
    */
   async hasDirectory(dirname) {
-    const dir = FS.resolvePath(this.real?.path ?? this.path, dirname)
+    const dir = FS.resolvePath(this.path, dirname)
     const directory = new DirectoryObject(dir)
 
     return await directory.exists

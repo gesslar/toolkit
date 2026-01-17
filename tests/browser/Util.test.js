@@ -181,7 +181,7 @@ describe("Util", () => {
       assert.equal(result, "   test   ")
     })
 
-    it("handles numbers by converting to strings", () => {
+    it("handles numbers by converting to strings (centre-align)", () => {
       const result = Util.centreAlignText(123, 10)
 
       assert.equal(result.length, 10)
@@ -189,7 +189,7 @@ describe("Util", () => {
       assert.equal(result, "   123    ")
     })
 
-    it("returns unchanged if text exceeds width", () => {
+    it("returns unchanged if text exceeds width (centre-align)", () => {
       const longText = "This text is definitely longer than 10 characters"
       const result = Util.centreAlignText(longText, 10)
 
@@ -197,7 +197,7 @@ describe("Util", () => {
       assert.ok(result.length > 10)
     })
 
-    it("handles edge cases", () => {
+    it("handles edge cases (centre-align)", () => {
       // Zero width
       assert.equal(Util.centreAlignText("test", 0), "test")
 
@@ -208,7 +208,7 @@ describe("Util", () => {
       assert.equal(Util.centreAlignText("1234567890", 10), "1234567890")
     })
 
-    it("handles non-string inputs via String() conversion", () => {
+    it("handles non-string inputs via String() conversion (centre-align)", () => {
       // "null" is 4 chars, total padding is 6, left gets 3, right gets 3
       assert.equal(Util.centreAlignText(null, 10), "   null   ")
       // "undefined" is 9 chars, total padding is 1, left gets 0, right gets 1

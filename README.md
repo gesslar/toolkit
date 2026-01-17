@@ -42,12 +42,10 @@ Includes all browser functionality plus Node.js-specific modules for file I/O, l
 | Notify | Event system wrapper for Node.js events |
 | Sass | Custom Error class with enhanced features |
 | Tantrum | AggregateError implementation |
-| TempDirectoryObject | Temporary directory management with automatic cleanup |
 | Term | Terminal formatting and output utilities |
 | Util | General utility functions (Node-enhanced version) |
 | Valid | Validation and assertion methods |
-| VDirectoryObject | Directory operations constrained to a specific tree |
-| VFileObject | Virtual file operations for in-memory file handling |
+
 
 ## Installation
 

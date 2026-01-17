@@ -7,29 +7,29 @@ import { Collection, Sass } from "@gesslar/toolkit/browser"
 
 describe("Collection", () => {
   describe("evalArray()", () => {
-    it("handles normal cases", () => {
+    it("handles normal cases (evalArray)", () => {
       const array = [1, 2, 3, 4, 5]
       const result = Collection.evalArray(array, n => n > 3 ? n * 2 : null)
       assert.equal(result, 8) // 4 * 2 = 8
     })
 
-    it("returns undefined when no match found", () => {
+    it("returns undefined when no match found (evalArray)", () => {
       const array = [1, 2, 3]
       const result = Collection.evalArray(array, n => n > 5 ? n : null)
       assert.equal(result, undefined)
     })
 
-    it("handles empty arrays", () => {
+    it("handles empty arrays (evalArray)", () => {
       const result = Collection.evalArray([], n => n > 0 ? n : null)
       assert.equal(result, undefined)
     })
 
-    it("validates input types", () => {
+    it("validates input types (evalArray)", () => {
       assert.throws(() => Collection.evalArray("not array", () => {}), /Invalid type/)
       assert.throws(() => Collection.evalArray([], "not function"), /Invalid type/)
     })
 
-    it("passes correct arguments to predicate", () => {
+    it("passes correct arguments to predicate (evalArray)", () => {
       const array = ["a", "b", "c"]
       let capturedArgs = []
 
@@ -43,7 +43,7 @@ describe("Collection", () => {
       assert.deepEqual(capturedArgs[2], ["c", 2, array])
     })
 
-    it("supports forward iteration (default)", () => {
+    it("supports forward iteration (default) (evalArray)", () => {
       const array = [1, 2, 3, 4]
       const results = []
 
@@ -55,7 +55,7 @@ describe("Collection", () => {
       assert.deepEqual(results, [1, 2])
     })
 
-    it("supports backward iteration", () => {
+    it("supports backward iteration (evalArray)", () => {
       const array = [1, 2, 3, 4]
       const results = []
 
@@ -69,29 +69,29 @@ describe("Collection", () => {
   })
 
   describe("evalObject()", () => {
-    it("handles normal cases", () => {
+    it("handles normal cases (evalObject)", () => {
       const obj = {a: 1, b: 2, c: 3}
       const result = Collection.evalObject(obj, (value, key) => value > 2 ? `${key}:${value}` : null)
       assert.equal(result, "c:3")
     })
 
-    it("returns undefined when no match found", () => {
+    it("returns undefined when no match found (evalObject)", () => {
       const obj = {a: 1, b: 2}
       const result = Collection.evalObject(obj, value => value > 5 ? value : null)
       assert.equal(result, undefined)
     })
 
-    it("handles empty objects", () => {
+    it("handles empty objects (evalObject)", () => {
       const result = Collection.evalObject({}, value => value > 0 ? value : null)
       assert.equal(result, undefined)
     })
 
-    it("validates input types", () => {
+    it("validates input types (evalObject)", () => {
       assert.throws(() => Collection.evalObject("not object", () => {}), /Invalid type/)
       assert.throws(() => Collection.evalObject({}, "not function"), /Invalid type/)
     })
 
-    it("passes correct arguments to predicate", () => {
+    it("passes correct arguments to predicate (evalObject)", () => {
       const obj = {x: 10, y: 20}
       let capturedArgs = []
 
@@ -106,29 +106,29 @@ describe("Collection", () => {
   })
 
   describe("evalSet()", () => {
-    it("handles normal cases", () => {
+    it("handles normal cases (evalSet)", () => {
       const set = new Set([1, 2, 3, 4, 5])
       const result = Collection.evalSet(set, n => n > 3 ? n * 2 : null)
       assert.equal(result, 8) // 4 * 2 = 8
     })
 
-    it("returns undefined when no match found", () => {
+    it("returns undefined when no match found (evalSet)", () => {
       const set = new Set([1, 2, 3])
       const result = Collection.evalSet(set, n => n > 5 ? n : null)
       assert.equal(result, undefined)
     })
 
-    it("handles empty sets", () => {
+    it("handles empty sets (evalSet)", () => {
       const result = Collection.evalSet(new Set(), n => n > 0 ? n : null)
       assert.equal(result, undefined)
     })
 
-    it("validates input types", () => {
+    it("validates input types (evalSet)", () => {
       assert.throws(() => Collection.evalSet("not set", () => {}), /Invalid type/)
       assert.throws(() => Collection.evalSet(new Set(), "not function"), /Invalid type/)
     })
 
-    it("passes correct arguments to predicate", () => {
+    it("passes correct arguments to predicate (evalSet)", () => {
       const set = new Set(["a", "b"])
       let capturedArgs = []
 
@@ -144,29 +144,29 @@ describe("Collection", () => {
   })
 
   describe("evalMap()", () => {
-    it("handles normal cases", () => {
+    it("handles normal cases (evalMap)", () => {
       const map = new Map([['a', 1], ['b', 2], ['c', 3]])
       const result = Collection.evalMap(map, (value, key) => value > 2 ? `${key}:${value}` : null)
       assert.equal(result, "c:3")
     })
 
-    it("returns undefined when no match found", () => {
+    it("returns undefined when no match found (evalMap)", () => {
       const map = new Map([['a', 1], ['b', 2]])
       const result = Collection.evalMap(map, value => value > 5 ? value : null)
       assert.equal(result, undefined)
     })
 
-    it("handles empty maps", () => {
+    it("handles empty maps (evalMap)", () => {
       const result = Collection.evalMap(new Map(), value => value > 0 ? value : null)
       assert.equal(result, undefined)
     })
 
-    it("validates input types", () => {
+    it("validates input types (evalMap)", () => {
       assert.throws(() => Collection.evalMap("not map", () => {}), /Invalid type/)
       assert.throws(() => Collection.evalMap(new Map(), "not function"), /Invalid type/)
     })
 
-    it("passes correct arguments to predicate", () => {
+    it("passes correct arguments to predicate (evalMap)", () => {
       const map = new Map([['x', 10], ['y', 20]])
       let capturedArgs = []
 
@@ -179,7 +179,7 @@ describe("Collection", () => {
       assert.deepEqual(capturedArgs[1], [20, "y", map])
     })
 
-    it("supports forward iteration (default)", () => {
+    it("supports forward iteration (default) (evalMap)", () => {
       const map = new Map([['a', 1], ['b', 2], ['c', 3]])
       const results = []
 
@@ -191,7 +191,7 @@ describe("Collection", () => {
       assert.deepEqual(results, ["a", "b"])
     })
 
-    it("supports backward iteration", () => {
+    it("supports backward iteration (evalMap)", () => {
       const map = new Map([['a', 1], ['b', 2], ['c', 3]])
       const results = []
 
@@ -215,7 +215,7 @@ describe("Collection", () => {
       assert.deepEqual(result, [[1, 'a'], [2, 'b']])
     })
 
-    it("handles empty arrays", () => {
+    it("handles empty arrays (zip)", () => {
       const result = Collection.zip([], [])
       assert.deepEqual(result, [])
     })
@@ -283,12 +283,12 @@ describe("Collection", () => {
       assert.deepEqual(result, [2, 4, 6])
     })
 
-    it("handles empty arrays", async () => {
+    it("handles empty arrays (asyncMap)", async () => {
       const result = await Collection.asyncMap([], async (n) => n * 2)
       assert.deepEqual(result, [])
     })
 
-    it("validates input types", async () => {
+    it("validates input types (asyncMap)", async () => {
       await assert.rejects(
         () => Collection.asyncMap("not array", async () => {}),
         /Invalid type.*Expected Array/
@@ -299,7 +299,7 @@ describe("Collection", () => {
       )
     })
 
-    it("handles null and undefined inputs", async () => {
+    it("handles null and undefined inputs (asyncMap)", async () => {
       await assert.rejects(
         () => Collection.asyncMap(null, async () => {}),
         /Invalid type.*Expected Array/
@@ -401,7 +401,7 @@ describe("Collection", () => {
   })
 
   describe("error scenarios", () => {
-    it("handles null and undefined inputs", () => {
+    it("handles null and undefined inputs (error scenarios)", () => {
       assert.throws(() => Collection.evalArray(null, () => {}), /Invalid type/)
       assert.throws(() => Collection.evalArray(undefined, () => {}), /Invalid type/)
       assert.throws(() => Collection.evalObject(null, () => {}), /Invalid type/)
@@ -592,7 +592,7 @@ describe("Collection", () => {
       })
     })
 
-    it("handles empty objects", () => {
+    it("handles empty objects (flattenObjectArray)", () => {
       const objects = [{}, { a: 1 }, {}]
 
       const result = Collection.flattenObjectArray(objects)
@@ -600,7 +600,7 @@ describe("Collection", () => {
       assert.deepEqual(result, { a: [1] })
     })
 
-    it("handles empty array", () => {
+    it("handles empty array (flattenObjectArray)", () => {
       const result = Collection.flattenObjectArray([])
 
       assert.deepEqual(result, {})

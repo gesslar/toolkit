@@ -247,23 +247,13 @@ export default class FileObject extends FS {
   }
 
   /**
-   * Returns the real path of the file (resolving symlinks).
-   * Currently returns null as symlink resolution is not implemented.
-   *
-   * @returns {FileObject|null} The real file object or null
-   */
-  get real() {
-    return this.#meta.real
-  }
-
-  /**
    * Check if a file can be read. Returns true if the file can be read, false
    *
    * @returns {Promise<boolean>} Whether the file can be read
    */
   async canRead() {
     try {
-      await fs.access(this.real?.path ?? this.path, fs.constants.R_OK)
+      await fs.access(this.path, fs.constants.R_OK)
 
       return true
     } catch {
@@ -278,7 +268,7 @@ export default class FileObject extends FS {
    */
   async canWrite() {
     try {
-      await fs.access(this.real?.path ?? this.path, fs.constants.W_OK)
+      await fs.access(this.path, fs.constants.W_OK)
 
       return true
     } catch {
@@ -293,7 +283,7 @@ export default class FileObject extends FS {
    */
   async #fileExists() {
     try {
-      await fs.access(this.real?.path ?? this.path, fs.constants.F_OK)
+      await fs.access(this.path, fs.constants.F_OK)
 
       return true
     } catch {
@@ -308,7 +298,7 @@ export default class FileObject extends FS {
    */
   async size() {
     try {
-      const stat = await fs.stat(this.real?.path ?? this.path)
+      const stat = await fs.stat(this.path)
 
       return stat.size
     } catch {
@@ -324,7 +314,7 @@ export default class FileObject extends FS {
    */
   async modified() {
     try {
-      const stat = await fs.stat(this.real?.path ?? this.path)
+      const stat = await fs.stat(this.path)
 
       return stat.mtime
     } catch {
@@ -339,7 +329,7 @@ export default class FileObject extends FS {
    * @returns {Promise<string>} The file contents
    */
   async read(encoding="utf8") {
-    const filePath = this.real?.path ?? this.path
+    const filePath = this.path
 
     if(!(await this.exists))
       throw Sass.new(`No such file '${filePath}'`)
@@ -360,7 +350,7 @@ export default class FileObject extends FS {
    * // Use the buffer (e.g., send in HTTP response, process image, etc.)
    */
   async readBinary() {
-    const filePath = this.real?.path ?? this.path
+    const filePath = this.path
 
     if(!(await this.exists))
       throw Sass.new(`No such file '${filePath}'`)
@@ -381,7 +371,7 @@ export default class FileObject extends FS {
    * await file.write(JSON.stringify({key: 'value'}))
    */
   async write(content, encoding="utf8") {
-    const filePath = this.real?.path ?? this.path
+    const filePath = this.path
 
     if(!filePath)
       throw Sass.new("No actual disk location detected.")
@@ -410,7 +400,7 @@ export default class FileObject extends FS {
    * await file.writeBinary(buffer)
    */
   async writeBinary(data) {
-    const filePath = this.real?.path ?? this.path
+    const filePath = this.path
 
     const exists = await this.parent.exists
     Valid.assert(exists, `Invalid directory writing ${filePath}`)
@@ -472,7 +462,7 @@ export default class FileObject extends FS {
    * @returns {Promise<object>} The file contents as a module.
    */
   async import() {
-    const filePath = this.real?.path ?? this.path
+    const filePath = this.path
 
     if(!(await this.exists))
       throw Sass.new(`No such file '${filePath}'`)
@@ -491,7 +481,7 @@ export default class FileObject extends FS {
    * await file.delete()
    */
   async delete() {
-    const filePath = this.real?.path ?? this.path
+    const filePath = this.path
 
     if(!(await this.exists))
       throw Sass.new(`No such resource '${filePath}'`)
