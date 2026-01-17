@@ -23,16 +23,6 @@ export default class FileObject extends FS {
         [key: string]: Array<typeof JSON5 | typeof YAML>;
     };
     /**
-     * Strip root from absolute path to make it relative.
-     * Used for virtual filesystem path resolution.
-     *
-     * @private
-     * @static
-     * @param {string} pathName - The path to convert
-     * @returns {string} Path with root stripped, or original if already relative
-     */
-    private static "__#private@#absoluteToRelative";
-    /**
      * Constructs a FileObject instance.
      *
      * @param {string} submitted - The file path

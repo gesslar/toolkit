@@ -1,5 +1,24 @@
 /**
- * DirectoryObject encapsulates metadata and operations for a directory,
+ * @typedef {object} GeneratorType
+ * @property {function(): {value: DirectoryObject, done: boolean}} next
+ * @property {function(): GeneratorType} [Symbol.iterator]
+ */
+/**
+ * @typedef {object} DirectoryMeta
+ *
+ * @property {boolean} isDirectory - Always true for directories
+ * @property {string|null} extension - The directory extension (if any)
+ * @property {string|null} module - The directory name without extension
+ * @property {string|null} name - The directory name
+ * @property {DirectoryObject|undefined} parent - The parent DirectoryObject
+ * @property {string|null} parentPath - The parent directory path
+ * @property {string|null} path - The absolute directory path
+ * @property {string|null} sep - Path separator
+ * @property {string|null} supplied - User-supplied path
+ * @property {Array<string>|null} trail - Path segments
+ * @property {URL|null} url - The directory URL
+ */
+/** * DirectoryObject encapsulates metadata and operations for a directory,
  * providing immutable path resolution, existence checks, and content enumeration.
  *
  * Features:
@@ -20,7 +39,6 @@
  * @property {boolean} isDirectory - Always true
  * @property {DirectoryObject|null} parent - The parent directory (null if root)
  * @property {Promise<boolean>} exists - Whether the directory exists (async getter)
- * @property {Generator<DirectoryObject>} walkUp - Generator yielding parent directories up to root
  *
  * @example
  * // Basic usage
@@ -60,7 +78,6 @@ export default class DirectoryObject extends FS {
      * Constructs a DirectoryObject instance.
      *
      * @param {string?} [supplied="."] - The directory path (defaults to current directory)
-     * @param {DirectoryObject?} [parent] - Optional parent directory (ignored by DirectoryObject, used by subclasses)
      */
     constructor(supplied?: string | null);
     /**
@@ -94,15 +111,15 @@ export default class DirectoryObject extends FS {
      */
     get name(): string;
     /**
-     * Returns the directory name without the path or extension.
+     * Returns the directory name without extension.
      *
      * @returns {string} The directory name without extension
      */
     get module(): string;
     /**
-     * Returns the directory extension. Will be an empty string if unavailable.
+     * Returns the directory extension (if any).
      *
-     * @returns {string} The directory extension
+     * @returns {string} The directory extension including the dot (e.g., '.git')
      */
     get extension(): string;
     /**
@@ -144,11 +161,10 @@ export default class DirectoryObject extends FS {
      * Lists the contents of a directory, optionally filtered by a glob pattern.
      *
      * Returns FileObject and DirectoryObject instances for regular directories.
-     * Returns VFileObject and VDirectoryObject instances when called on virtual directories.
      *
      * @async
      * @param {string} [pat=""] - Optional glob pattern to filter results (e.g., "*.txt", "test-*")
-     * @returns {Promise<{files: Array<FileObject|VFileObject>, directories: Array<DirectoryObject|VDirectoryObject>}>} Object containing arrays of files and directories
+     * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} Object containing arrays of files and directories
      * @example
      * const dir = new DirectoryObject("./src")
      * const {files, directories} = await dir.read()
@@ -160,19 +176,18 @@ export default class DirectoryObject extends FS {
      * console.log(files) // Only .js files in ./src
      */
     read(pat?: string): Promise<{
-        files: Array<FileObject | VFileObject>;
-        directories: Array<DirectoryObject | VDirectoryObject>;
+        files: Array<FileObject>;
+        directories: Array<DirectoryObject>;
     }>;
     /**
      * Recursively searches directory tree for files and directories matching a glob pattern.
      * Unlike read(), this method searches recursively through subdirectories.
      *
      * Returns FileObject and DirectoryObject instances for regular directories.
-     * Returns VFileObject and VDirectoryObject instances when called on virtual directories.
      *
      * @async
      * @param {string} [pat=""] - Glob pattern to filter results
-     * @returns {Promise<{files: Array<FileObject|VFileObject>, directories: Array<DirectoryObject|VDirectoryObject>}>} Object containing arrays of matching files and directories
+     * @returns {Promise<{files: Array<FileObject|FileObject>, directories: Array<DirectoryObject>}>} Object containing arrays of matching files and directories
      * @throws {Sass} If an entry is neither a file nor directory
      * @example
      * const dir = new DirectoryObject("./src")
@@ -184,8 +199,8 @@ export default class DirectoryObject extends FS {
      * const {files} = await dir.glob("**\/package.json")
      */
     glob(pat?: string): Promise<{
-        files: Array<FileObject | VFileObject>;
-        directories: Array<DirectoryObject | VDirectoryObject>;
+        files: Array<FileObject | FileObject>;
+        directories: Array<DirectoryObject>;
     }>;
     /**
      * Ensures a directory exists, creating it if necessary.
@@ -277,7 +292,59 @@ export default class DirectoryObject extends FS {
     getFile(filename: string): FileObject;
     #private;
 }
+export type GeneratorType = {
+    next: () => {
+        value: DirectoryObject;
+        done: boolean;
+    };
+    iterator?: () => GeneratorType;
+};
+export type DirectoryMeta = {
+    /**
+     * - Always true for directories
+     */
+    isDirectory: boolean;
+    /**
+     * - The directory extension (if any)
+     */
+    extension: string | null;
+    /**
+     * - The directory name without extension
+     */
+    module: string | null;
+    /**
+     * - The directory name
+     */
+    name: string | null;
+    /**
+     * - The parent DirectoryObject
+     */
+    parent: DirectoryObject | undefined;
+    /**
+     * - The parent directory path
+     */
+    parentPath: string | null;
+    /**
+     * - The absolute directory path
+     */
+    path: string | null;
+    /**
+     * - Path separator
+     */
+    sep: string | null;
+    /**
+     * - User-supplied path
+     */
+    supplied: string | null;
+    /**
+     * - Path segments
+     */
+    trail: Array<string> | null;
+    /**
+     * - The directory URL
+     */
+    url: URL | null;
+};
 import FS from "./FileSystem.js";
 import FileObject from "./FileObject.js";
-import VFileObject from "./VFileObject.js";
 //# sourceMappingURL=DirectoryObject.d.ts.map

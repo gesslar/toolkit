@@ -13,9 +13,6 @@ export { default as FileObject } from "./lib/FileObject.js";
 export { default as FileSystem } from "./lib/FileSystem.js";
 export { default as Glog } from "./lib/Glog.js";
 export { default as Notify } from "./lib/Notify.js";
-export { default as TempDirectoryObject } from "./lib/TempDirectoryObject.js";
 export { default as Term } from "./lib/Term.js";
-export { default as VFileObject } from "./lib/VFileObject.js";
-export { default as VDirectoryObject } from "./lib/VDirectoryObject.js";
 export { default as Disposer, Disposer as DisposerClass } from "../browser/lib/Disposer.js";
 //# sourceMappingURL=index.d.ts.map
