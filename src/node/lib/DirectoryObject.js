@@ -541,10 +541,26 @@ export default class DirectoryObject extends FS {
   getDirectory(newPath) {
     Valid.type(newPath, "String", {allowEmpty: false})
 
+    // Reject absolute paths
+    if(path.isAbsolute(newPath)) {
+      throw Sass.new(`Absolute paths not allowed: ${newPath}`)
+    }
+
+    // Reject parent directory traversal
+    if(newPath.includes("..")) {
+      throw Sass.new(`Path traversal not allowed: ${newPath} contains '..'`)
+    }
+
     const thisPath = this.path
     const merged = FS.mergeOverlappingPaths(thisPath, newPath)
+    const resolved = FS.resolvePath(thisPath, merged)
 
-    return new this.constructor(merged)
+    // Final safety check
+    if(!FS.pathContains(thisPath, resolved)) {
+      throw Sass.new(`Path resolves outside directory: ${newPath}`)
+    }
+
+    return new this.constructor(resolved)
   }
 
   /**
@@ -562,9 +578,25 @@ export default class DirectoryObject extends FS {
   getFile(filename) {
     Valid.type(filename, "String", {allowEmpty: false})
 
+    // Reject absolute paths
+    if(path.isAbsolute(filename)) {
+      throw Sass.new(`Absolute paths not allowed: ${filename}`)
+    }
+
+    // Reject parent directory traversal
+    if(filename.includes("..")) {
+      throw Sass.new(`Path traversal not allowed: ${filename} contains '..'`)
+    }
+
     const thisPath = this.path
     const merged = FS.mergeOverlappingPaths(thisPath, filename)
+    const resolved = FS.resolvePath(thisPath, merged)
 
-    return new FileObject(merged)
+    // Final safety check
+    if(!FS.pathContains(thisPath, resolved)) {
+      throw Sass.new(`Path resolves outside directory: ${filename}`)
+    }
+
+    return new FileObject(resolved)
   }
 }

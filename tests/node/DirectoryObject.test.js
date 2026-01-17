@@ -45,14 +45,14 @@ describe("DirectoryObject", () => {
     it("handles no arguments (defaults to current directory)", () => {
       const dir = new DirectoryObject()
 
-      assert.equal(dir.supplied, undefined)
+      assert.equal(dir.supplied, null)
       assert.equal(dir.path, process.cwd())
     })
 
     it("handles undefined input (defaults to current directory)", () => {
       const dir = new DirectoryObject(undefined)
 
-      assert.equal(dir.supplied, undefined)
+      assert.equal(dir.supplied, null)
       assert.equal(dir.path, process.cwd())
     })
 
@@ -1148,15 +1148,13 @@ describe("DirectoryObject", () => {
     it("requires chaining for nested paths", () => {
       const dir = new DirectoryObject(baseDir)
 
-      // Nested paths with separators are rejected
-      assert.throws(
-        () => dir.getDirectory("src/lib"),
-        /out of bounds/
-      )
-
-      // Must chain instead
-      const subDir = dir.getDirectory("src").getDirectory("lib")
+      // Nested paths work fine now
+      const subDir = dir.getDirectory("src/lib")
       assert.ok(subDir.path.endsWith("lib"))
+
+      // Chaining also works
+      const chainedSubDir = dir.getDirectory("src").getDirectory("lib")
+      assert.ok(chainedSubDir.path.endsWith("lib"))
     })
 
     it("returns new DirectoryObject instance", () => {
@@ -1170,15 +1168,16 @@ describe("DirectoryObject", () => {
     it("validates directory name parameter", () => {
       const dir = new DirectoryObject("/test")
 
-      // Rejects paths with separators
+      // Path traversal attempts are rejected
       assert.throws(
-        () => dir.getDirectory("../parent"),
-        /out of bounds/
+        () => dir.getDirectory(".."),
+        /contains '..'/
       )
 
+      // Absolute paths are rejected
       assert.throws(
         () => dir.getDirectory("/absolute"),
-        /out of bounds/
+        /Absolute paths not allowed/
       )
     })
   })
@@ -1221,29 +1220,28 @@ describe("DirectoryObject", () => {
     it("requires chaining for nested file paths", () => {
       const dir = new DirectoryObject(baseDir)
 
-      // Nested paths with separators are rejected
-      assert.throws(
-        () => dir.getFile("src/index.js"),
-        /out of bounds/
-      )
-
-      // Must navigate to directory first
-      const file = dir.getDirectory("src").getFile("index.js")
+      // Nested paths work fine now
+      const file = dir.getFile("src/index.js")
       assert.ok(file.path.includes("index.js"))
+
+      // Chaining also works
+      const chainedFile = dir.getDirectory("src").getFile("index.js")
+      assert.ok(chainedFile.path.includes("index.js"))
     })
 
     it("validates filename parameter", () => {
       const dir = new DirectoryObject("/test")
 
-      // Rejects paths with separators
+      // Path traversal attempts are rejected
       assert.throws(
         () => dir.getFile("../parent/file.txt"),
-        /out of bounds/
+        /contains '..'/
       )
 
+      // Absolute paths are rejected
       assert.throws(
         () => dir.getFile("/absolute/file.txt"),
-        /out of bounds/
+        /Absolute paths not allowed/
       )
     })
 

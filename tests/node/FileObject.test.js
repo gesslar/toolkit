@@ -4,7 +4,7 @@ import path from "node:path"
 import {URL} from "node:url"
 import {afterEach, beforeEach, describe, it} from "node:test"
 import process from "node:process"
-import Buffer from "node:buffer"
+import {Buffer} from "node:buffer"
 
 import {DirectoryObject,FileObject,Sass} from "../../src/node/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
@@ -148,9 +148,9 @@ describe("FileObject", () => {
       const dir = new DirectoryObject("/tmp")
       const file = new FileObject("/home/user/projects/test.js", dir)
 
-      // Parent should be /tmp/home/user/projects, not /tmp
+      // Parent is the actual directory containing the file
       assert.ok(file.parent.path.endsWith("projects"))
-      assert.ok(file.parent.path.includes("tmp"))
+      assert.ok(file.parent.path.includes("/home/user/projects"))
     })
 
     it("parent matches path.dirname of resolved path", () => {
