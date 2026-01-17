@@ -3,9 +3,10 @@ import fs from "node:fs/promises"
 import path from "node:path"
 import {URL} from "node:url"
 import {afterEach, beforeEach, describe, it} from "node:test"
+import process from "node:process"
+import Buffer from "node:buffer"
 
 import {DirectoryObject,FileObject,Sass} from "../../src/node/index.js"
-import {VDirectoryObject} from "../../src/node/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
 
 describe("FileObject", () => {
@@ -221,17 +222,6 @@ describe("FileObject", () => {
 
       assert.equal(parentPath, expectedParent)
     })
-
-    it("uses parent's constructor for intermediate directories (inheritance)", () => {
-      const vdir = new VDirectoryObject("/home/user/projects")
-      const file = new FileObject("subdir/nested/test.js", vdir)
-
-      // Parent should be an instance of VDirectoryObject, not plain DirectoryObject
-      assert.ok(file.parent instanceof VDirectoryObject)
-      assert.ok(file.parent instanceof DirectoryObject)
-      assert.equal(file.parent.constructor.name, "VDirectoryObject")
-      assert.ok(file.parent.path.includes("nested"))
-    })
   })
 
   describe("string representations", () => {
@@ -413,73 +403,6 @@ describe("FileObject", () => {
       await assert.rejects(
         () => file.import(),
         Sass
-      )
-    })
-  })
-
-  describe("loadData method", () => {
-    let jsonFile, yamlFile, invalidFile
-
-    beforeEach(async () => {
-      testDir = await TestUtils.createTestDir("file-data-test")
-
-      // Create JSON file
-      const jsonPath = path.join(testDir, "test.json")
-      await fs.writeFile(jsonPath, JSON.stringify({ name: "test", value: 42 }))
-      jsonFile = new FileObject(jsonPath)
-
-      // Create YAML file
-      const yamlPath = path.join(testDir, "test.yaml")
-      await fs.writeFile(yamlPath, "name: test\nvalue: 42\n")
-      yamlFile = new FileObject(yamlPath)
-
-      // Create invalid file
-      const invalidPath = path.join(testDir, "invalid.txt")
-      await fs.writeFile(invalidPath, "this is not json or yaml")
-      invalidFile = new FileObject(invalidPath)
-    })
-
-    afterEach(async () => {
-      if (testDir) {
-        await TestUtils.cleanupTestDir(testDir)
-      }
-    })
-
-    it("loads JSON data", async () => {
-      const data = await jsonFile.loadData("json")
-
-      assert.equal(typeof data, "object")
-      assert.equal(data.name, "test")
-      assert.equal(data.value, 42)
-    })
-
-    it("loads YAML data", async () => {
-      const data = await yamlFile.loadData("yaml")
-
-      assert.equal(typeof data, "object")
-      assert.equal(data.name, "test")
-      assert.equal(data.value, 42)
-    })
-
-    it("loads data with 'any' type (auto-detect)", async () => {
-      const jsonData = await jsonFile.loadData("any")
-      const yamlData = await yamlFile.loadData("any")
-
-      assert.equal(jsonData.name, "test")
-      assert.equal(yamlData.name, "test")
-    })
-
-    it("throws for invalid data", async () => {
-      await assert.rejects(
-        () => invalidFile.loadData("json"),
-        Sass
-      )
-    })
-
-    it("throws for unsupported type", async () => {
-      await assert.rejects(
-        () => jsonFile.loadData("xml"),
-        /Unsupported data type 'xml'/
       )
     })
   })

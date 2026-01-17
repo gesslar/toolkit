@@ -31,7 +31,7 @@ describe("Promised", () => {
       )
     })
 
-    it("handles empty array", async () => {
+    it("handles empty array (await)", async () => {
       const results = await Promised.await([])
       assert.deepEqual(results, [])
     })
@@ -112,7 +112,7 @@ describe("Promised", () => {
       assert.ok(results.every(r => r.reason instanceof Error))
     })
 
-    it("handles empty array", async () => {
+    it("handles empty array (settle)", async () => {
       const results = await Promised.settle([])
       assert.deepEqual(results, [])
     })
@@ -148,7 +148,7 @@ describe("Promised", () => {
       assert.equal(Promised.hasRejected(settled), true)
     })
 
-    it("returns false for empty array", () => {
+    it("returns false for empty array (hasRejected)", () => {
       assert.equal(Promised.hasRejected([]), false)
     })
   })
@@ -183,7 +183,7 @@ describe("Promised", () => {
       assert.equal(Promised.hasFulfilled(settled), true)
     })
 
-    it("returns false for empty array", () => {
+    it("returns false for empty array (hasFulfilled)", () => {
       assert.equal(Promised.hasFulfilled([]), false)
     })
   })
@@ -206,7 +206,7 @@ describe("Promised", () => {
       assert.equal(rejected[1].reason.message, "fail2")
     })
 
-    it("returns empty array when all promises fulfilled", async () => {
+    it("returns empty array when all promises fulfilled (rejected)", async () => {
       const settled = await Promised.settle([
         Promise.resolve(1),
         Promise.resolve(2)
@@ -216,7 +216,7 @@ describe("Promised", () => {
       assert.deepEqual(rejected, [])
     })
 
-    it("returns all results when all promises rejected", async () => {
+    it("returns all results when all promises rejected (rejected)", async () => {
       const settled = await Promised.settle([
         Promise.reject(new Error("fail1")),
         Promise.reject(new Error("fail2"))
@@ -226,7 +226,7 @@ describe("Promised", () => {
       assert.equal(rejected.length, 2)
     })
 
-    it("returns empty array for empty input", () => {
+    it("returns empty array for empty input (rejected)", () => {
       assert.deepEqual(Promised.rejected([]), [])
     })
   })
@@ -247,7 +247,7 @@ describe("Promised", () => {
       assert.equal(fulfilled[1].value, 42)
     })
 
-    it("returns empty array when all promises rejected", async () => {
+    it("returns empty array when all promises rejected (fulfilled)", async () => {
       const settled = await Promised.settle([
         Promise.reject(new Error("fail1")),
         Promise.reject(new Error("fail2"))
@@ -257,7 +257,7 @@ describe("Promised", () => {
       assert.deepEqual(fulfilled, [])
     })
 
-    it("returns all results when all promises fulfilled", async () => {
+    it("returns all results when all promises fulfilled (fulfilled)", async () => {
       const settled = await Promised.settle([
         Promise.resolve(1),
         Promise.resolve(2),
@@ -268,7 +268,7 @@ describe("Promised", () => {
       assert.equal(fulfilled.length, 3)
     })
 
-    it("returns empty array for empty input", () => {
+    it("returns empty array for empty input (fulfilled)", () => {
       assert.deepEqual(Promised.fulfilled([]), [])
     })
   })
@@ -290,7 +290,7 @@ describe("Promised", () => {
       assert.equal(reasons[1].message, "fail2")
     })
 
-    it("returns empty array when all promises fulfilled", async () => {
+    it("returns empty array when all promises fulfilled (reasons)", async () => {
       const settled = await Promised.settle([
         Promise.resolve(1),
         Promise.resolve(2)
@@ -300,7 +300,7 @@ describe("Promised", () => {
       assert.deepEqual(reasons, [])
     })
 
-    it("extracts all reasons when all promises rejected", async () => {
+    it("extracts all reasons when all promises rejected (reasons)", async () => {
       const settled = await Promised.settle([
         Promise.reject(new Error("fail1")),
         Promise.reject(new Error("fail2")),
@@ -329,7 +329,7 @@ describe("Promised", () => {
       assert.deepEqual(reasons[2], {custom: "error"})
     })
 
-    it("returns empty array for empty input", () => {
+    it("returns empty array for empty input (reasons)", () => {
       assert.deepEqual(Promised.reasons([]), [])
     })
   })
@@ -349,7 +349,7 @@ describe("Promised", () => {
       assert.deepEqual(values, ["ok", 42, true])
     })
 
-    it("returns empty array when all promises rejected", async () => {
+    it("returns empty array when all promises rejected (values)", async () => {
       const settled = await Promised.settle([
         Promise.reject(new Error("fail1")),
         Promise.reject(new Error("fail2"))
@@ -359,7 +359,7 @@ describe("Promised", () => {
       assert.deepEqual(values, [])
     })
 
-    it("extracts all values when all promises fulfilled", async () => {
+    it("extracts all values when all promises fulfilled (values)", async () => {
       const settled = await Promised.settle([
         Promise.resolve(1),
         Promise.resolve(2),
@@ -388,7 +388,7 @@ describe("Promised", () => {
       assert.equal(values[4], false)
     })
 
-    it("returns empty array for empty input", () => {
+    it("returns empty array for empty input (values)", () => {
       assert.deepEqual(Promised.values([]), [])
     })
   })

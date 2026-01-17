@@ -30,7 +30,9 @@ export default class Time {
 
     let timerId
     const promise = new Promise(resolve => {
-      timerId = setTimeout(() => resolve(value), delay)
+      // Cap at max 32-bit signed integer to avoid Node.js timeout overflow warning
+      const safeDelay = Math.min(delay, 2147483647)
+      timerId = setTimeout(() => resolve(value), safeDelay)
     })
     promise.timerId = timerId
 
