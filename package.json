@@ -24,7 +24,7 @@
     "browser",
     "node"
   ],
-  "packageManager": "pnpm@10.28.0",
+  "packageManager": "pnpm@10.28.1",
   "main": "./src/node/index.js",
   "type": "module",
   "types": "./types/node/index.d.ts",
@@ -79,11 +79,11 @@
     "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@gesslar/uglier": "^1.1.0",
+    "@gesslar/uglier": "^1.2.0",
     "eslint": "^9.39.2",
-    "eslint-plugin-jsdoc": "^62.0.0",
-    "happy-dom": "^20.3.1",
+    "eslint-plugin-jsdoc": "^62.3.0",
+    "happy-dom": "^20.3.4",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.0"
+    "typescript-eslint": "^8.53.1"
   }
 }
