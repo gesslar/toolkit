@@ -80,17 +80,19 @@ export default class FileSystem {
   }
 
   /**
-   * Convert a URI to a path
+   * Convert a file URL to a path.
    *
    * @static
-   * @param {string} pathName - The URI to convert
-   * @returns {string} The path
+   * @param {string} fileUrl - The file URL to convert (e.g., import.meta.url)
+   * @returns {string} The file path
+   * @example
+   * const currentFile = FileSystem.urlToPath(import.meta.url)
    */
-  static urlToPath(pathName) {
+  static urlToPath(fileUrl) {
     try {
-      return url.fileURLToPath(new URL(pathName).pathName)
+      return url.fileURLToPath(fileUrl)
     } catch {
-      return pathName
+      return fileUrl
     }
   }
 

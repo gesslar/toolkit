@@ -1015,4 +1015,33 @@ describe("FileObject", () => {
       })
     })
   })
+
+  describe("fromCwf()", () => {
+    it("returns a FileObject representing the current file", () => {
+      const thisFile = FileObject.fromCwf()
+
+      assert.ok(thisFile instanceof FileObject)
+      assert.ok(thisFile.path.endsWith("FileObject.test.js"))
+    })
+
+    it("returns correct path for the test file", () => {
+      const thisFile = FileObject.fromCwf()
+
+      assert.ok(thisFile.path.includes("tests"))
+      assert.ok(thisFile.path.includes("node"))
+      assert.equal(thisFile.name, "FileObject.test.js")
+    })
+
+    it("returns a FileObject that exists", async () => {
+      const thisFile = FileObject.fromCwf()
+
+      assert.equal(await thisFile.exists, true)
+    })
+
+    it("has correct parent directory", () => {
+      const thisFile = FileObject.fromCwf()
+
+      assert.ok(thisFile.parent.path.endsWith("node"))
+    })
+  })
 })

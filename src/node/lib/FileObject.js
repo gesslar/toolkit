@@ -488,4 +488,49 @@ export default class FileObject extends FS {
 
     return await fs.unlink(filePath)
   }
+
+  /**
+   * Creates a FileObject representing the current working file (the file
+   * that called this method). Parses the stack trace to determine the
+   * caller's file path.
+   *
+   * @returns {FileObject} A new FileObject instance for the calling file
+   * @throws {Sass} If unable to determine caller file from stack trace
+   * @example
+   * // In /home/user/project/src/app.js:
+   * const thisFile = FileObject.fromCwf()
+   * console.log(thisFile.path) // /home/user/project/src/app.js
+   */
+  static fromCwf() {
+    const originalPrepare = Error.prepareStackTrace
+    Error.prepareStackTrace = (_, stack) => stack
+    /** @type {Array<{getFileName: () => string|null}>} */
+    const stack = (new Error().stack)
+    Error.prepareStackTrace = originalPrepare
+
+    // Find the first call site that isn't this file
+    // Stack filenames may be file:// URLs, so compare both forms
+    const thisFileUrl = import.meta.url
+    const thisFilePath = FS.urlToPath(thisFileUrl)
+    const callerSite = stack.find(site => {
+      const fileName = site.getFileName()
+
+      if(!fileName)
+        return false
+
+      return fileName !== thisFileUrl && fileName !== thisFilePath
+    })
+
+    const callerFile = callerSite?.getFileName()
+
+    if(!callerFile)
+      throw Sass.new("Unable to determine caller file from stack trace")
+
+    // Handle file:// URLs
+    const filePath = callerFile.startsWith("file://")
+      ? FS.urlToPath(callerFile)
+      : callerFile
+
+    return new this(filePath)
+  }
 }
