@@ -50,7 +50,7 @@
     "UNLICENSE.txt"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=24.13.0"
   },
   "scripts": {
     "types": "node -e \"require('fs').rmSync('types',{recursive:true,force:true});\" && tsc -p tsconfig.types.json",

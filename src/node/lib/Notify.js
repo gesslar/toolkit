@@ -7,6 +7,7 @@
 import {EventEmitter} from "node:events"
 
 import Valid from "./Valid.js"
+import Util from "./Util.js"
 
 /**
  * @typedef {object} NotifyEventOptions
@@ -33,10 +34,24 @@ export default new class Notify {
    * @returns {void}
    */
   emit(type, payload=undefined) {
-    Valid.type(type, "String")
-    Valid.assert(type.length > 0, "Event type cannot be an empty string.")
+    Valid.type(type, "String", {allowEmpty: false})
 
     this.#emitter.emit(type, payload)
+  }
+
+  /**
+   * Emits an event asynchronously and waits for all listeners to complete.
+   * Unlike emit() which is synchronous, this method properly handles async
+   * event listeners by waiting for all of them to resolve.
+   *
+   * @param {string} type - Event name to dispatch.
+   * @param {unknown} [payload] - Data to send with the event.
+   * @returns {Promise<void>} Resolves when all listeners have completed.
+   */
+  async asyncEmit(type, payload) {
+    Valid.type(type, "String", {allowEmpty: false})
+
+    await Util.asyncEmit(this.#emitter, type, payload)
   }
 
   /**
@@ -48,8 +63,7 @@ export default new class Notify {
    * @returns {unknown} The payload after listeners have processed it.
    */
   request(type, payload={}) {
-    Valid.type(type, "String")
-    Valid.assert(type.length > 0, "Event type cannot be an empty string.")
+    Valid.type(type, "String", {allowEmpty: false})
 
     this.#emitter.emit(type, payload)
 
@@ -66,8 +80,7 @@ export default new class Notify {
    * @returns {() => void} Dispose function to unregister the handler.
    */
   on(type, handler, emitter=this.#emitter, options=undefined) {
-    Valid.type(type, "String")
-    Valid.assert(type.length > 0, "Event type cannot be an empty string.")
+    Valid.type(type, "String", {allowEmpty: false})
     Valid.type(handler, "Function")
 
     if(options?.once) {
@@ -88,6 +101,8 @@ export default new class Notify {
    * @returns {void}
    */
   off(type, handler, emitter=this.#emitter) {
+    Valid.type(type, "String", {allowEmpty: false})
+
     emitter.off(type, handler)
   }
 }
