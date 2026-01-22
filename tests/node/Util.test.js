@@ -233,12 +233,13 @@ describe("Util (Node-specific features)", () => {
       try {
         await Util.asyncEmit(emitter, "test")
         assert.fail("Should have thrown")
-      } catch (error) {
-        // After fix: Should not double-wrap Sass errors
+      } catch(error) {
+        // Sass errors get wrapped via addTrace - message preserved, context in trace
         assert.ok(error instanceof Sass)
         assert.equal(error.message, "Original Sass error")
-        // Should not have extra wrapping context
-        assert.equal(error.trace.length, 1)
+        // Trace includes wrapper context prepended + original message
+        assert.equal(error.trace.length, 2)
+        assert.match(error.trace[0], /Processing 'test' event/)
       }
     })
   })

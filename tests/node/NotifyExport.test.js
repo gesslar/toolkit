@@ -125,7 +125,7 @@ describe("Notify (Node.js)", () => {
     it("throws when type is missing", () => {
       assert.throws(
         () => Notify.on("", () => {}),
-        /Event type cannot be an empty string/
+        /no empty values/
       )
     })
 
@@ -195,6 +195,95 @@ describe("Notify (Node.js)", () => {
       customEmitter.emit("custom-dispose", 2)
 
       assert.deepEqual(events, [1])
+    })
+  })
+
+  describe("asyncEmit", () => {
+    it("waits for async listeners to complete", async () => {
+      const order = []
+
+      const handler = async payload => {
+        await new Promise(resolve => setTimeout(resolve, 10))
+        order.push(payload)
+      }
+
+      Notify.on("async-test", handler)
+      await Notify.asyncEmit("async-test", "done")
+      Notify.off("async-test", handler)
+
+      assert.deepEqual(order, ["done"])
+    })
+
+    it("waits for multiple async listeners", async () => {
+      const order = []
+
+      const handler1 = async () => {
+        await new Promise(resolve => setTimeout(resolve, 20))
+        order.push(1)
+      }
+
+      const handler2 = async () => {
+        await new Promise(resolve => setTimeout(resolve, 10))
+        order.push(2)
+      }
+
+      Notify.on("async-multi", handler1)
+      Notify.on("async-multi", handler2)
+      await Notify.asyncEmit("async-multi")
+      Notify.off("async-multi", handler1)
+      Notify.off("async-multi", handler2)
+
+      assert.equal(order.length, 2)
+      assert.ok(order.includes(1))
+      assert.ok(order.includes(2))
+    })
+
+    it("handles sync listeners too", async () => {
+      const order = []
+
+      const handler = payload => {
+        order.push(payload)
+      }
+
+      Notify.on("async-sync", handler)
+      await Notify.asyncEmit("async-sync", "sync-value")
+      Notify.off("async-sync", handler)
+
+      assert.deepEqual(order, ["sync-value"])
+    })
+
+    it("throws when a listener rejects", async () => {
+      const handler = async () => {
+        throw new Error("listener failed")
+      }
+
+      Notify.on("async-error", handler)
+
+      await assert.rejects(
+        () => Notify.asyncEmit("async-error"),
+        /listener failed/
+      )
+
+      Notify.off("async-error", handler)
+    })
+
+    it("throws when type is empty string", async () => {
+      await assert.rejects(
+        () => Notify.asyncEmit(""),
+        /no empty values/
+      )
+    })
+
+    it("throws when type is not a string", async () => {
+      await assert.rejects(
+        () => Notify.asyncEmit(123),
+        /Invalid type.*Expected String/
+      )
+    })
+
+    it("resolves immediately when no listeners", async () => {
+      await Notify.asyncEmit("no-listeners", "data")
+      // Should not hang or throw
     })
   })
 
