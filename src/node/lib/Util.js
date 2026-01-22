@@ -108,11 +108,6 @@ export default class Util extends BrowserUtil {
     } catch(error) {
       const argsDesc = args.length > 0 ? `with arguments: ${args.map(String).join(", ")}` : "with no arguments"
 
-      // If it's already a Sass error, just re-throw to avoid double-wrapping
-      if(error instanceof Sass) {
-        throw error
-      }
-
       throw Sass.new(
         `Processing '${event}' event ${argsDesc}.`,
         error
@@ -143,11 +138,6 @@ export default class Util extends BrowserUtil {
       await this.#performAsyncEmit(emitter, event, ...args)
     } catch(error) {
       const argsDesc = args.length > 0 ? `with arguments: ${args.map(String).join(", ")}` : "with no arguments"
-
-      // If it's already a Sass error, just re-throw to avoid double-wrapping
-      if(error instanceof Sass) {
-        throw error
-      }
 
       throw Sass.new(
         `Processing '${event}' event ${argsDesc}.`,
