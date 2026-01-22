@@ -1,11 +1,44 @@
-import console from "node:console"
+import console, {Console} from "node:console"
 import process from "node:process"
-import {Console} from "node:console"
 import {Writable} from "node:stream"
+import supportsColor from "supports-color"
+import {stripVTControlCharacters} from "node:util"
 
 import Sass from "./Sass.js"
 
 export default class Term {
+  static #cache = new Map()
+
+  static #preformat(text) {
+    return this.hasColor
+      ? text
+      : stripVTControlCharacters(text)
+  }
+
+  static get columns() {
+    return process.stdout.columns
+  }
+
+  static get rows() {
+    return process.stdout.rows
+  }
+
+  static get dim() {
+    return ({columns, rows} = process.stdout)
+  }
+
+  static get isInteractive() {
+    return this.#cache.has("isInteractive")
+      ? this.#cache.get("isInteractive")
+      : this.#cache.set("isInteractive", process.stdout.isTTY && !process.env.CI).get("isInteractive")
+  }
+
+  static get hasColor() {
+    return this.#cache.has("hasColor")
+      ? this.#cache.get("hasColor")
+      : this.#cache.set("hasColor", Boolean(supportsColor.stdout)).get("hasColor")
+  }
+
   /**
    * Log an informational message.
    *
@@ -126,13 +159,13 @@ export default class Term {
       // Keep: top border (line 0), data rows (line 3+)
       const modified = [lines[0], ...lines.slice(3)]
 
-      process.stdout.write(modified.join("\n"))
+      this.write(modified.join("\n"))
     } else if(showHeader) {
       // Keep header but remove quotes if requested
-      process.stdout.write(processed)
+      this.write(processed)
     } else {
       // Fallback: just output as-is if format unexpected
-      process.stdout.write(processed)
+      this.write(processed)
     }
   }
 
@@ -241,13 +274,77 @@ export default class Term {
     return `${brackets[0]}${text}${brackets[1]}`
   }
 
-  static async resetTerminal() {
-    await Term.directWrite("\x1b[?25h")
-    process.stdin.setRawMode(false)
+  static get start() {
+    return `\r`
   }
 
-  static async clearLines(num) {
-    await Term.directWrite(`${"\r\x1b[2K\x1b[1A".repeat(num)}`)
+  static moveStart() {
+    this.isInteractive && this.write(this.start)
+
+    return this
+  }
+
+  static get end() {
+    return `\x1b[${this.columns}G`
+  }
+
+  static moveEnd() {
+    this.isInteractive && this.write(this.end)
+
+    return this
+  }
+
+  static get up() {
+    return `\x1b[1A`
+  }
+
+  static moveUp(num) {
+    this.isInteractive && this.write(this.up.repeat(num))
+
+    return this
+  }
+
+  static hideCursor() {
+    this.isInteractive && this.write("\x1b[?25l")
+
+    return this
+  }
+
+  static showCursor() {
+    this.isInteractive && this.write("\x1b[?25h")
+
+    return this
+  }
+
+  static setCharMode() {
+    this.isInteractive && process.stdin.setRawMode(true)
+
+    return this
+  }
+
+  static setLineMode() {
+    this.isInteractive && process.stdin.setRawMode(false)
+
+    return this
+  }
+
+  static clearLine() {
+    this.isInteractive && this.write(`\x1b[2K`)
+
+    return this
+  }
+
+  static clearLines(num) {
+    while(num--)
+      this.clearLine().moveUp()
+
+    return this
+  }
+
+  static write(output) {
+    this.directWrite(output).catch(console.error)
+
+    return this
   }
 
   static directWrite(output) {
