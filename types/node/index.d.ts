@@ -11,6 +11,7 @@ export { default as Cache } from "./lib/Cache.js";
 export { default as DirectoryObject } from "./lib/DirectoryObject.js";
 export { default as FileObject } from "./lib/FileObject.js";
 export { default as FileSystem } from "./lib/FileSystem.js";
+export { default as Font } from "./lib/Font.js";
 export { default as Glog } from "./lib/Glog.js";
 export { default as Notify } from "./lib/Notify.js";
 export { default as Term } from "./lib/Term.js";

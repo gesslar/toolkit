@@ -382,6 +382,11 @@ export default class Term {
     return this
   }
 
+  /**
+   * Whether the terminal is in character (raw) input mode.
+   *
+   * @type {boolean}
+   */
   static get isCharMode() {
     if(!this.isInteractive)
       return false
@@ -389,6 +394,11 @@ export default class Term {
     return process.stdin.isRaw
   }
 
+  /**
+   * Whether the terminal is in line (buffered) input mode.
+   *
+   * @type {boolean}
+   */
   static get isLineMode() {
     if(!this.isInteractive)
       return false
@@ -457,6 +467,9 @@ export default class Term {
   /**
    * Returns a promise that resolves with the next chunk of data from stdin.
    * If in Char Mode, it resolves on Enter, Ctrl+D, or the ANSI 'R' terminator.
+   *
+   * @param {(text: string) => boolean} [terminator] - Optional callback to check if input is complete.
+   * @returns {Promise<string>} Resolves with the input data.
    */
   static data(terminator = () => false) {
     process.stdin.resume()
@@ -515,6 +528,11 @@ export default class Term {
     })
   }
 
+  /**
+   * Gets the current cursor position in the terminal.
+   *
+   * @returns {Promise<[number, number]>} Resolves with [x, y] cursor position.
+   */
   static async getCursorPosition() {
     const result = [0, 0]
 
