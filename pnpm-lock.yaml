@@ -44,7 +44,7 @@ importers:
         version: 62.3.1(eslint@9.39.2)
       happy-dom:
         specifier: ^20.3.4
-        version: 20.3.6
+        version: 20.3.7
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -418,8 +418,8 @@ packages:
     resolution: {integrity: sha512-gv5BeD2EssA793rlFWVPMMCqefTlpusw6/2TbAVMy0FzcG8wKJn4O+NqJ4+XWmmwrayJgw5TzrmWjFgmz1XPqw==}
     engines: {node: '>=18'}
 
-  happy-dom@20.3.6:
-    resolution: {integrity: sha512-LDnfyfuPuYSt6umKHDi+n6m+Xl2RrBK3QxRmRow5l/4437rs0jaOevRjBTrh3dIzNb/Uez59YNaGOAK+rbAMeg==}
+  happy-dom@20.3.7:
+    resolution: {integrity: sha512-sb5IzoRl1WJKsUSRe+IloJf3z1iDq5PQ7Yk/ULMsZ5IAQEs9ZL7RsFfiKBXU7nK9QmO+iz0e59EH8r8jexTZ/g==}
     engines: {node: '>=20.0.0'}
 
   has-flag@4.0.0:
@@ -1096,7 +1096,7 @@ snapshots:
 
   globals@17.0.0: {}
 
-  happy-dom@20.3.6:
+  happy-dom@20.3.7:
     dependencies:
       '@types/node': 25.0.10
       '@types/whatwg-mimetype': 3.0.2
