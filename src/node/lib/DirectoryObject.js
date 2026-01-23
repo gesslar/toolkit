@@ -315,7 +315,10 @@ export default class DirectoryObject extends FS {
    * const {files} = await dir.read("*.js")
    * console.log(files) // Only .js files in ./src
    */
-  async read(pat="") {
+  async read(pat="", options={}) {
+    Valid.type(pat, "String")
+    Valid.type(options, "Object")
+
     const withFileTypes = true
     const url = this.url
 
@@ -325,10 +328,13 @@ export default class DirectoryObject extends FS {
     const found = !pat
       ? await readdir(url, {withFileTypes})
       : await Array.fromAsync(
-        glob(pat, {
-          cwd: this.path,
-          withFileTypes,
-        })
+        glob(pat, Object.assign({},
+          options,
+          { // nice try overwriting my options, tho
+            cwd: this.path,
+            withFileTypes,
+          })
+        )
       )
 
     const files = found
@@ -365,13 +371,19 @@ export default class DirectoryObject extends FS {
    * // Find all package.json files recursively
    * const {files} = await dir.glob("**\/package.json")
    */
-  async glob(pat="") {
+  async glob(pat="", options={}) {
+    Valid.type(pat, "String")
+    Valid.type(options, "Object")
+
     const withFileTypes = true
     const found = await Array.fromAsync(
-      glob(pat, {
-        cwd: this.path,
-        withFileTypes,
-      })
+      glob(pat, Object.assign({},
+        options,
+        { // teeheeheeeee
+          cwd: this.path,
+          withFileTypes,
+        })
+      )
     )
 
     const files = [], directories = []

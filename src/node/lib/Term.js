@@ -5,7 +5,7 @@ import supportsColor from "supports-color"
 import {stripVTControlCharacters} from "node:util"
 
 import Sass from "./Sass.js"
-
+import Font from "./Font.js"
 export default class Term {
   static #cache = new Map()
 
@@ -15,24 +15,49 @@ export default class Term {
       : stripVTControlCharacters(text)
   }
 
+  /**
+   * Terminal width in columns.
+   *
+   * @type {number | undefined}
+   */
   static get columns() {
     return process.stdout.columns
   }
 
+  /**
+   * Terminal height in rows.
+   *
+   * @type {number | undefined}
+   */
   static get rows() {
     return process.stdout.rows
   }
 
+  /**
+   * Terminal dimensions as an object.
+   *
+   * @type {{columns: number | undefined, rows: number | undefined}}
+   */
   static get dim() {
-    return ({columns, rows} = process.stdout)
+    return {columns: this.columns, rows: this.rows}
   }
 
+  /**
+   * Whether the terminal is interactive (TTY and not in CI).
+   *
+   * @type {boolean}
+   */
   static get isInteractive() {
     return this.#cache.has("isInteractive")
       ? this.#cache.get("isInteractive")
-      : this.#cache.set("isInteractive", process.stdout.isTTY && !process.env.CI).get("isInteractive")
+      : this.#cache.set("isInteractive", Boolean(process.stdout.isTTY && !process.env.CI)).get("isInteractive")
   }
 
+  /**
+   * Whether the terminal supports color output.
+   *
+   * @type {boolean}
+   */
   static get hasColor() {
     return this.#cache.has("hasColor")
       ? this.#cache.get("hasColor")
@@ -274,66 +299,142 @@ export default class Term {
     return `${brackets[0]}${text}${brackets[1]}`
   }
 
+  /**
+   * ANSI escape sequence to move cursor to start of line.
+   *
+   * @type {string}
+   */
   static get start() {
     return `\r`
   }
 
+  /**
+   * Move cursor to start of line (interactive terminals only).
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
   static moveStart() {
     this.isInteractive && this.write(this.start)
 
     return this
   }
 
+  /**
+   * ANSI escape sequence to move cursor to end of line.
+   *
+   * @type {string}
+   */
   static get end() {
     return `\x1b[${this.columns}G`
   }
 
+  /**
+   * Move cursor to end of line (interactive terminals only).
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
   static moveEnd() {
     this.isInteractive && this.write(this.end)
 
     return this
   }
 
+  /**
+   * ANSI escape sequence to move cursor up one line.
+   *
+   * @type {string}
+   */
   static get up() {
     return `\x1b[1A`
   }
 
+  /**
+   * Move cursor up by specified number of lines (interactive terminals only).
+   *
+   * @param {number} num - Number of lines to move up.
+   * @returns {typeof Term} The Term class for chaining.
+   */
   static moveUp(num) {
     this.isInteractive && this.write(this.up.repeat(num))
 
     return this
   }
 
+  /**
+   * Hide the terminal cursor (interactive terminals only).
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
   static hideCursor() {
     this.isInteractive && this.write("\x1b[?25l")
 
     return this
   }
 
+  /**
+   * Show the terminal cursor (interactive terminals only).
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
   static showCursor() {
     this.isInteractive && this.write("\x1b[?25h")
 
     return this
   }
 
+  static get isCharMode() {
+    if(!this.isInteractive)
+      return false
+
+    return process.stdin.isRaw
+  }
+
+  static get isLineMode() {
+    if(!this.isInteractive)
+      return false
+
+    return !this.isCharMode
+  }
+
+  /**
+   * Set terminal to character mode (raw input, interactive terminals only).
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
   static setCharMode() {
     this.isInteractive && process.stdin.setRawMode(true)
 
     return this
   }
 
+  /**
+   * Set terminal to line mode (buffered input, interactive terminals only).
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
   static setLineMode() {
     this.isInteractive && process.stdin.setRawMode(false)
 
     return this
   }
 
+  /**
+   * Clear the current line (interactive terminals only).
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
   static clearLine() {
     this.isInteractive && this.write(`\x1b[2K`)
 
     return this
   }
 
+  /**
+   * Clear multiple lines by moving up and clearing each (interactive terminals only).
+   *
+   * @param {number} num - Number of lines to clear.
+   * @returns {typeof Term} The Term class for chaining.
+   */
   static clearLines(num) {
     while(num--)
       this.clearLine().moveUp()
@@ -341,15 +442,145 @@ export default class Term {
     return this
   }
 
+  /**
+   * Write output to stdout asynchronously (fire-and-forget).
+   *
+   * @param {string} output - The string to write.
+   * @returns {typeof Term} The Term class for chaining.
+   */
   static write(output) {
     this.directWrite(output).catch(console.error)
 
     return this
   }
 
+  /**
+   * Returns a promise that resolves with the next chunk of data from stdin.
+   * If in Char Mode, it resolves on Enter, Ctrl+D, or the ANSI 'R' terminator.
+   */
+  static data(terminator = () => false) {
+    process.stdin.resume()
+
+    return new Promise((resolve, reject) => {
+      const chunks = []
+
+      function onData(chunk) {
+        const s = chunk.toString()
+        chunks.push(chunk)
+
+        const result = terminator(s)
+        console.error(result)
+        if(result)
+          return onEnd()
+
+        if(Term.isCharMode) {
+          // Resolve on Enter, Ctrl+D
+          if(s === "\r" || s === "\n" || s === "\u0004")
+            return onEnd()
+
+          // Standard CLI escape: Ctrl+C
+          if(s === "\u0003")
+            process.exit()
+        }
+      }
+
+      function onEnd() {
+        cleanup()
+
+        const result = (chunks.length > 0 && typeof chunks[0] === "string")
+          ? chunks.join("")
+          : Buffer.concat(chunks).toString()
+
+        resolve(result)
+      }
+
+      function onError(err) {
+        cleanup()
+        reject(err)
+      }
+
+      function cleanup() {
+        process.stdin.off("data", onData)
+        process.stdin.off("end", onEnd)
+        process.stdin.off("error", onError)
+
+        // ALWAYS pause when the specific task is done.
+        // It can be resumed by the next caller.
+        process.stdin.pause()
+      }
+
+      process.stdin.on("data", onData)
+      process.stdin.once("end", onEnd)
+      process.stdin.once("error", onError)
+    })
+  }
+
+  static async getCursorPosition() {
+    const result = [0, 0]
+
+    if(!this.isInteractive)
+      return result
+
+    const prevRawMode = this.isCharMode
+
+    // 1. Force Raw Mode so the terminal sends the report immediately
+    this.setCharMode()
+    process.stdin.setEncoding("utf8")
+
+    // 2. Start the listener FIRST (do not await yet)
+    const dataPromise = this.data((text => {
+      console.error(JSON.stringify(text))
+      console.error(this)
+      console.error(text.endsWith("R"))
+      console.error(this.isCharMode)
+
+      return this.isCharMode && text.endsWith("R")
+    }).bind(this))
+
+    // 3. Write to stdout AFTER the listener is ready
+    this.write("\x1b[6n")
+
+    // 4. Now await the response
+    const positionData = await dataPromise
+
+    // 5. Restore the previous mode
+    prevRawMode ? this.setCharMode() : this.setLineMode()
+
+    const match = /\x1b\[(?<y>\d+);(?<x>\d+)R/.exec(positionData)
+
+    if(!match)
+      return result
+
+    const {x, y} = match.groups
+
+    // ANSI returns [row;col], which is [y;x]
+    return [parseInt(x, 10), parseInt(y, 10)]
+  }
+
+  /**
+   * Write output to stdout and return a promise that resolves when complete.
+   *
+   * @param {string} output - The string to write.
+   * @returns {Promise<void>} Resolves when write completes.
+   */
   static directWrite(output) {
     return new Promise(resolve => {
       process.stdout.write(output, () => resolve())
     })
   }
+
+  static #spinFrames = Font.hasNerdFonts()
+    ? ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    : ["|", "/", "-", "\\"]
+
+  // static async spinimate(delay=300, options = {position: {x: 0,y: 0}}) {
+  //   const spinFrames = await this.#spinFrames
+  //   const {x, y} = options?.position ?? {}
+
+  //   if(!isNaN(shiftX) && !isNaN(shiftY)) {
+  //     setTimeout(delay, () => {
+
+  //     })
+  //   }
+  // }
 }

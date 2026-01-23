@@ -23,6 +23,19 @@ export default class FileObject extends FS {
         [key: string]: Array<typeof JSON5 | typeof YAML>;
     };
     /**
+     * Creates a FileObject representing the current working file (the file
+     * that called this method). Parses the stack trace to determine the
+     * caller's file path.
+     *
+     * @returns {FileObject} A new FileObject instance for the calling file
+     * @throws {Sass} If unable to determine caller file from stack trace
+     * @example
+     * // In /home/user/project/src/app.js:
+     * const thisFile = FileObject.fromCwf()
+     * console.log(thisFile.path) // /home/user/project/src/app.js
+     */
+    static fromCwf(): FileObject;
+    /**
      * Constructs a FileObject instance.
      *
      * @param {string} submitted - The file path

@@ -22,13 +22,15 @@ export default class FileSystem {
      */
     static pathToUrl(pathName: string): string;
     /**
-     * Convert a URI to a path
+     * Convert a file URL to a path.
      *
      * @static
-     * @param {string} pathName - The URI to convert
-     * @returns {string} The path
+     * @param {string} fileUrl - The file URL to convert (e.g., import.meta.url)
+     * @returns {string} The file path
+     * @example
+     * const currentFile = FileSystem.urlToPath(import.meta.url)
      */
-    static urlToPath(pathName: string): string;
+    static urlToPath(fileUrl: string): string;
     /**
      * Computes the relative path from one file or directory to another.
      *
