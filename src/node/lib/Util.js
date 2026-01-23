@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto"
 import {EventEmitter} from "node:events"
-import {Util as BrowserUtil} from "../../browser/index.js"
+import BrowserUtil from "../../browser/lib/Util.js"
 import Sass from "./Sass.js"
 import process from "node:process"
 import JSON5 from "json5"
