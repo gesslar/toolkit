@@ -5,5 +5,5 @@
 export default class Sass extends BrowserSass {
     #private;
 }
-import { Sass as BrowserSass } from "../../browser/index.js";
+import BrowserSass from "../../browser/lib/Sass.js";
 //# sourceMappingURL=Sass.d.ts.map

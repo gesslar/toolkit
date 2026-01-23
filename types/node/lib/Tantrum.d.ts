@@ -5,5 +5,5 @@
 export default class Tantrum extends BrowserTantrum {
     constructor(message: any, errors?: any[]);
 }
-import { Tantrum as BrowserTantrum } from "../../browser/index.js";
+import BrowserTantrum from "../../browser/lib/Tantrum.js";
 //# sourceMappingURL=Tantrum.d.ts.map
