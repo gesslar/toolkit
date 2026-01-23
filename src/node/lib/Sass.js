@@ -11,7 +11,7 @@
  * debugging.
  */
 
-import {Sass as BrowserSass} from "../../browser/index.js"
+import BrowserSass from "../../browser/lib/Sass.js"
 import Term from "./Term.js"
 
 /**

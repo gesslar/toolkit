@@ -9,7 +9,7 @@
  * multiple error scenarios.
  */
 
-import {Tantrum as BrowserTantrum} from "../../browser/index.js"
+import BrowserTantrum from "../../browser/lib/Tantrum.js"
 import Sass from "./Sass.js"
 import Term from "./Term.js"
 

@@ -404,7 +404,7 @@ export default class DirectoryObject extends FS {
 
         directories.push(directory)
       } else {
-        throw Sass.new(`wtf is this? ${e}`)
+        throw Sass.new(`wtf is this? ${JSON.stringify(e)}`)
       }
     }
 

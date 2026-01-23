@@ -7,7 +7,8 @@ import os from "os"
 import {promisify} from "node:util"
 import child_process from "node:child_process"
 
-import {DirectoryObject, FileSystem as FS} from "../../node/index.js"
+import DirectoryObject from "./DirectoryObject.js"
+import FS from "./FileSystem.js"
 
 const execFile = promisify(child_process.execFile)
 
@@ -112,16 +113,26 @@ export default class Font {
    */
   static async #findNerdFontsWindows() {
     const fontDirs = [
-      new DirectoryObject(FS.resolvePath(process.env.WINDIR || "C:/Windows", "/Fonts")),
-      new DirectoryObject(FS.resolvePath(process.env.LOCALAPPDATA, "Microsoft/Windows/Fonts"))
+      new DirectoryObject(FS.resolvePath(process.env.WINDIR || "C:/Windows", "/Fonts"))
     ]
+
+    if(process.env.LOCALAPPDATA) {
+      fontDirs.push(new DirectoryObject(FS.resolvePath(process.env.LOCALAPPDATA, "Microsoft/Windows/Fonts")))
+    }
 
     const fontFiles = []
 
     for(const fontDir of fontDirs) {
-      const {files} = await fontDir.read("*.{ttf,otf}")
+      try {
+        if(!await fontDir.exists)
+          continue
 
-      fontFiles.push(...files)
+        const {files} = await fontDir.read("*.{ttf,otf}")
+
+        fontFiles.push(...files)
+      } catch {
+        // Directory doesn't exist or isn't accessible
+      }
     }
 
     return this.#identifyNerdFonts(fontFiles)
@@ -135,16 +146,26 @@ export default class Font {
    */
   static async #findNerdFontsMac() {
     const fontDirs = [
-      new DirectoryObject("/Library/Fonts"),
-      new DirectoryObject(FS.resolvePath(process.env.HOME, "Library/Fonts"))
+      new DirectoryObject("/Library/Fonts")
     ]
+
+    if(process.env.HOME) {
+      fontDirs.push(new DirectoryObject(FS.resolvePath(process.env.HOME, "Library/Fonts")))
+    }
 
     const fontFiles = []
 
     for(const fontDir of fontDirs) {
-      const {files} = await fontDir.glob("**/*.{ttf,otf}")
+      try {
+        if(!await fontDir.exists)
+          continue
 
-      fontFiles.push(...files)
+        const {files} = await fontDir.glob("**/*.{ttf,otf}")
+
+        fontFiles.push(...files)
+      } catch {
+        // Directory doesn't exist or isn't accessible
+      }
     }
 
     return this.#identifyNerdFonts(fontFiles)
