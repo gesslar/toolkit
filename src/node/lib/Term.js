@@ -5,7 +5,7 @@ import supportsColor from "supports-color"
 import {stripVTControlCharacters} from "node:util"
 
 import Sass from "./Sass.js"
-import Font from "./Font.js"
+
 export default class Term {
   static #cache = new Map()
 
@@ -587,9 +587,9 @@ export default class Term {
     })
   }
 
-  static #spinFrames = Font.hasNerdFonts()
-    ? ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-    : ["|", "/", "-", "\\"]
+  // Spinner frames - using Braille patterns (widely supported)
+  // Falls back to ASCII when spinimate is implemented with proper detection
+  static #spinFrames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
   // static async spinimate(delay=300, options = {position: {x: 0,y: 0}}) {
   //   const spinFrames = await this.#spinFrames
