@@ -175,7 +175,7 @@ export default class DirectoryObject extends FS {
      * const {files} = await dir.read("*.js")
      * console.log(files) // Only .js files in ./src
      */
-    read(pat?: string): Promise<{
+    read(pat?: string, options?: {}): Promise<{
         files: Array<FileObject>;
         directories: Array<DirectoryObject>;
     }>;
@@ -198,7 +198,7 @@ export default class DirectoryObject extends FS {
      * // Find all package.json files recursively
      * const {files} = await dir.glob("**\/package.json")
      */
-    glob(pat?: string): Promise<{
+    glob(pat?: string, options?: {}): Promise<{
         files: Array<FileObject | FileObject>;
         directories: Array<DirectoryObject>;
     }>;

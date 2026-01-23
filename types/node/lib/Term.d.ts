@@ -205,6 +205,18 @@ export default class Term {
      */
     static showCursor(): typeof Term;
     /**
+     * Whether the terminal is in character (raw) input mode.
+     *
+     * @type {boolean}
+     */
+    static get isCharMode(): boolean;
+    /**
+     * Whether the terminal is in line (buffered) input mode.
+     *
+     * @type {boolean}
+     */
+    static get isLineMode(): boolean;
+    /**
      * Set terminal to character mode (raw input, interactive terminals only).
      *
      * @returns {typeof Term} The Term class for chaining.
@@ -237,11 +249,26 @@ export default class Term {
      */
     static write(output: string): typeof Term;
     /**
+     * Returns a promise that resolves with the next chunk of data from stdin.
+     * If in Char Mode, it resolves on Enter, Ctrl+D, or the ANSI 'R' terminator.
+     *
+     * @param {(text: string) => boolean} [terminator] - Optional callback to check if input is complete.
+     * @returns {Promise<string>} Resolves with the input data.
+     */
+    static data(terminator?: (text: string) => boolean): Promise<string>;
+    /**
+     * Gets the current cursor position in the terminal.
+     *
+     * @returns {Promise<[number, number]>} Resolves with [x, y] cursor position.
+     */
+    static getCursorPosition(): Promise<[number, number]>;
+    /**
      * Write output to stdout and return a promise that resolves when complete.
      *
      * @param {string} output - The string to write.
      * @returns {Promise<void>} Resolves when write completes.
      */
     static directWrite(output: string): Promise<void>;
+    static "__#private@#spinFrames": string[];
 }
 //# sourceMappingURL=Term.d.ts.map
