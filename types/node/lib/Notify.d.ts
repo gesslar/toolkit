@@ -12,6 +12,16 @@ declare const _default: {
      */
     emit(type: string, payload?: unknown): void;
     /**
+     * Emits an event asynchronously and waits for all listeners to complete.
+     * Unlike emit() which is synchronous, this method properly handles async
+     * event listeners by waiting for all of them to resolve.
+     *
+     * @param {string} type - Event name to dispatch.
+     * @param {unknown} [payload] - Data to send with the event.
+     * @returns {Promise<void>} Resolves when all listeners have completed.
+     */
+    asyncEmit(type: string, payload?: unknown): Promise<void>;
+    /**
      * Emits an event and returns the payload for simple request/response flows.
      * Listeners can mutate the payload object to provide responses.
      *

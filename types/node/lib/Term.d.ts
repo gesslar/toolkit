@@ -1,4 +1,39 @@
 export default class Term {
+    static "__#private@#cache": Map<any, any>;
+    static "__#private@#preformat"(text: any): any;
+    /**
+     * Terminal width in columns.
+     *
+     * @type {number | undefined}
+     */
+    static get columns(): number | undefined;
+    /**
+     * Terminal height in rows.
+     *
+     * @type {number | undefined}
+     */
+    static get rows(): number | undefined;
+    /**
+     * Terminal dimensions as an object.
+     *
+     * @type {{columns: number | undefined, rows: number | undefined}}
+     */
+    static get dim(): {
+        columns: number | undefined;
+        rows: number | undefined;
+    };
+    /**
+     * Whether the terminal is interactive (TTY and not in CI).
+     *
+     * @type {boolean}
+     */
+    static get isInteractive(): boolean;
+    /**
+     * Whether the terminal supports color output.
+     *
+     * @type {boolean}
+     */
+    static get hasColor(): boolean;
     /**
      * Log an informational message.
      *
@@ -120,8 +155,93 @@ export default class Term {
      * @throws {Sass} If any element of `parts` is not a string.
      */
     static terminalBracket([level, text, brackets]: Array<string>): string;
-    static resetTerminal(): Promise<void>;
-    static clearLines(num: any): Promise<void>;
-    static directWrite(output: any): Promise<any>;
+    /**
+     * ANSI escape sequence to move cursor to start of line.
+     *
+     * @type {string}
+     */
+    static get start(): string;
+    /**
+     * Move cursor to start of line (interactive terminals only).
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static moveStart(): typeof Term;
+    /**
+     * ANSI escape sequence to move cursor to end of line.
+     *
+     * @type {string}
+     */
+    static get end(): string;
+    /**
+     * Move cursor to end of line (interactive terminals only).
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static moveEnd(): typeof Term;
+    /**
+     * ANSI escape sequence to move cursor up one line.
+     *
+     * @type {string}
+     */
+    static get up(): string;
+    /**
+     * Move cursor up by specified number of lines (interactive terminals only).
+     *
+     * @param {number} num - Number of lines to move up.
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static moveUp(num: number): typeof Term;
+    /**
+     * Hide the terminal cursor (interactive terminals only).
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static hideCursor(): typeof Term;
+    /**
+     * Show the terminal cursor (interactive terminals only).
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static showCursor(): typeof Term;
+    /**
+     * Set terminal to character mode (raw input, interactive terminals only).
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static setCharMode(): typeof Term;
+    /**
+     * Set terminal to line mode (buffered input, interactive terminals only).
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static setLineMode(): typeof Term;
+    /**
+     * Clear the current line (interactive terminals only).
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static clearLine(): typeof Term;
+    /**
+     * Clear multiple lines by moving up and clearing each (interactive terminals only).
+     *
+     * @param {number} num - Number of lines to clear.
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static clearLines(num: number): typeof Term;
+    /**
+     * Write output to stdout asynchronously (fire-and-forget).
+     *
+     * @param {string} output - The string to write.
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static write(output: string): typeof Term;
+    /**
+     * Write output to stdout and return a promise that resolves when complete.
+     *
+     * @param {string} output - The string to write.
+     * @returns {Promise<void>} Resolves when write completes.
+     */
+    static directWrite(output: string): Promise<void>;
 }
 //# sourceMappingURL=Term.d.ts.map

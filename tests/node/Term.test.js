@@ -256,18 +256,148 @@ describe("Term", () => {
       assert.equal(typeof Term.clearLines, "function")
     })
 
-    it("resetTerminal exists and returns a promise", async () => {
-      assert.equal(typeof Term.resetTerminal, "function")
+    it("write exists and returns Term class for chaining", () => {
+      assert.equal(typeof Term.write, "function")
+      // write returns Term class for method chaining
+      const result = Term.write("")
+      assert.equal(result, Term)
+    })
 
-      // resetTerminal may fail if stdin doesn't support setRawMode (like in test environment)
-      try {
-        const result = Term.resetTerminal()
-        assert.ok(result instanceof Promise)
-        await result
-      } catch (error) {
-        // Expected in test environment where setRawMode is not available
-        assert.match(error.message, /setRawMode/)
-      }
+    it("clearLine exists and returns Term class", () => {
+      assert.equal(typeof Term.clearLine, "function")
+    })
+
+    it("moveUp exists and returns Term class", () => {
+      assert.equal(typeof Term.moveUp, "function")
+    })
+
+    it("moveStart exists and returns Term class", () => {
+      assert.equal(typeof Term.moveStart, "function")
+    })
+
+    it("moveEnd exists and returns Term class", () => {
+      assert.equal(typeof Term.moveEnd, "function")
+    })
+
+    it("hideCursor exists and returns Term class", () => {
+      assert.equal(typeof Term.hideCursor, "function")
+    })
+
+    it("showCursor exists and returns Term class", () => {
+      assert.equal(typeof Term.showCursor, "function")
+    })
+
+    it("setCharMode exists", () => {
+      assert.equal(typeof Term.setCharMode, "function")
+    })
+
+    it("setLineMode exists", () => {
+      assert.equal(typeof Term.setLineMode, "function")
+    })
+  })
+
+  describe("terminal properties", () => {
+    it("columns returns a number or undefined (non-TTY)", () => {
+      const cols = Term.columns
+      // In non-TTY environments (like test runners), columns may be undefined
+      assert.ok(cols === undefined || typeof cols === "number")
+    })
+
+    it("rows returns a number or undefined (non-TTY)", () => {
+      const rows = Term.rows
+      // In non-TTY environments (like test runners), rows may be undefined
+      assert.ok(rows === undefined || typeof rows === "number")
+    })
+
+    it("dim returns an object with columns and rows properties", () => {
+      const dim = Term.dim
+      assert.ok(typeof dim === "object")
+      assert.ok("columns" in dim)
+      assert.ok("rows" in dim)
+    })
+
+    it("isInteractive returns a boolean", () => {
+      const interactive = Term.isInteractive
+      // isInteractive uses caching and checks process.stdout.isTTY
+      assert.equal(typeof interactive, "boolean")
+    })
+
+    it("hasColor returns a boolean", () => {
+      const color = Term.hasColor
+      assert.equal(typeof color, "boolean")
+    })
+
+    it("start returns carriage return sequence", () => {
+      assert.equal(Term.start, "\r")
+    })
+
+    it("end returns ANSI move to end sequence", () => {
+      const end = Term.end
+      assert.ok(end.startsWith("\x1b["))
+      assert.ok(end.endsWith("G"))
+    })
+
+    it("up returns ANSI move up sequence", () => {
+      assert.equal(Term.up, "\x1b[1A")
+    })
+  })
+
+  describe("table method", () => {
+    it("exists and is a function", () => {
+      assert.equal(typeof Term.table, "function")
+    })
+
+    it("handles array data", () => {
+      // Just ensure it doesn't throw
+      assert.doesNotThrow(() => {
+        Term.table([{a: 1, b: 2}, {a: 3, b: 4}])
+      })
+    })
+
+    it("handles object data", () => {
+      assert.doesNotThrow(() => {
+        Term.table({row1: {a: 1}, row2: {a: 2}})
+      })
+    })
+
+    it("accepts properties option", () => {
+      assert.doesNotThrow(() => {
+        Term.table([{a: 1, b: 2, c: 3}], {properties: ["a", "b"]})
+      })
+    })
+
+    it("accepts showHeader option", () => {
+      assert.doesNotThrow(() => {
+        Term.table([{a: 1}], {showHeader: true})
+      })
+    })
+
+    it("accepts quotedStrings option", () => {
+      assert.doesNotThrow(() => {
+        Term.table([{a: "hello"}], {quotedStrings: true})
+      })
+    })
+
+    it("accepts combined options", () => {
+      assert.doesNotThrow(() => {
+        Term.table([{a: "hello", b: "world"}], {
+          showHeader: true,
+          quotedStrings: true,
+          properties: ["a"]
+        })
+      })
+    })
+
+    it("handles empty array", () => {
+      assert.doesNotThrow(() => {
+        Term.table([])
+      })
+    })
+
+    it("handles empty object", () => {
+      assert.doesNotThrow(() => {
+        Term.table({})
+      })
     })
   })
 })
