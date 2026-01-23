@@ -482,7 +482,7 @@ export default class Term {
         chunks.push(chunk)
 
         const result = terminator(s)
-        console.error(result)
+
         if(result)
           return onEnd()
 
@@ -547,11 +547,6 @@ export default class Term {
 
     // 2. Start the listener FIRST (do not await yet)
     const dataPromise = this.data((text => {
-      console.error(JSON.stringify(text))
-      console.error(this)
-      console.error(text.endsWith("R"))
-      console.error(this.isCharMode)
-
       return this.isCharMode && text.endsWith("R")
     }).bind(this))
 
