@@ -91,8 +91,8 @@ export default class Font {
     /**
      * Identifies Nerd Fonts from a list of font file objects.
      *
-     * @param {Array<DirectoryObject>} directoryObjects - Array of directory objects to scan.
-     * @returns {Promise<Array<string>>} Sorted array of unique Nerd Font family names.
+     * @param {Array<import("./FileObject.js").default>} fileObjects - Array of FileObject instances representing font files.
+     * @returns {Array<string>} Sorted array of unique Nerd Font family names.
      * @private
      */
     private static "__#private@#identifyNerdFonts";
