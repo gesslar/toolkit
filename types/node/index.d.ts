@@ -13,7 +13,7 @@ export { default as FileObject } from "./lib/FileObject.js";
 export { default as FileSystem } from "./lib/FileSystem.js";
 export { default as Font } from "./lib/Font.js";
 export { default as Glog } from "./lib/Glog.js";
-export { default as Notify } from "./lib/Notify.js";
 export { default as Term } from "./lib/Term.js";
 export { default as Disposer, Disposer as DisposerClass } from "../browser/lib/Disposer.js";
+export { default as Notify, Notify as NotifyClass } from "./lib/Notify.js";
 //# sourceMappingURL=index.d.ts.map

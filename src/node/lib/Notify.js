@@ -19,7 +19,7 @@ import Util from "./Util.js"
  * Notify class provides a thin wrapper around EventEmitter for centralized
  * event handling in Node.js applications. Mirrors the browser Notify API.
  */
-export default new class Notify {
+export class Notify {
   /** @type {string} Display name for debugging. */
   name = "Notify"
 
@@ -106,3 +106,5 @@ export default new class Notify {
     emitter.off(type, handler)
   }
 }
+
+export default new Notify()

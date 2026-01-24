@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import {EventEmitter} from "node:events"
 import {afterEach, describe, it} from "node:test"
 
-import {Notify} from "../../src/node/index.js"
+import {Notify, NotifyClass} from "../../src/node/index.js"
 
 describe("Notify (Node.js)", () => {
   let receivedEvents = []
@@ -347,5 +347,92 @@ describe("Notify (Node.js)", () => {
       dispose()
       dispose() // Should not throw
     })
+  })
+})
+
+describe("NotifyClass export", () => {
+  it("is exported as a class", () => {
+    assert.equal(typeof NotifyClass, "function")
+    assert.equal(NotifyClass.name, "Notify")
+  })
+
+  it("can be instantiated", () => {
+    const instance = new NotifyClass()
+
+    assert.ok(instance)
+    assert.equal(instance.name, "Notify")
+    assert.equal(typeof instance.emit, "function")
+    assert.equal(typeof instance.on, "function")
+    assert.equal(typeof instance.off, "function")
+    assert.equal(typeof instance.request, "function")
+    assert.equal(typeof instance.asyncEmit, "function")
+  })
+
+  it("default export is an instance of NotifyClass", () => {
+    assert.ok(Notify instanceof NotifyClass)
+  })
+
+  it("instances are independent", () => {
+    const instance1 = new NotifyClass()
+    const instance2 = new NotifyClass()
+    const events1 = []
+    const events2 = []
+
+    const handler1 = payload => events1.push(payload)
+    const handler2 = payload => events2.push(payload)
+
+    instance1.on("test", handler1)
+    instance2.on("test", handler2)
+
+    instance1.emit("test", "from-1")
+    instance2.emit("test", "from-2")
+
+    instance1.off("test", handler1)
+    instance2.off("test", handler2)
+
+    assert.deepEqual(events1, ["from-1"])
+    assert.deepEqual(events2, ["from-2"])
+  })
+
+  it("instances are independent from default export", () => {
+    const instance = new NotifyClass()
+    const instanceEvents = []
+    const defaultEvents = []
+
+    const instanceHandler = payload => instanceEvents.push(payload)
+    const defaultHandler = payload => defaultEvents.push(payload)
+
+    instance.on("isolated", instanceHandler)
+    Notify.on("isolated", defaultHandler)
+
+    instance.emit("isolated", "instance-only")
+    Notify.emit("isolated", "default-only")
+
+    instance.off("isolated", instanceHandler)
+    Notify.off("isolated", defaultHandler)
+
+    assert.deepEqual(instanceEvents, ["instance-only"])
+    assert.deepEqual(defaultEvents, ["default-only"])
+  })
+
+  it("multiple instances can coexist", () => {
+    const instances = [
+      new NotifyClass(),
+      new NotifyClass(),
+      new NotifyClass()
+    ]
+    const results = []
+
+    instances.forEach((inst, idx) => {
+      inst.on("ping", () => results.push(idx))
+    })
+
+    instances[1].emit("ping")
+
+    instances.forEach(inst => {
+      inst.off("ping", () => {})
+    })
+
+    assert.deepEqual(results, [1])
   })
 })
