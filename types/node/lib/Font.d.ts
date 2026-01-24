@@ -15,6 +15,7 @@
  * console.log(fonts) // ["FiraCode", "JetBrainsMono", ...]
  */
 export default class Font {
+    static "__#private@#cache": Map<any, any>;
     /**
      * Finds all Nerd Fonts installed on the system.
      * Detects the current platform and uses platform-specific methods
@@ -91,10 +92,22 @@ export default class Font {
     /**
      * Identifies Nerd Fonts from a list of font file objects.
      *
-     * @param {Array<import("./FileObject.js").default>} fileObjects - Array of FileObject instances representing font files.
+     * @param {Array<FileObject>} fileObjects - Array of FileObject instances representing font files.
      * @returns {Array<string>} Sorted array of unique Nerd Font family names.
      * @private
      */
     private static "__#private@#identifyNerdFonts";
+    /**
+     * Gets spinner animation frames appropriate for the current font environment.
+     * Returns Unicode braille characters if Nerd Fonts are available,
+     * otherwise returns ASCII fallback characters.
+     *
+     * @returns {Promise<Array<string>>} Promise resolving to array of spinner frame characters.
+     * @example
+     * const frames = await Font.spinFrames
+     * // With Nerd Fonts: ["⠋", "⠙", "⠹", ...]
+     * // Without: ["|", "/", "-", "\\"]
+     */
+    static get spinFrames(): Promise<Array<string>>;
 }
 //# sourceMappingURL=Font.d.ts.map

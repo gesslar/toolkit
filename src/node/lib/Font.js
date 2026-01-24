@@ -10,6 +10,10 @@ import child_process from "node:child_process"
 import DirectoryObject from "./DirectoryObject.js"
 import FS from "./FileSystem.js"
 
+/**
+ * @import {FileObject} from "./FileObject.js"
+ */
+
 const execFile = promisify(child_process.execFile)
 
 /**
@@ -29,6 +33,8 @@ const execFile = promisify(child_process.execFile)
  * console.log(fonts) // ["FiraCode", "JetBrainsMono", ...]
  */
 export default class Font {
+  static #cache = new Map()
+
   /**
    * Finds all Nerd Fonts installed on the system.
    * Detects the current platform and uses platform-specific methods
@@ -40,17 +46,20 @@ export default class Font {
    * console.log(nerdFonts) // ["FiraCode Nerd Font", "JetBrains Mono NF", ...]
    */
   static async findNerdFonts() {
-    const platform = os.platform()
+    if(!this.#cache.has("nerdFonts")) {
+      const platform = os.platform()
 
-    if(platform === "win32") {
-      return this.#findNerdFontsWindows()
-    } else if(platform === "darwin") {
-      return this.#findNerdFontsMac()
-    } else if(platform === "linux") {
-      return this.#findNerdFontsLinux()
-    } else {
-      return []
+      if(platform === "win32")
+        this.#cache.set("nerdFonts", this.#findNerdFontsWindows())
+      else if(platform === "darwin")
+        this.#cache.set("nerdFonts", this.#findNerdFontsMac())
+      else if(platform === "linux")
+        this.#cache.set("nerdFonts", this.#findNerdFontsLinux())
+      else
+        this.#cache.set("nerdFonts", [])
     }
+
+    return this.#cache.get("nerdFonts")
   }
 
   /**
@@ -113,12 +122,17 @@ export default class Font {
    */
   static async #findNerdFontsWindows() {
     const fontDirs = [
-      new DirectoryObject(FS.resolvePath(process.env.WINDIR || "C:/Windows", "/Fonts"))
+      new DirectoryObject(FS.resolvePath(
+        process.env.WINDIR || "C:/Windows",
+        "/Fonts"
+      ))
     ]
 
-    if(process.env.LOCALAPPDATA) {
-      fontDirs.push(new DirectoryObject(FS.resolvePath(process.env.LOCALAPPDATA, "Microsoft/Windows/Fonts")))
-    }
+    if(process.env.LOCALAPPDATA)
+      fontDirs.push(new DirectoryObject(FS.resolvePath(
+        process.env.LOCALAPPDATA,
+        "Microsoft/Windows/Fonts"
+      )))
 
     const fontFiles = []
 
@@ -135,7 +149,9 @@ export default class Font {
       }
     }
 
-    return this.#identifyNerdFonts(fontFiles)
+    this.#cache.set("nerdFonts", this.#identifyNerdFonts(fontFiles))
+
+    return this.#cache.get("nerdFonts")
   }
 
   /**
@@ -208,7 +224,7 @@ export default class Font {
   /**
    * Identifies Nerd Fonts from a list of font file objects.
    *
-   * @param {Array<import("./FileObject.js").default>} fileObjects - Array of FileObject instances representing font files.
+   * @param {Array<FileObject>} fileObjects - Array of FileObject instances representing font files.
    * @returns {Array<string>} Sorted array of unique Nerd Font family names.
    * @private
    */
@@ -224,5 +240,24 @@ export default class Font {
     }
 
     return Array.from(nerdFonts).sort()
+  }
+
+  /**
+   * Gets spinner animation frames appropriate for the current font environment.
+   * Returns Unicode braille characters if Nerd Fonts are available,
+   * otherwise returns ASCII fallback characters.
+   *
+   * @returns {Promise<Array<string>>} Promise resolving to array of spinner frame characters.
+   * @example
+   * const frames = await Font.spinFrames
+   * // With Nerd Fonts: ["⠋", "⠙", "⠹", ...]
+   * // Without: ["|", "/", "-", "\\"]
+   */
+  static get spinFrames() {
+    return this.hasNerdFonts().then(has =>
+      has
+        ? ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        : ["|", "/", "-", "\\"]
+    )
   }
 }
