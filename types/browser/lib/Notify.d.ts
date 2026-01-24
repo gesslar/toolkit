@@ -1,4 +1,15 @@
-declare const _default: {
+/**
+ * Thin wrapper around `window` event handling to centralize emit/on/off
+ * helpers. Used to dispatch simple CustomEvents and manage listeners in one
+ * place.
+ */
+/**
+ * @typedef {object} NotifyEventOptions
+ * @property {boolean} [bubbles] - Whether the event bubbles up the DOM tree.
+ * @property {boolean} [cancelable] - Whether the event can be canceled.
+ * @property {boolean} [composed] - Whether the event can cross the shadow DOM boundary.
+ */
+export class Notify {
     /** @type {string} Display name for debugging. */
     name: string;
     /**
@@ -29,7 +40,7 @@ declare const _default: {
      * @param {boolean | object} [options] - Options to pass to addEventListener.
      * @returns {() => void} Dispose function to unregister the handler.
      */
-    on(type: string, handler: (evt: /*elided*/ any) => void, element?: HTMLElement | Window, options?: boolean | object): () => void;
+    on(type: string, handler: (evt: Notify) => void, element?: HTMLElement | Window, options?: boolean | object): () => void;
     /**
      * Removes a previously registered listener for the given event type.
      *
@@ -39,9 +50,10 @@ declare const _default: {
      * @param {boolean | object} [options] - Options to pass to removeEventListener.
      * @returns {void}
      */
-    off(type: string, handler: (evt: /*elided*/ any) => void, element?: HTMLElement | Window, options?: boolean | object): void;
-    "__#private@#buildEventInit"(detail: any, options: any): any;
-};
+    off(type: string, handler: (evt: Notify) => void, element?: HTMLElement | Window, options?: boolean | object): void;
+    #private;
+}
+declare const _default: Notify;
 export default _default;
 export type NotifyEventOptions = {
     /**

@@ -1,8 +1,15 @@
-declare const _default: {
+/**
+ * @typedef {object} NotifyEventOptions
+ * @property {boolean} [once] - Whether the listener should be invoked only once.
+ * @property {AbortSignal} [signal] - An AbortSignal to remove the listener.
+ */
+/**
+ * Notify class provides a thin wrapper around EventEmitter for centralized
+ * event handling in Node.js applications. Mirrors the browser Notify API.
+ */
+export class Notify {
     /** @type {string} Display name for debugging. */
     name: string;
-    /** @type {EventEmitter} Internal event emitter */
-    "__#private@#emitter": EventEmitter;
     /**
      * Emits an event without expecting a return value.
      *
@@ -49,7 +56,9 @@ declare const _default: {
      * @returns {void}
      */
     off(type: string, handler: (payload: unknown) => void, emitter?: EventEmitter): void;
-};
+    #private;
+}
+declare const _default: Notify;
 export default _default;
 export type NotifyEventOptions = {
     /**

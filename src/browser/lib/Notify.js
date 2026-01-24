@@ -10,7 +10,7 @@
  * @property {boolean} [cancelable] - Whether the event can be canceled.
  * @property {boolean} [composed] - Whether the event can cross the shadow DOM boundary.
  */
-export default new class Notify {
+export class Notify {
   /** @type {string} Display name for debugging. */
   name = "Notify"
 
@@ -87,3 +87,5 @@ export default new class Notify {
     return {detail}
   }
 }
+
+export default new Notify()
