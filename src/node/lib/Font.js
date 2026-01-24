@@ -208,25 +208,19 @@ export default class Font {
   /**
    * Identifies Nerd Fonts from a list of font file objects.
    *
-   * @param {Array<DirectoryObject>} directoryObjects - Array of directory objects to scan.
-   * @returns {Promise<Array<string>>} Sorted array of unique Nerd Font family names.
+   * @param {Array<import("./FileObject.js").default>} fileObjects - Array of FileObject instances representing font files.
+   * @returns {Array<string>} Sorted array of unique Nerd Font family names.
    * @private
    */
-  static async #identifyNerdFonts(directoryObjects) {
+  static #identifyNerdFonts(fileObjects) {
     const nerdFonts = new Set()
 
-    for(const dir of directoryObjects) {
-      if(!await dir.exists)
-        continue
+    for(const file of fileObjects) {
+      const name = file.module
 
-      try {
-        const {files} = await dir.read("*.{ttf,otf}")
-
-        files
-          .map(f => f.module)
-          .filter(f => this.#isNerdFontName(f, this.#nerdTests))
-          .forEach(f => nerdFonts.add(this.#stripStyles(f)))
-      } catch {}
+      if(this.#isNerdFontName(name, this.#nerdTests)) {
+        nerdFonts.add(this.#stripStyles(name))
+      }
     }
 
     return Array.from(nerdFonts).sort()
