@@ -65,4 +65,39 @@ describe("Font", () => {
       })
     })
   })
+
+  describe("spinFrames", () => {
+    it("exists and is a getter", () => {
+      const descriptor = Object.getOwnPropertyDescriptor(Font, "spinFrames")
+
+      assert.ok(descriptor, "spinFrames should exist")
+      assert.equal(typeof descriptor.get, "function", "spinFrames should be a getter")
+    })
+
+    it("returns a promise", () => {
+      const result = Font.spinFrames
+
+      assert.ok(result instanceof Promise)
+    })
+
+    it("resolves to an array", async () => {
+      const result = await Font.spinFrames
+
+      assert.ok(Array.isArray(result))
+    })
+
+    it("resolves to strings in the array", async () => {
+      const result = await Font.spinFrames
+
+      result.forEach(frame => {
+        assert.equal(typeof frame, "string")
+      })
+    })
+
+    it("resolves to non-empty array", async () => {
+      const result = await Font.spinFrames
+
+      assert.ok(result.length > 0, "spinFrames should return at least one frame")
+    })
+  })
 })
