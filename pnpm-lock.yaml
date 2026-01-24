@@ -41,7 +41,7 @@ importers:
         version: 9.39.2
       eslint-plugin-jsdoc:
         specifier: ^62.3.0
-        version: 62.3.1(eslint@9.39.2)
+        version: 62.4.0(eslint@9.39.2)
       happy-dom:
         specifier: ^20.3.4
         version: 20.3.7
@@ -306,8 +306,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-plugin-jsdoc@62.3.1:
-    resolution: {integrity: sha512-eQzrU7Z8FFSKdUgurmz8XZMz25GC5807uPmAV1x/Dw+xLteJEqPjbsdBT1pYB5p3uSsD4q3tCbJOpVLMNiTSSw==}
+  eslint-plugin-jsdoc@62.4.0:
+    resolution: {integrity: sha512-SmwVS4QCSsBRmOfAn1J2CyCO4chqZtSU5olBCiHZ0RnxZVjIBTgm/1ZBFwFDUiV5/llFZcuSHEJK5DjHCDcGPw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
@@ -741,7 +741,7 @@ snapshots:
       '@skarab/detect-package-manager': 1.0.0
       '@stylistic/eslint-plugin': 5.7.1(eslint@9.39.2)
       eslint: 9.39.2
-      eslint-plugin-jsdoc: 62.3.1(eslint@9.39.2)
+      eslint-plugin-jsdoc: 62.4.0(eslint@9.39.2)
       globals: 17.0.0
     transitivePeerDependencies:
       - supports-color
@@ -950,7 +950,7 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-plugin-jsdoc@62.3.1(eslint@9.39.2):
+  eslint-plugin-jsdoc@62.4.0(eslint@9.39.2):
     dependencies:
       '@es-joy/jsdoccomment': 0.82.0
       '@es-joy/resolve.exports': 1.2.0
