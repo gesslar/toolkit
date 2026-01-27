@@ -266,19 +266,40 @@ export default class DirectoryObject extends FS {
     /**
      * Creates a new DirectoryObject by extending this directory's path.
      *
+     * Paths are always resolved relative to THIS directory. Any attempt to
+     * escape via `..` or absolute paths is constrained - the `..` segments
+     * are stripped and the remaining path is resolved relative to this directory.
+     *
+     * On Windows, cross-drive absolute paths (e.g., `D:\foo` when base is `C:\`)
+     * are also constrained - the drive root is stripped and the path is resolved
+     * relative to this directory.
+     *
      * Uses overlapping path segment detection to intelligently combine paths.
-     * Preserves the temporary flag from the current directory.
      *
      * @param {string} newPath - The path to append to this directory's path.
      * @returns {DirectoryObject} A new DirectoryObject with the extended path.
      * @example
      * const dir = new DirectoryObject("/projects/git/toolkit")
-     * const subDir = dir.addDirectory("src/lib")
+     * const subDir = dir.getDirectory("src/lib")
      * console.log(subDir.path) // "/projects/git/toolkit/src/lib"
+     *
+     * @example
+     * // Path traversal is constrained to this directory
+     * const dir = new DirectoryObject("/projects/git/toolkit")
+     * const escaped = dir.getDirectory("../../../foo/bar")
+     * console.log(escaped.path) // "/projects/git/toolkit/foo/bar"
      */
     getDirectory(newPath: string): DirectoryObject;
     /**
      * Creates a new FileObject by extending this directory's path.
+     *
+     * Paths are always resolved relative to THIS directory. Any attempt to
+     * escape via `..` or absolute paths is constrained - the `..` segments
+     * are stripped and the remaining path is resolved relative to this directory.
+     *
+     * On Windows, cross-drive absolute paths (e.g., `D:\foo` when base is `C:\`)
+     * are also constrained - the drive root is stripped and the path is resolved
+     * relative to this directory.
      *
      * Uses overlapping path segment detection to intelligently combine paths.
      *
@@ -286,8 +307,14 @@ export default class DirectoryObject extends FS {
      * @returns {FileObject} A new FileObject with the extended path.
      * @example
      * const dir = new DirectoryObject("/projects/git/toolkit")
-     * const file = dir.addFile("package.json")
+     * const file = dir.getFile("package.json")
      * console.log(file.path) // "/projects/git/toolkit/package.json"
+     *
+     * @example
+     * // Path traversal is constrained to this directory
+     * const dir = new DirectoryObject("/projects/git/toolkit")
+     * const escaped = dir.getFile("../../../foo/bar.js")
+     * console.log(escaped.path) // "/projects/git/toolkit/foo/bar.js"
      */
     getFile(filename: string): FileObject;
     #private;

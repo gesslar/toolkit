@@ -1165,20 +1165,24 @@ describe("DirectoryObject", () => {
       assert.ok(subDir instanceof DirectoryObject)
     })
 
-    it("validates directory name parameter", () => {
+    it("constrains path traversal to current directory", () => {
       const dir = new DirectoryObject("/test")
 
-      // Path traversal attempts are rejected
-      assert.throws(
-        () => dir.getDirectory(".."),
-        /contains '..'/
-      )
+      // Path traversal attempts are constrained - ".." is stripped
+      const escaped = dir.getDirectory("..")
+      assert.equal(escaped.path, path.resolve("/test"))
 
-      // Absolute paths are rejected
-      assert.throws(
-        () => dir.getDirectory("/absolute"),
-        /Absolute paths not allowed/
-      )
+      // Multiple ".." are stripped
+      const multiEscaped = dir.getDirectory("../../../foo/bar")
+      assert.equal(multiEscaped.path, path.resolve("/test/foo/bar"))
+    })
+
+    it("constrains absolute paths to current directory", () => {
+      const dir = new DirectoryObject("/test")
+
+      // Absolute paths are constrained to this directory
+      const absolute = dir.getDirectory("/absolute/path")
+      assert.ok(absolute.path.startsWith(path.resolve("/test")))
     })
   })
 
@@ -1229,20 +1233,24 @@ describe("DirectoryObject", () => {
       assert.ok(chainedFile.path.includes("index.js"))
     })
 
-    it("validates filename parameter", () => {
+    it("constrains path traversal to current directory", () => {
       const dir = new DirectoryObject("/test")
 
-      // Path traversal attempts are rejected
-      assert.throws(
-        () => dir.getFile("../parent/file.txt"),
-        /contains '..'/
-      )
+      // Path traversal attempts are constrained - ".." is stripped
+      const escaped = dir.getFile("../parent/file.txt")
+      assert.equal(escaped.path, path.resolve("/test/parent/file.txt"))
 
-      // Absolute paths are rejected
-      assert.throws(
-        () => dir.getFile("/absolute/file.txt"),
-        /Absolute paths not allowed/
-      )
+      // Multiple ".." are stripped
+      const multiEscaped = dir.getFile("../../../foo/bar.js")
+      assert.equal(multiEscaped.path, path.resolve("/test/foo/bar.js"))
+    })
+
+    it("constrains absolute paths to current directory", () => {
+      const dir = new DirectoryObject("/test")
+
+      // Absolute paths are constrained to this directory
+      const absolute = dir.getFile("/absolute/file.txt")
+      assert.ok(absolute.path.startsWith(path.resolve("/test")))
     })
 
     it("works with files with complex names", () => {
