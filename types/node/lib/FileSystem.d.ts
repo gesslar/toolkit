@@ -101,26 +101,45 @@ export default class FileSystem {
      * @param {string} [sep=path.sep] - The path separator to use (defaults to system separator)
      * @returns {string|null} The relative path, empty string if paths are identical, or null if no overlap found
      * @example
-     * FS.toRelativePath("/projects/toolkit", "/projects/toolkit/src") // "src"
-     * FS.toRelativePath("/home/user", "/home/user") // ""
-     * FS.toRelativePath("/projects/app", "/other/path") // null
+     * FS.toLocalRelativePath("/projects/toolkit", "/projects/toolkit/src") // "src"
+     * FS.toLocalRelativePath("/home/user", "/home/user") // ""
+     * FS.toLocalRelativePath("/projects/app", "/other/path") // null
      */
-    static toRelativePath(from: string, to: string, sep?: string): string | null;
+    static toLocalRelativePath(from: string, to: string, sep?: string): string | null;
     /**
-     * Find the common root path between two paths by identifying overlapping segments.
-     * Returns the portion of 'from' that matches up to the overlap point in 'to'.
+     * Computes the relative path from one path to another using Node's path.relative.
+     *
+     * Unlike toLocalRelativePath which uses overlap detection, this method uses
+     * standard relative path calculation and may return paths with ".." segments.
      *
      * @static
-     * @param {string} from - The first path to compare
-     * @param {string} to - The second path to find common root with
+     * @param {string} from - The base path to calculate relative from
+     * @param {string} to - The target path to make relative
+     * @returns {string} The relative path, or empty string if paths are identical
+     * @example
+     * FS.toRelativePath("/home/user", "/home/user/docs") // "docs"
+     * FS.toRelativePath("/home/user", "/home/user") // ""
+     * FS.toRelativePath("/home/user", "/home/other") // "../other"
+     */
+    static toRelativePath(from: string, to: string): string;
+    /**
+     * Find where a path's final segment appears in another path, returning the
+     * portion of 'from' up to that overlap point.
+     *
+     * Looks for the last segment of `from` within `to`. If found, returns `from`
+     * sliced to the index where that segment appears in `to`.
+     *
+     * @static
+     * @param {string} from - The source path whose final segment to search for
+     * @param {string} to - The target path to search within
      * @param {string} [sep=path.sep] - The path separator to use (defaults to system separator)
-     * @returns {string|null} The common root path, the original path if identical, or null if no overlap found
+     * @returns {string|null} The sliced portion of from, the original path if identical, or null if no overlap
      * @throws {Sass} If from is not a non-empty string
      * @throws {Sass} If to is not a non-empty string
      * @example
-     * FS.getCommonRootPath("/projects/toolkit/src", "/projects/toolkit/tests") // "/projects/toolkit"
+     * FS.getCommonRootPath("/projects/toolkit", "/projects/toolkit/src") // "/projects/toolkit"
      * FS.getCommonRootPath("/home/user", "/home/user") // "/home/user"
-     * FS.getCommonRootPath("/projects/app", "/other/path") // null
+     * FS.getCommonRootPath("/projects/app", "/other/path") // null (no overlap)
      */
     static getCommonRootPath(from: string, to: string, sep?: string): string | null;
     /**

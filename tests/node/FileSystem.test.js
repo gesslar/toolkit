@@ -292,4 +292,224 @@ describe("FS", () => {
       tempDirs = []
     })
   })
+
+  describe("pathContains", () => {
+    it("returns true when candidate is within container", () => {
+      const result = FileSystem.pathContains("/home/user", "/home/user/docs/file.txt")
+      assert.equal(result, true)
+    })
+
+    it("returns false when candidate is outside container", () => {
+      const result = FileSystem.pathContains("/home/user", "/home/other/file.txt")
+      assert.equal(result, false)
+    })
+
+    it("returns false when candidate is the container itself", () => {
+      const result = FileSystem.pathContains("/home/user", "/home/user")
+      assert.equal(result, false)
+    })
+
+    it("returns false for sibling paths", () => {
+      const result = FileSystem.pathContains("/home/user/docs", "/home/user/images")
+      assert.equal(result, false)
+    })
+
+    it("handles trailing slashes correctly", () => {
+      const result = FileSystem.pathContains("/home/user/", "/home/user/docs")
+      assert.equal(result, true)
+    })
+
+    it("throws Sass for empty container", () => {
+      assert.throws(
+        () => FileSystem.pathContains("", "/home/user"),
+        Sass
+      )
+    })
+
+    it("throws Sass for empty candidate", () => {
+      assert.throws(
+        () => FileSystem.pathContains("/home/user", ""),
+        Sass
+      )
+    })
+  })
+
+  describe("toLocalRelativePath", () => {
+    it("returns relative path when paths overlap", () => {
+      const result = FileSystem.toLocalRelativePath("/projects/toolkit", "/projects/toolkit/src")
+      assert.equal(result, "src")
+    })
+
+    it("returns empty string for identical paths", () => {
+      const result = FileSystem.toLocalRelativePath("/home/user", "/home/user")
+      assert.equal(result, "")
+    })
+
+    it("returns null when no overlap found", () => {
+      const result = FileSystem.toLocalRelativePath("/projects/app", "/completely/different")
+      assert.equal(result, null)
+    })
+
+    it("handles deeply nested paths", () => {
+      const result = FileSystem.toLocalRelativePath(
+        "/projects/toolkit",
+        "/projects/toolkit/src/lib/utils"
+      )
+      assert.equal(result, path.join("src", "lib", "utils"))
+    })
+
+    it("respects custom separator", () => {
+      const result = FileSystem.toLocalRelativePath(
+        "projects\\toolkit",
+        "projects\\toolkit\\src\\lib",
+        "\\"
+      )
+      assert.equal(result, "src\\lib")
+    })
+  })
+
+  describe("toRelativePath", () => {
+    it("returns relative path for nested target", () => {
+      const result = FileSystem.toRelativePath("/home/user", "/home/user/docs")
+      assert.equal(result, "docs")
+    })
+
+    it("returns empty string for identical paths", () => {
+      const result = FileSystem.toRelativePath("/home/user", "/home/user")
+      assert.equal(result, "")
+    })
+
+    it("returns path with .. for sibling navigation", () => {
+      const result = FileSystem.toRelativePath("/home/user/docs", "/home/user/images")
+      assert.equal(result, path.join("..", "images"))
+    })
+
+    it("handles upward navigation", () => {
+      const result = FileSystem.toRelativePath("/home/user/project/src", "/home/user")
+      assert.equal(result, path.join("..", ".."))
+    })
+  })
+
+  describe("getCommonRootPath", () => {
+    it("returns from path when last segment found in to", () => {
+      // "toolkit" (last segment of from) is found in to at index 2
+      const result = FileSystem.getCommonRootPath(
+        "/projects/toolkit",
+        "/projects/toolkit/src"
+      )
+      assert.equal(result, "/projects/toolkit")
+    })
+
+    it("returns the path itself for identical paths", () => {
+      const result = FileSystem.getCommonRootPath("/home/user", "/home/user")
+      assert.equal(result, "/home/user")
+    })
+
+    it("returns null when last segment not found in to", () => {
+      // "app" is not in "/completely/different"
+      const result = FileSystem.getCommonRootPath("/projects/app", "/completely/different")
+      assert.equal(result, null)
+    })
+
+    it("returns null when paths diverge at end", () => {
+      // "src" is not in "/projects/toolkit/tests"
+      const result = FileSystem.getCommonRootPath(
+        "/projects/toolkit/src",
+        "/projects/toolkit/tests"
+      )
+      assert.equal(result, null)
+    })
+
+    it("slices from based on position in to", () => {
+      // "c" (last segment of from) found at index 3 in to
+      // Returns fromTrail.slice(0, 4) = "/a/b/c"
+      const result = FileSystem.getCommonRootPath(
+        "/a/b/c",
+        "/x/y/z/c/d"
+      )
+      assert.equal(result, "/a/b/c")
+    })
+
+    it("throws Sass for empty from path", () => {
+      assert.throws(
+        () => FileSystem.getCommonRootPath("", "/home/user"),
+        Sass
+      )
+    })
+
+    it("throws Sass for empty to path", () => {
+      assert.throws(
+        () => FileSystem.getCommonRootPath("/home/user", ""),
+        Sass
+      )
+    })
+
+    it("respects custom separator", () => {
+      // "toolkit" found in to path
+      const result = FileSystem.getCommonRootPath(
+        "projects\\toolkit",
+        "projects\\toolkit\\src",
+        "\\"
+      )
+      assert.equal(result, "projects\\toolkit")
+    })
+  })
+
+  describe("pathParts", () => {
+    it("returns correct parts for file path", () => {
+      const result = FileSystem.pathParts("/home/user/file.txt")
+
+      assert.equal(result.root, "/")
+      assert.equal(result.dir, "/home/user")
+      assert.equal(result.base, "file.txt")
+      assert.equal(result.ext, ".txt")
+      assert.equal(result.name, "file")
+    })
+
+    it("handles file with multiple extensions", () => {
+      const result = FileSystem.pathParts("/path/to/archive.tar.gz")
+
+      assert.equal(result.base, "archive.tar.gz")
+      assert.equal(result.ext, ".gz")
+      assert.equal(result.name, "archive.tar")
+    })
+
+    it("handles file without extension", () => {
+      const result = FileSystem.pathParts("/path/to/Makefile")
+
+      assert.equal(result.base, "Makefile")
+      assert.equal(result.ext, "")
+      assert.equal(result.name, "Makefile")
+    })
+
+    it("handles hidden files", () => {
+      const result = FileSystem.pathParts("/home/user/.bashrc")
+
+      assert.equal(result.base, ".bashrc")
+      assert.equal(result.ext, "")
+      assert.equal(result.name, ".bashrc")
+    })
+
+    it("throws Sass for empty path", () => {
+      assert.throws(
+        () => FileSystem.pathParts(""),
+        Sass
+      )
+    })
+  })
+
+  describe("cwd getter", () => {
+    it("returns current working directory", () => {
+      const result = FileSystem.cwd
+      assert.equal(result, process.cwd())
+    })
+
+    it("returns a string", () => {
+      assert.equal(typeof FileSystem.cwd, "string")
+    })
+
+    it("returns an absolute path", () => {
+      assert.ok(path.isAbsolute(FileSystem.cwd))
+    })
+  })
 })

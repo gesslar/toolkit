@@ -5,6 +5,7 @@
  */
 
 import {glob, mkdir, opendir, readdir, rmdir} from "node:fs/promises"
+import {relative} from "node:path"
 import path from "node:path"
 import {URL} from "node:url"
 
@@ -540,43 +541,63 @@ export default class DirectoryObject extends FS {
   /**
    * Creates a new DirectoryObject by extending this directory's path.
    *
+   * Paths are always resolved relative to THIS directory. Any attempt to
+   * escape via `..` or absolute paths is constrained - the `..` segments
+   * are stripped and the remaining path is resolved relative to this directory.
+   *
+   * On Windows, cross-drive absolute paths (e.g., `D:\foo` when base is `C:\`)
+   * are also constrained - the drive root is stripped and the path is resolved
+   * relative to this directory.
+   *
    * Uses overlapping path segment detection to intelligently combine paths.
-   * Preserves the temporary flag from the current directory.
    *
    * @param {string} newPath - The path to append to this directory's path.
    * @returns {DirectoryObject} A new DirectoryObject with the extended path.
    * @example
    * const dir = new DirectoryObject("/projects/git/toolkit")
-   * const subDir = dir.addDirectory("src/lib")
+   * const subDir = dir.getDirectory("src/lib")
    * console.log(subDir.path) // "/projects/git/toolkit/src/lib"
+   *
+   * @example
+   * // Path traversal is constrained to this directory
+   * const dir = new DirectoryObject("/projects/git/toolkit")
+   * const escaped = dir.getDirectory("../../../foo/bar")
+   * console.log(escaped.path) // "/projects/git/toolkit/foo/bar"
    */
   getDirectory(newPath) {
     Valid.type(newPath, "String", {allowEmpty: false})
 
-    // Reject absolute paths
-    if(path.isAbsolute(newPath)) {
-      throw Sass.new(`Absolute paths not allowed: ${newPath}`)
-    }
-
-    // Reject parent directory traversal
-    if(newPath.includes("..")) {
-      throw Sass.new(`Path traversal not allowed: ${newPath} contains '..'`)
-    }
-
+    // New direction: every path is relative to THIS path. Absolute?
+    //  ../../../..? up to this path and then down again if required.
     const thisPath = this.path
     const merged = FS.mergeOverlappingPaths(thisPath, newPath)
     const resolved = FS.resolvePath(thisPath, merged)
+    let local = relative(thisPath, resolved)
 
-    // Final safety check
-    if(!FS.pathContains(thisPath, resolved)) {
-      throw Sass.new(`Path resolves outside directory: ${newPath}`)
-    }
+    // On Windows, cross-drive paths return absolute - strip the root
+    if(path.isAbsolute(local))
+      local = local.slice(path.parse(local).root.length)
 
-    return new this.constructor(resolved)
+    const parts = local.split(this.sep)
+
+    while(parts[0] === "..")
+      parts.shift()
+
+    const newLocal = parts.join(this.sep)
+
+    return new this.constructor(FS.resolvePath(this.path, newLocal))
   }
 
   /**
    * Creates a new FileObject by extending this directory's path.
+   *
+   * Paths are always resolved relative to THIS directory. Any attempt to
+   * escape via `..` or absolute paths is constrained - the `..` segments
+   * are stripped and the remaining path is resolved relative to this directory.
+   *
+   * On Windows, cross-drive absolute paths (e.g., `D:\foo` when base is `C:\`)
+   * are also constrained - the drive root is stripped and the path is resolved
+   * relative to this directory.
    *
    * Uses overlapping path segment detection to intelligently combine paths.
    *
@@ -584,31 +605,36 @@ export default class DirectoryObject extends FS {
    * @returns {FileObject} A new FileObject with the extended path.
    * @example
    * const dir = new DirectoryObject("/projects/git/toolkit")
-   * const file = dir.addFile("package.json")
+   * const file = dir.getFile("package.json")
    * console.log(file.path) // "/projects/git/toolkit/package.json"
+   *
+   * @example
+   * // Path traversal is constrained to this directory
+   * const dir = new DirectoryObject("/projects/git/toolkit")
+   * const escaped = dir.getFile("../../../foo/bar.js")
+   * console.log(escaped.path) // "/projects/git/toolkit/foo/bar.js"
    */
   getFile(filename) {
     Valid.type(filename, "String", {allowEmpty: false})
 
-    // Reject absolute paths
-    if(path.isAbsolute(filename)) {
-      throw Sass.new(`Absolute paths not allowed: ${filename}`)
-    }
-
-    // Reject parent directory traversal
-    if(filename.includes("..")) {
-      throw Sass.new(`Path traversal not allowed: ${filename} contains '..'`)
-    }
-
+    // Every path is relative to THIS path. Absolute or .. paths
+    // are constrained to this directory.
     const thisPath = this.path
     const merged = FS.mergeOverlappingPaths(thisPath, filename)
     const resolved = FS.resolvePath(thisPath, merged)
+    let local = relative(thisPath, resolved)
 
-    // Final safety check
-    if(!FS.pathContains(thisPath, resolved)) {
-      throw Sass.new(`Path resolves outside directory: ${filename}`)
-    }
+    // On Windows, cross-drive paths return absolute - strip the root
+    if(path.isAbsolute(local))
+      local = local.slice(path.parse(local).root.length)
 
-    return new FileObject(resolved)
+    const parts = local.split(this.sep)
+
+    while(parts[0] === "..")
+      parts.shift()
+
+    const newLocal = parts.join(this.sep)
+
+    return new FileObject(newLocal, this)
   }
 }
