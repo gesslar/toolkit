@@ -32,7 +32,7 @@ importers:
         version: 9.39.2(supports-color@10.2.2)
       happy-dom:
         specifier: ^20.3.7
-        version: 20.3.7
+        version: 20.4.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -328,8 +328,8 @@ packages:
     resolution: {integrity: sha512-8HoIcWI5fCvG5NADj4bDav+er9B9JMj2vyL2pI8D0eismKyUvPLTSs+Ln3wqhwcp306i73iyVnEKx3F6T47TGw==}
     engines: {node: '>=18'}
 
-  happy-dom@20.3.7:
-    resolution: {integrity: sha512-sb5IzoRl1WJKsUSRe+IloJf3z1iDq5PQ7Yk/ULMsZ5IAQEs9ZL7RsFfiKBXU7nK9QmO+iz0e59EH8r8jexTZ/g==}
+  happy-dom@20.4.0:
+    resolution: {integrity: sha512-RDeQm3dT9n0A5f/TszjUmNCLEuPnMGv3Tv4BmNINebz/h17PA6LMBcxJ5FrcqltNBMh9jA/8ufgDdBYUdBt+eg==}
     engines: {node: '>=20.0.0'}
 
   has-flag@4.0.0:
@@ -882,7 +882,7 @@ snapshots:
 
   globals@17.1.0: {}
 
-  happy-dom@20.3.7:
+  happy-dom@20.4.0:
     dependencies:
       '@types/node': 25.0.10
       '@types/whatwg-mimetype': 3.0.2
