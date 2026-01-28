@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import {describe,it} from "node:test"
+import {stripVTControlCharacters} from "node:util"
 
 import {Sass, Term} from "../../src/node/index.js"
 
@@ -70,22 +71,25 @@ describe("Term", () => {
   })
 
   describe("terminalBracket", () => {
-    it("creates basic bracketed text", () => {
+    it("creates basic bracketed text with colour", () => {
       const result = Term.terminalBracket(["success", "COMPILED"])
+      const stripped = stripVTControlCharacters(result)
 
-      assert.equal(result, "[COMPILED]")
+      assert.equal(stripped, "[COMPILED]")
     })
 
     it("uses custom brackets when provided", () => {
       const result = Term.terminalBracket(["info", "STATUS", ["<", ">"]])
+      const stripped = stripVTControlCharacters(result)
 
-      assert.equal(result, "<STATUS>")
+      assert.equal(stripped, "<STATUS>")
     })
 
     it("defaults to square brackets", () => {
       const result = Term.terminalBracket(["error", "FAILED"])
+      const stripped = stripVTControlCharacters(result)
 
-      assert.equal(result, "[FAILED]")
+      assert.equal(stripped, "[FAILED]")
     })
 
     it("throws error for non-string level", () => {
@@ -116,8 +120,9 @@ describe("Term", () => {
         ["success", "OK"],
         "- processing complete"
       ])
+      const stripped = stripVTControlCharacters(result)
 
-      assert.equal(result, "Status: [OK] - processing complete")
+      assert.equal(stripped, "Status: [OK] - processing complete")
     })
 
     it("processes array with custom bracket segments", () => {
@@ -126,8 +131,9 @@ describe("Term", () => {
         ["error", "FAILED", ["<", ">"]],
         "check logs"
       ])
+      const stripped = stripVTControlCharacters(result)
 
-      assert.equal(result, "Alert: <FAILED> check logs")
+      assert.equal(stripped, "Alert: <FAILED> check logs")
     })
 
     it("handles mixed content in array", () => {
@@ -137,8 +143,9 @@ describe("Term", () => {
         "for project:",
         ["success", "MyApp"]
       ])
+      const stripped = stripVTControlCharacters(result)
 
-      assert.equal(result, "Build [STARTED] for project: [MyApp]")
+      assert.equal(stripped, "Build [STARTED] for project: [MyApp]")
     })
 
     it("throws error for invalid argument types", () => {
@@ -164,7 +171,9 @@ describe("Term", () => {
       })
 
       assert.equal(calls.length, 1)
-      assert.deepEqual(calls[0], ["Status: [OK]"])
+      const stripped = stripVTControlCharacters(calls[0][0])
+
+      assert.equal(stripped, "Status: [OK]")
     })
 
     it("suppresses output when silent option is true", () => {

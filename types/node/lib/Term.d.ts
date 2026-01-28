@@ -1,3 +1,16 @@
+/**
+ * Terminal output utilities with ANSI colour support.
+ *
+ * Provides console logging wrappers, cursor control, and formatted message
+ * output with colour styling via `@gesslar/colours`.
+ *
+ * Predefined colour aliases:
+ * - `success` - green (F035)
+ * - `info` - blue (F033)
+ * - `warn` - orange (F208)
+ * - `error` - red (F032)
+ * - `modified` - purple (F147)
+ */
 export default class Term {
     static "__#private@#cache": Map<any, any>;
     static "__#private@#preformat"(text: any): any;
@@ -107,17 +120,17 @@ export default class Term {
         silent: boolean;
     }): void;
     /**
-     * Constructs a formatted status line.
+     * Constructs a formatted status line with optional colour styling.
      *
      * Input forms:
      *  - string: printed as-is
      *  - array: each element is either:
      *    - a plain string (emitted unchanged), or
-     *    - a tuple: [level, text] where `level` maps to an ansiColors alias
-     *        (e.g. success, info, warn, error, modified).
-     *    - a tuple: [level, text, [openBracket,closeBracket]] where `level` maps to an ansiColors alias
-     *        (e.g. success, info, warn, error, modified). These are rendered as
-     *        colourised bracketed segments: [TEXT].
+     *    - a tuple: [colourCode, text] where `colourCode` is a colour alias
+     *        (e.g. success, info, warn, error, modified) or any valid
+     *        `@gesslar/colours` format string.
+     *    - a tuple: [colourCode, text, [openBracket, closeBracket]] for custom
+     *        brackets around the colourised text.
      *
      * The function performs a shallow validation: tuple elements must both be
      * strings; otherwise a TypeError is thrown. Nested arrays beyond depth 1 are
@@ -126,35 +139,35 @@ export default class Term {
      * Recursion: array input is normalised into a single string then re-dispatched
      * through `status` to leverage the string branch (keeps logic DRY).
      *
-     * @param {string | Array<string | [string, string] | [string, string, string]>} argList - Message spec.
-     * @returns {void}
+     * @param {string | Array<string | [string, string] | [string, string, [string, string]]>} argList - Message spec.
+     * @returns {string} The formatted message string.
      */
-    static terminalMessage(argList: string | Array<string | [string, string] | [string, string, string]>): void;
+    static terminalMessage(argList: string | Array<string | [string, string] | [string, string, [string, string]]>): string;
     /**
      * Construct a single coloured bracketed segment from a tuple specifying
-     * the style level and the text. The first element ("level") maps to an
-     * `ansiColors` alias (e.g. success, info, warn, error, modified) and is
-     * used both for the inner text colour and to locate its matching
-     * "-bracket" alias for the surrounding square brackets. The second
-     * element is the raw text to display.
+     * the colour code and text. The first element is a colour code that can be
+     * a predefined alias (success, info, warn, error, modified) or any valid
+     * `@gesslar/colours` format string. The brackets are coloured while the
+     * inner text remains uncoloured.
      *
-     * Input validation: every element of `parts` must be a string; otherwise
-     * an `Sass` error is thrown. (Additional elements beyond the first two are
-     * ignored – the method destructures only the first pair.)
+     * Input validation: colourCode and text must both be strings; otherwise
+     * a `Sass` error is thrown.
      *
      * Example:
-     *  terminalBracket(["success", "COMPILED"]) → "[COMPILED]" with coloured
-     *  brackets + inner text (assuming colour support is available in the
-     *  terminal).
+     *  terminalBracket(["success", "COMPILED"]) → "[COMPILED]" with green
+     *  brackets (assuming colour support is available in the terminal).
+     *
+     *  terminalBracket(["info", "STATUS", ["<", ">"]]) → "<STATUS>" with blue
+     *  angle brackets.
      *
      * This method does not append trailing spaces; callers are responsible for
      * joining multiple segments with appropriate separators.
      *
-     * @param {Array<string>} parts - Tuple: [level, text]. Additional entries ignored.
+     * @param {[string, string, [string, string]?]} parts - Tuple: [colourCode, text, brackets?].
      * @returns {string} Colourised bracketed segment (e.g. "[TEXT]").
-     * @throws {Sass} If any element of `parts` is not a string.
+     * @throws {Sass} If colourCode or text is not a string.
      */
-    static terminalBracket([level, text, brackets]: Array<string>): string;
+    static terminalBracket([colourCode, text, brackets]: [string, string, [string, string]?]): string;
     /**
      * ANSI escape sequence to move cursor to start of line.
      *
