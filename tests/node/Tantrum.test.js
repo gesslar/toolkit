@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
-import { describe, it } from "node:test"
+import {describe, it} from "node:test"
+import {stripVTControlCharacters} from "node:util"
 
 import {Sass, Tantrum} from "../../src/node/index.js"
 
@@ -31,7 +32,7 @@ function captureConsole(methods, fn) {
     })
   }
 
-  return calls.join("\n")
+  return stripVTControlCharacters(calls.join("\n"))
 }
 
 describe("Tantrum", () => {
