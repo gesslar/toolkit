@@ -315,7 +315,7 @@ export default class Term {
     if(!(typeof colourCode === "string" && typeof text === "string"))
       throw Sass.new("Each element must be a string.")
 
-    return c`{${colourCode}}${brackets[0]}{/}${text}{${colourCode}}${brackets[1]}{/}`
+    return this.#preformat(c`{${colourCode}}${brackets[0]}{/}${text}{${colourCode}}${brackets[1]}{/}`)
   }
 
   /**

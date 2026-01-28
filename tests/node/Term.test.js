@@ -71,25 +71,37 @@ describe("Term", () => {
   })
 
   describe("terminalBracket", () => {
-    it("creates basic bracketed text with colour", () => {
+    it("applies success colour to brackets", () => {
       const result = Term.terminalBracket(["success", "COMPILED"])
       const stripped = stripVTControlCharacters(result)
 
       assert.equal(stripped, "[COMPILED]")
+
+      if(Term.hasColor) {
+        assert.notEqual(result, stripped)
+      }
     })
 
-    it("uses custom brackets when provided", () => {
+    it("applies info colour with custom brackets", () => {
       const result = Term.terminalBracket(["info", "STATUS", ["<", ">"]])
       const stripped = stripVTControlCharacters(result)
 
       assert.equal(stripped, "<STATUS>")
+
+      if(Term.hasColor) {
+        assert.notEqual(result, stripped)
+      }
     })
 
-    it("defaults to square brackets", () => {
+    it("applies error colour to default brackets", () => {
       const result = Term.terminalBracket(["error", "FAILED"])
       const stripped = stripVTControlCharacters(result)
 
       assert.equal(stripped, "[FAILED]")
+
+      if(Term.hasColor) {
+        assert.notEqual(result, stripped)
+      }
     })
 
     it("throws error for non-string level", () => {
@@ -123,6 +135,10 @@ describe("Term", () => {
       const stripped = stripVTControlCharacters(result)
 
       assert.equal(stripped, "Status: [OK] - processing complete")
+
+      if(Term.hasColor) {
+        assert.notEqual(result, stripped)
+      }
     })
 
     it("processes array with custom bracket segments", () => {
@@ -134,6 +150,10 @@ describe("Term", () => {
       const stripped = stripVTControlCharacters(result)
 
       assert.equal(stripped, "Alert: <FAILED> check logs")
+
+      if(Term.hasColor) {
+        assert.notEqual(result, stripped)
+      }
     })
 
     it("handles mixed content in array", () => {
@@ -146,6 +166,10 @@ describe("Term", () => {
       const stripped = stripVTControlCharacters(result)
 
       assert.equal(stripped, "Build [STARTED] for project: [MyApp]")
+
+      if(Term.hasColor) {
+        assert.notEqual(result, stripped)
+      }
     })
 
     it("throws error for invalid argument types", () => {
@@ -174,6 +198,10 @@ describe("Term", () => {
       const stripped = stripVTControlCharacters(calls[0][0])
 
       assert.equal(stripped, "Status: [OK]")
+
+      if(Term.hasColor) {
+        assert.notEqual(calls[0][0], stripped)
+      }
     })
 
     it("suppresses output when silent option is true", () => {
