@@ -14,7 +14,6 @@ import url from "node:url"
 import Collection from "../../browser/lib/Collection.js"
 import Data from "../../browser/lib/Data.js"
 import Valid from "./Valid.js"
-import Sass from "./Sass.js"
 
 /** @typedef {import("./FileObject.js").default} FileObject */
 /** @typedef {import("./DirectoryObject.js").default} DirectoryObject */
@@ -235,7 +234,7 @@ export default class FileSystem {
     Valid.type(container, "String", {allowEmpty: false})
     Valid.type(candidate, "String", {allowEmpty: false})
 
-    const realPath = Data.append(container, "/")  // bookend this mofo
+    const realPath = Data.append(container, path.sep)  // bookend this mofo
 
     return candidate.startsWith(realPath)
   }
