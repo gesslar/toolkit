@@ -11,12 +11,15 @@
 import path from "node:path"
 import url from "node:url"
 
-import Collection from "../../browser/lib/Collection.js"
 import Data from "../../browser/lib/Data.js"
 import Valid from "./Valid.js"
+import Collection from "../../browser/lib/Collection.js"
 
-/** @typedef {import("./FileObject.js").default} FileObject */
-/** @typedef {import("./DirectoryObject.js").default} DirectoryObject */
+/**
+ * @import {FileObject} from "./FileObject.js"
+ * @import {DirectoryObject} from "./DirectoryObject.js"
+ * @import {Sass} from "./Sass.js"
+ */
 
 const fdTypes = Object.freeze(["file", "directory"])
 const upperFdTypes = Object.freeze(fdTypes.map(type => type.toUpperCase()))
@@ -114,7 +117,7 @@ export default class FileSystem {
     const relative = path.relative(fromBasePath, to.path)
 
     return relative.startsWith("..")
-      ? to.path
+      ? path.resolve(to.path)
       : relative
   }
 
@@ -133,7 +136,7 @@ export default class FileSystem {
     const relative = path.relative(from, to)
 
     return relative.startsWith("..")
-      ? to
+      ? path.resolve(to)
       : relative
   }
 
@@ -164,9 +167,13 @@ export default class FileSystem {
       const result = path.join(...prefix, ...to)
 
       // If original path1 was absolute, ensure result is also absolute
-      return isAbsolutePath1 && !path.isAbsolute(result)
-        ? path.sep + result
-        : result
+      if(isAbsolutePath1 && !path.isAbsolute(result)) {
+        const root = path.parse(path1).root || path.sep
+
+        return path.join(root, result)
+      }
+
+      return result
     }
 
     // If no overlap, just join the paths
