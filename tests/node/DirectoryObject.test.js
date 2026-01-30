@@ -29,10 +29,9 @@ describe("DirectoryObject", () => {
 
     it("handles relative paths", () => {
       const dir = new DirectoryObject("../test")
-      const expected = path.normalize("../test")
 
       assert.ok(path.isAbsolute(dir.path))
-      assert.equal(dir.supplied, expected)
+      assert.equal(dir.supplied, "../test")
     })
 
     it("handles current directory", () => {
@@ -77,7 +76,7 @@ describe("DirectoryObject", () => {
 
     it("supplied returns original path", () => {
       const dir = new DirectoryObject("../test")
-      assert.equal(dir.supplied, path.normalize("../test"))
+      assert.equal(dir.supplied, "../test")
     })
 
     it("path returns absolute path", () => {

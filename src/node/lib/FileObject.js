@@ -462,7 +462,7 @@ export default class FileObject extends FS {
    * @returns {Promise<object>} The file contents as a module.
    */
   async import() {
-    const filePath = this.path
+    const filePath = this.url
 
     if(!(await this.exists))
       throw Sass.new(`No such file '${filePath}'`)

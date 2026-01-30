@@ -41,11 +41,12 @@ describe("FS", () => {
     })
 
     it("pathToUrl converts paths to file URLs", () => {
-      const testPath = "/home/user/file.txt"
+      const testPath = path.join(path.sep, "home", "user", "file.txt")
       const url = FileSystem.pathToUrl(testPath)
 
       assert.ok(url.startsWith("file://"))
-      assert.ok(url.includes(testPath))
+      const converted = FileSystem.urlToPath(url)
+      assert.equal(converted, path.resolve(testPath))
     })
 
     it("pathToUrl handles invalid paths gracefully", () => {
@@ -58,7 +59,7 @@ describe("FS", () => {
     })
 
     it("urlToPath converts file URLs to paths", async() => {
-      const testPath = path.resolve(path.normalize("/home/user/file.txt"))
+      const testPath = path.resolve(path.normalize(path.join(path.sep, "home", "user", "file.txt")))
       const testUrl = url.fileURLToPath(url.pathToFileURL(testPath))
       const result = FileSystem.urlToPath(testUrl)
 
@@ -76,8 +77,8 @@ describe("FS", () => {
 
   describe("path resolution and merging", () => {
     it("relativeOrAbsolute returns absolute path for upward paths", () => {
-      const from = new FileObject("/home/user/project/src/index.js")
-      const to = new FileObject("/home/user/project/lib/utils.js")
+      const from = new FileObject(path.join(path.sep, "home", "user", "project", "src", "index.js"))
+      const to = new FileObject(path.join(path.sep, "home", "user", "project", "lib", "utils.js"))
 
       const result = FileSystem.relativeOrAbsolute(from, to)
       // Returns absolute path because relative would start with "../"
@@ -85,8 +86,8 @@ describe("FS", () => {
     })
 
     it("relativeOrAbsolute uses containing directory for files", () => {
-      const from = new FileObject("/home/user/project/src/index.js")
-      const to = new FileObject("/home/user/project/src/utils/helper.js")
+      const from = new FileObject(path.join(path.sep, "home", "user", "project", "src", "index.js"))
+      const to = new FileObject(path.join(path.sep, "home", "user", "project", "src", "utils", "helper.js"))
 
       const result = FileSystem.relativeOrAbsolute(from, to)
 
@@ -94,16 +95,16 @@ describe("FS", () => {
     })
 
     it("relativeOrAbsolute returns absolute path when outside scope", () => {
-      const from = new FileObject("/home/user/project/src/index.js")
-      const to = new FileObject("/etc/config.txt")
+      const from = new FileObject(path.join(path.sep, "home", "user", "project", "src", "index.js"))
+      const to = new FileObject(path.join(path.sep, "etc", "config.txt"))
 
       const result = FileSystem.relativeOrAbsolute(from, to)
       assert.equal(result, path.resolve("/etc/config.txt"))
     })
 
     it("relativeOrAbsolutePath returns relative path for strings within scope", () => {
-      const from = "/home/user/project/src"
-      const to = "/home/user/project/src/utils/helper.js"
+      const from = path.join(path.sep, "home", "user", "project", "src")
+      const to = path.join(path.sep, "home", "user", "project", "src", "utils", "helper.js")
 
       const result = FileSystem.relativeOrAbsolutePath(from, to)
 
@@ -111,26 +112,26 @@ describe("FS", () => {
     })
 
     it("relativeOrAbsolutePath returns absolute path for strings with upward navigation", () => {
-      const from = "/home/user/project/src"
-      const to = "/home/user/project/lib/utils.js"
+      const from = path.join(path.sep, "home", "user", "project", "src")
+      const to = path.join(path.sep, "home", "user", "project", "lib", "utils.js")
 
       const result = FileSystem.relativeOrAbsolutePath(from, to)
 
-      assert.equal(result, path.resolve("/home/user/project/lib/utils.js"))
+      assert.equal(path.resolve(result), path.resolve("/home/user/project/lib/utils.js"))
     })
 
     it("relativeOrAbsolutePath returns absolute path for completely different paths", () => {
-      const from = "/home/user/project"
-      const to = "/etc/config.txt"
+      const from = path.join(path.sep, "home", "user", "project")
+      const to = path.join(path.sep, "etc", "config.txt")
 
       const result = FileSystem.relativeOrAbsolutePath(from, to)
 
-      assert.equal(result, path.resolve("/etc/config.txt"))
+      assert.equal(path.resolve(result), path.resolve("/etc/config.txt"))
     })
 
     it("relativeOrAbsolutePath handles same path", () => {
-      const from = "/home/user/project"
-      const to = "/home/user/project"
+      const from = path.join(path.sep, "home", "user", "project")
+      const to = path.join(path.sep, "home", "user", "project")
 
       const result = FileSystem.relativeOrAbsolutePath(from, to)
 
@@ -138,8 +139,8 @@ describe("FS", () => {
     })
 
     it("relativeTo returns relative path for FileObject within scope", () => {
-      const from = new FileObject("/home/user/project/src/index.js")
-      const to = new FileObject("/home/user/project/src/utils/helper.js")
+      const from = new FileObject(path.join(path.sep, "home", "user", "project", "src", "index.js"))
+      const to = new FileObject(path.join(path.sep, "home", "user", "project", "src", "utils", "helper.js"))
 
       const result = to.relativeTo(from)
 
@@ -147,8 +148,8 @@ describe("FS", () => {
     })
 
     it("relativeTo returns absolute path for FileObject outside scope", () => {
-      const from = new FileObject("/home/user/project/src/index.js")
-      const to = new FileObject("/home/user/project/lib/utils.js")
+      const from = new FileObject(path.join(path.sep, "home", "user", "project", "src", "index.js"))
+      const to = new FileObject(path.join(path.sep, "home", "user", "project", "lib", "utils.js"))
 
       const result = to.relativeTo(from)
 
@@ -156,8 +157,8 @@ describe("FS", () => {
     })
 
     it("relativeTo works with DirectoryObject instances", () => {
-      const from = new DirectoryObject("/home/user/project/src")
-      const to = new DirectoryObject("/home/user/project/src/utils")
+      const from = new DirectoryObject(path.join(path.sep, "home", "user", "project", "src"))
+      const to = new DirectoryObject(path.join(path.sep, "home", "user", "project", "src", "utils"))
 
       const result = to.relativeTo(from)
 
@@ -165,7 +166,7 @@ describe("FS", () => {
     })
 
     it("relativeTo throws Sass error for null parameter", () => {
-      const file = new FileObject("/home/user/file.js")
+      const file = new FileObject(path.join(path.sep, "home", "user", "file.js"))
 
       assert.throws(
         () => file.relativeTo(null),
@@ -174,7 +175,7 @@ describe("FS", () => {
     })
 
     it("relativeTo throws Sass error for undefined parameter", () => {
-      const file = new FileObject("/home/user/file.js")
+      const file = new FileObject(path.join(path.sep, "home", "user", "file.js"))
 
       assert.throws(
         () => file.relativeTo(undefined),
@@ -183,7 +184,7 @@ describe("FS", () => {
     })
 
     it("relativeTo throws Sass error for object without path property", () => {
-      const file = new FileObject("/home/user/file.js")
+      const file = new FileObject(path.join(path.sep, "home", "user", "file.js"))
       const invalidObj = {name: "not a file object"}
 
       assert.throws(
@@ -208,12 +209,12 @@ describe("FS", () => {
     })
 
     it("resolvePath handles absolute paths", () => {
-      const result = FileSystem.resolvePath("home/user", "/etc/config.txt")
+      const result = FileSystem.resolvePath("home/user", path.join(path.sep, "etc", "config.txt"))
       assert.equal(result, path.resolve("/etc/config.txt"))
     })
 
     it("resolvePath handles relative navigation", () => {
-      const result = FileSystem.resolvePath("/home/user/project", path.normalize("../other/file.txt"))
+      const result = FileSystem.resolvePath(path.join(path.sep, "home", "user", "project"), path.normalize("../other/file.txt"))
       assert.equal(result, path.resolve("/home/user/project", path.normalize("../other/file.txt")))
     })
 
@@ -249,8 +250,8 @@ describe("FS", () => {
     })
 
     it("relativeOrAbsolute returns absolute path for upward navigation", () => {
-      const from = new FileObject("/home/user/project/file1.txt")
-      const to = new FileObject("/home/user/file2.txt")
+      const from = new FileObject(path.join(path.sep, "home", "user", "project", "file1.txt"))
+      const to = new FileObject(path.join(path.sep, "home", "user", "file2.txt"))
 
       const result = FileSystem.relativeOrAbsolute(from, to)
       // Returns absolute path because relative would start with "../"
@@ -295,40 +296,40 @@ describe("FS", () => {
 
   describe("pathContains", () => {
     it("returns true when candidate is within container", () => {
-      const result = FileSystem.pathContains("/home/user", "/home/user/docs/file.txt")
+      const result = FileSystem.pathContains(path.join(path.sep, "home", "user"), path.join(path.sep, "home", "user", "docs", "file.txt"))
       assert.equal(result, true)
     })
 
     it("returns false when candidate is outside container", () => {
-      const result = FileSystem.pathContains("/home/user", "/home/other/file.txt")
+      const result = FileSystem.pathContains(path.join(path.sep, "home", "user"), path.join(path.sep, "home", "other", "file.txt"))
       assert.equal(result, false)
     })
 
     it("returns false when candidate is the container itself", () => {
-      const result = FileSystem.pathContains("/home/user", "/home/user")
+      const result = FileSystem.pathContains(path.join(path.sep, "home", "user"), path.join(path.sep, "home", "user"))
       assert.equal(result, false)
     })
 
     it("returns false for sibling paths", () => {
-      const result = FileSystem.pathContains("/home/user/docs", "/home/user/images")
+      const result = FileSystem.pathContains(path.join(path.sep, "home", "user", "docs"), path.join(path.sep, "home", "user", "images"))
       assert.equal(result, false)
     })
 
     it("handles trailing slashes correctly", () => {
-      const result = FileSystem.pathContains("/home/user/", "/home/user/docs")
+      const result = FileSystem.pathContains(path.join(path.sep, "home", "user") + path.sep, path.join(path.sep, "home", "user", "docs"))
       assert.equal(result, true)
     })
 
     it("throws Sass for empty container", () => {
       assert.throws(
-        () => FileSystem.pathContains("", "/home/user"),
+        () => FileSystem.pathContains("", path.join(path.sep, "home", "user")),
         Sass
       )
     })
 
     it("throws Sass for empty candidate", () => {
       assert.throws(
-        () => FileSystem.pathContains("/home/user", ""),
+        () => FileSystem.pathContains(path.join(path.sep, "home", "user"), ""),
         Sass
       )
     })
@@ -336,24 +337,27 @@ describe("FS", () => {
 
   describe("toLocalRelativePath", () => {
     it("returns relative path when paths overlap", () => {
-      const result = FileSystem.toLocalRelativePath("/projects/toolkit", "/projects/toolkit/src")
+      const result = FileSystem.toLocalRelativePath(
+        path.join("projects", "toolkit"),
+        path.join("projects", "toolkit", "src")
+      )
       assert.equal(result, "src")
     })
 
     it("returns empty string for identical paths", () => {
-      const result = FileSystem.toLocalRelativePath("/home/user", "/home/user")
+      const result = FileSystem.toLocalRelativePath(path.join(path.sep, "home", "user"), path.join(path.sep, "home", "user"))
       assert.equal(result, "")
     })
 
     it("returns null when no overlap found", () => {
-      const result = FileSystem.toLocalRelativePath("/projects/app", "/completely/different")
+      const result = FileSystem.toLocalRelativePath(path.join(path.sep, "projects", "app"), path.join(path.sep, "completely", "different"))
       assert.equal(result, null)
     })
 
     it("handles deeply nested paths", () => {
       const result = FileSystem.toLocalRelativePath(
-        "/projects/toolkit",
-        "/projects/toolkit/src/lib/utils"
+        path.join("projects", "toolkit"),
+        path.join("projects", "toolkit", "src", "lib", "utils")
       )
       assert.equal(result, path.join("src", "lib", "utils"))
     })
@@ -370,22 +374,22 @@ describe("FS", () => {
 
   describe("toRelativePath", () => {
     it("returns relative path for nested target", () => {
-      const result = FileSystem.toRelativePath("/home/user", "/home/user/docs")
+      const result = FileSystem.toRelativePath(path.join(path.sep, "home", "user"), path.join(path.sep, "home", "user", "docs"))
       assert.equal(result, "docs")
     })
 
     it("returns empty string for identical paths", () => {
-      const result = FileSystem.toRelativePath("/home/user", "/home/user")
+      const result = FileSystem.toRelativePath(path.join(path.sep, "home", "user"), path.join(path.sep, "home", "user"))
       assert.equal(result, "")
     })
 
     it("returns path with .. for sibling navigation", () => {
-      const result = FileSystem.toRelativePath("/home/user/docs", "/home/user/images")
+      const result = FileSystem.toRelativePath(path.join(path.sep, "home", "user", "docs"), path.join(path.sep, "home", "user", "images"))
       assert.equal(result, path.join("..", "images"))
     })
 
     it("handles upward navigation", () => {
-      const result = FileSystem.toRelativePath("/home/user/project/src", "/home/user")
+      const result = FileSystem.toRelativePath(path.join(path.sep, "home", "user", "project", "src"), path.join(path.sep, "home", "user"))
       assert.equal(result, path.join("..", ".."))
     })
   })
@@ -394,52 +398,53 @@ describe("FS", () => {
     it("returns from path when last segment found in to", () => {
       // "toolkit" (last segment of from) is found in to at index 2
       const result = FileSystem.getCommonRootPath(
-        "/projects/toolkit",
-        "/projects/toolkit/src"
+        path.join("projects", "toolkit"),
+        path.join("projects", "toolkit", "src")
       )
-      assert.equal(result, "/projects/toolkit")
+      assert.equal(result, path.join("projects", "toolkit"));
     })
 
     it("returns the path itself for identical paths", () => {
-      const result = FileSystem.getCommonRootPath("/home/user", "/home/user")
-      assert.equal(result, "/home/user")
+      const result = FileSystem.getCommonRootPath(path.join(path.sep, "home", "user"), path.join(path.sep, "home", "user"))
+      assert.equal(result, path.join(path.sep, "home", "user"))
     })
 
     it("returns null when last segment not found in to", () => {
       // "app" is not in "/completely/different"
-      const result = FileSystem.getCommonRootPath("/projects/app", "/completely/different")
+      const result = FileSystem.getCommonRootPath(path.join(path.sep, "projects", "app"), path.join(path.sep, "completely", "different"))
       assert.equal(result, null)
     })
 
     it("returns null when paths diverge at end", () => {
       // "src" is not in "/projects/toolkit/tests"
       const result = FileSystem.getCommonRootPath(
-        "/projects/toolkit/src",
-        "/projects/toolkit/tests"
+        path.join(path.sep, "projects", "toolkit", "src"),
+        path.join(path.sep, "projects", "toolkit", "tests")
       )
       assert.equal(result, null)
     })
 
     it("slices from based on position in to", () => {
-      // "c" (last segment of from) found at index 3 in to
-      // Returns fromTrail.slice(0, 4) = "/a/b/c"
-      const result = FileSystem.getCommonRootPath(
-        "/a/b/c",
-        "/x/y/z/c/d"
-      )
-      assert.equal(result, "/a/b/c")
+      // "d" (last segment of from) found at index 2 in to
+      // Returns fromTrail.slice(0, 3) = "/a/b"
+      const from = path.join(path.sep, "a", "b", "c", "d")
+      const to = path.join(path.sep, "a", "d", "e")
+      const expected = path.join(path.sep, "a", "b")
+
+      const result = FileSystem.getCommonRootPath(from, to)
+      assert.equal(result, expected)
     })
 
     it("throws Sass for empty from path", () => {
       assert.throws(
-        () => FileSystem.getCommonRootPath("", "/home/user"),
+        () => FileSystem.getCommonRootPath("", path.join(path.sep, "home", "user")),
         Sass
       )
     })
 
     it("throws Sass for empty to path", () => {
       assert.throws(
-        () => FileSystem.getCommonRootPath("/home/user", ""),
+        () => FileSystem.getCommonRootPath(path.join(path.sep, "home", "user"), ""),
         Sass
       )
     })
@@ -457,17 +462,18 @@ describe("FS", () => {
 
   describe("pathParts", () => {
     it("returns correct parts for file path", () => {
-      const result = FileSystem.pathParts("/home/user/file.txt")
+      const testPath = path.join(path.sep, "home", "user", "file.txt")
+      const result = FileSystem.pathParts(testPath)
 
-      assert.equal(result.root, "/")
-      assert.equal(result.dir, "/home/user")
+      assert.equal(result.root, path.sep)
+      assert.equal(result.dir, path.join(path.sep, "home", "user"))
       assert.equal(result.base, "file.txt")
       assert.equal(result.ext, ".txt")
       assert.equal(result.name, "file")
     })
 
     it("handles file with multiple extensions", () => {
-      const result = FileSystem.pathParts("/path/to/archive.tar.gz")
+      const result = FileSystem.pathParts(path.join(path.sep, "path", "to", "archive.tar.gz"))
 
       assert.equal(result.base, "archive.tar.gz")
       assert.equal(result.ext, ".gz")
@@ -475,7 +481,7 @@ describe("FS", () => {
     })
 
     it("handles file without extension", () => {
-      const result = FileSystem.pathParts("/path/to/Makefile")
+      const result = FileSystem.pathParts(path.join(path.sep, "path", "to", "Makefile"))
 
       assert.equal(result.base, "Makefile")
       assert.equal(result.ext, "")
@@ -483,7 +489,7 @@ describe("FS", () => {
     })
 
     it("handles hidden files", () => {
-      const result = FileSystem.pathParts("/home/user/.bashrc")
+      const result = FileSystem.pathParts(path.join(path.sep, "home", "user", ".bashrc"))
 
       assert.equal(result.base, ".bashrc")
       assert.equal(result.ext, "")

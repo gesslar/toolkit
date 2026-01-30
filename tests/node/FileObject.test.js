@@ -150,7 +150,7 @@ describe("FileObject", () => {
 
       // Parent is the actual directory containing the file
       assert.ok(file.parent.path.endsWith("projects"))
-      assert.ok(file.parent.path.includes("/home/user/projects"))
+      assert.ok(file.parent.path.includes(path.join(path.sep, "home", "user", "projects")))
     })
 
     it("parent matches path.dirname of resolved path", () => {
@@ -442,7 +442,7 @@ describe("FileObject", () => {
     })
 
     it("resolves relative paths to absolute paths", () => {
-      const file = new FileObject("tests/fixtures/settings.json")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
 
       // Path should be absolute
       assert.ok(path.isAbsolute(file.path),
@@ -450,20 +450,20 @@ describe("FileObject", () => {
     })
 
     it("resolves relative paths with ./ prefix correctly", () => {
-      const file = new FileObject("./tests/fixtures/settings.json")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
 
       // Path should be absolute
       assert.ok(path.isAbsolute(file.path),
         `Expected absolute path, got: ${file.path}`)
 
       // Should not have duplicated path segments
-      assert.ok(!file.path.includes('tests/fixtures/tests/fixtures'),
+      assert.ok(!file.path.includes(path.join("tests", "fixtures", "tests", "fixtures")),
         `Path has duplicate segments: ${file.path}`)
     })
 
     it("handles directory parameter correctly", () => {
-      const file1 = new FileObject('settings.json', 'tests/fixtures')
-      const file2 = new FileObject('settings.json', path.join(process.cwd(), 'tests/fixtures'))
+      const file1 = new FileObject('settings.json', path.join(process.cwd(), 'tests', 'fixtures'))
+      const file2 = new FileObject('settings.json', path.join(process.cwd(), 'tests', 'fixtures'))
 
       // Both should resolve to absolute paths
       assert.ok(path.isAbsolute(file1.path))
@@ -705,7 +705,7 @@ describe("FileObject", () => {
 
   describe("loadData method", () => {
     it("loads JSON5 data successfully", async () => {
-      const file = new FileObject("tests/fixtures/config-lpc-to-markdown.json5")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "config-lpc-to-markdown.json5"))
       const data = await file.loadData("json5")
 
       assert.ok(data)
@@ -713,7 +713,7 @@ describe("FileObject", () => {
     })
 
     it("loads JSON data successfully", async () => {
-      const file = new FileObject("tests/fixtures/settings.json")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
       const data = await file.loadData("json")
 
       assert.ok(data)
@@ -721,7 +721,7 @@ describe("FileObject", () => {
     })
 
     it("loads YAML data successfully", async () => {
-      const file = new FileObject("tests/fixtures/colors.yaml")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "colors.yaml"))
       const data = await file.loadData("yaml")
 
       assert.ok(data)
@@ -729,7 +729,7 @@ describe("FileObject", () => {
     })
 
     it("auto-detects JSON5 format with 'any' type", async () => {
-      const file = new FileObject("tests/fixtures/config-lpc-to-markdown.json5")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "config-lpc-to-markdown.json5"))
       const data = await file.loadData("any")
 
       assert.ok(data)
@@ -737,7 +737,7 @@ describe("FileObject", () => {
     })
 
     it("auto-detects YAML format with 'any' type", async () => {
-      const file = new FileObject("tests/fixtures/colors.yaml")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "colors.yaml"))
       const data = await file.loadData("any")
 
       assert.ok(data)
@@ -745,7 +745,7 @@ describe("FileObject", () => {
     })
 
     it("uses toLowerCase for type normalization (not toLocaleLowerCase)", async () => {
-      const file = new FileObject("tests/fixtures/settings.json")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
 
       // These should work regardless of locale
       const data1 = await file.loadData("JSON")
@@ -758,7 +758,7 @@ describe("FileObject", () => {
     })
 
     it("handles different encoding", async () => {
-      const file = new FileObject("tests/fixtures/settings.json")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
       const data = await file.loadData("json", "utf8")
 
       assert.ok(data)
@@ -766,7 +766,7 @@ describe("FileObject", () => {
     })
 
     it("throws Sass error for unsupported type", async () => {
-      const file = new FileObject("tests/fixtures/settings.json")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
 
       await assert.rejects(
         () => file.loadData("xml"),
@@ -779,7 +779,7 @@ describe("FileObject", () => {
     })
 
     it("throws Sass error for invalid JSON5", async () => {
-      const file = new FileObject("tests/fixtures/broken.json5")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "broken.json5"))
 
       await assert.rejects(
         () => file.loadData("json5"),
@@ -792,7 +792,7 @@ describe("FileObject", () => {
     })
 
     it("throws Sass error for invalid YAML", async () => {
-      const file = new FileObject("tests/fixtures/broken.yaml")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "broken.yaml"))
 
       await assert.rejects(
         () => file.loadData("yaml"),
@@ -805,7 +805,7 @@ describe("FileObject", () => {
     })
 
     it("falls back from JSON5 to YAML with 'any' type", async () => {
-      const file = new FileObject("tests/fixtures/colors.yaml")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "colors.yaml"))
 
       // Should try JSON5 first, fail, then succeed with YAML
       const data = await file.loadData("any")
@@ -815,7 +815,7 @@ describe("FileObject", () => {
     })
 
     it("handles empty type parameter (defaults to 'any')", async () => {
-      const file = new FileObject("tests/fixtures/settings.json")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
       const data = await file.loadData()
 
       assert.ok(data)
@@ -823,7 +823,7 @@ describe("FileObject", () => {
     })
 
     it("type parameter is case-insensitive", async () => {
-      const file = new FileObject("tests/fixtures/settings.json")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
 
       const testCases = ["JSON5", "Json5", "json5", "JSON", "Json", "json"]
 
@@ -834,7 +834,7 @@ describe("FileObject", () => {
     })
 
     it("YAML type parameter variations work correctly", async () => {
-      const file = new FileObject("tests/fixtures/colors.yaml")
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "colors.yaml"))
 
       const testCases = ["YAML", "Yaml", "yaml", "YaML"]
 
@@ -850,7 +850,7 @@ describe("FileObject", () => {
 
     beforeEach(async () => {
       testDir = await TestUtils.createTestDir("binary-test")
-      binaryFixture = new FileObject("tests/fixtures/2015-01-13.jpg")
+      binaryFixture = new FileObject(path.join(process.cwd(), "tests", "fixtures", "2015-01-13.jpg"))
     })
 
     afterEach(async () => {
