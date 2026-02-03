@@ -379,6 +379,28 @@ describe("Term", () => {
     })
   })
 
+  describe("stdin wrapper methods", () => {
+    it("pause returns Term class for chaining", () => {
+      assert.equal(typeof Term.pause, "function")
+      const result = Term.pause()
+      assert.equal(result, Term)
+    })
+
+    it("resume returns Term class for chaining", () => {
+      assert.equal(typeof Term.resume, "function")
+      const result = Term.resume()
+      assert.equal(result, Term)
+      // Clean up: pause stdin so it doesn't keep the process alive
+      Term.pause()
+    })
+
+    it("utf8 returns Term class for chaining", () => {
+      assert.equal(typeof Term.utf8, "function")
+      const result = Term.utf8()
+      assert.equal(result, Term)
+    })
+  })
+
   describe("table method", () => {
     it("exists and is a function", () => {
       assert.equal(typeof Term.table, "function")

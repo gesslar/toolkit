@@ -16,8 +16,6 @@ import Valid from "./Valid.js"
 import Collection from "../../browser/lib/Collection.js"
 
 /**
- * @import {FileObject} from "./FileObject.js"
- * @import {DirectoryObject} from "./DirectoryObject.js"
  * @import {Sass} from "./Sass.js"
  */
 
@@ -41,7 +39,7 @@ export default class FileSystem {
    * If the target is outside the source (i.e., the relative path starts with ".."),
    * returns the absolute path to this instance instead.
    *
-   * @param {FileObject|DirectoryObject} fileOrDirectoryObject - The source file or directory object
+   * @param {import("./FileObject.js").default|import("./DirectoryObject.js").default} fileOrDirectoryObject - The source file or directory object
    * @returns {string} The relative path from the source to this instance, or the absolute path if not reachable
    * @throws {Sass} If the parameter is not a FileObject or DirectoryObject
    */
@@ -105,8 +103,8 @@ export default class FileSystem {
    * ".."), returns the absolute path to the target instead.
    *
    * @static
-   * @param {FileObject|DirectoryObject} from - The source file or directory object
-   * @param {FileObject|DirectoryObject} to - The target file or directory object
+   * @param {import("./FileObject.js").default|import("./DirectoryObject.js").default} from - The source file or directory object
+   * @param {import("./FileObject.js").default|import("./DirectoryObject.js").default} to - The target file or directory object
    * @returns {string} The relative path from `from` to `to`, or the absolute path if not reachable
    */
   static relativeOrAbsolute(from, to) {

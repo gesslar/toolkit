@@ -282,6 +282,24 @@ export default class Term {
      * @returns {Promise<void>} Resolves when write completes.
      */
     static directWrite(output: string): Promise<void>;
-    static "__#private@#spinFrames": string[];
+    static spinFrames: readonly string[];
+    /**
+     * Pause stdin, preventing it from emitting data events.
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static pause(): typeof Term;
+    /**
+     * Resume stdin so it can emit data events.
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static resume(): typeof Term;
+    /**
+     * Set stdin encoding to UTF-8.
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static utf8(): typeof Term;
 }
 //# sourceMappingURL=Term.d.ts.map
