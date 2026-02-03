@@ -603,7 +603,7 @@ export default class Term {
 
   // Spinner frames - using Braille patterns (widely supported)
   // Falls back to ASCII when spinimate is implemented with proper detection
-  static #spinFrames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+  static spinFrames = Object.freeze(["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
 
   // static async spinimate(delay=300, options = {position: {x: 0,y: 0}}) {
   //   const spinFrames = await this.#spinFrames
@@ -615,4 +615,37 @@ export default class Term {
   //     })
   //   }
   // }
+
+  /**
+   * Pause stdin, preventing it from emitting data events.
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
+  static pause() {
+    process.stdin.pause()
+
+    return this
+  }
+
+  /**
+   * Resume stdin so it can emit data events.
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
+  static resume() {
+    process.stdin.resume()
+
+    return this
+  }
+
+  /**
+   * Set stdin encoding to UTF-8.
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
+  static utf8() {
+    process.stdin.setEncoding("utf8")
+
+    return this
+  }
 }
