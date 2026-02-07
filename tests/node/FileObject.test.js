@@ -703,6 +703,209 @@ describe("FileObject", () => {
     })
   })
 
+  describe("copy method", () => {
+    let testDir
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("file-copy-test")
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("copies file to new location and returns new FileObject", async () => {
+      const srcPath = path.join(testDir, "source.txt")
+      await fs.writeFile(srcPath, "hello world")
+      const srcFile = new FileObject(srcPath)
+
+      const destPath = path.join(testDir, "dest.txt")
+      const destFile = await srcFile.copy(destPath)
+
+      assert.ok(destFile instanceof FileObject)
+      assert.equal(await destFile.exists, true)
+      assert.equal(await destFile.read(), "hello world")
+    })
+
+    it("preserves original file after copy", async () => {
+      const srcPath = path.join(testDir, "source.txt")
+      await fs.writeFile(srcPath, "original content")
+      const srcFile = new FileObject(srcPath)
+
+      await srcFile.copy(path.join(testDir, "copy.txt"))
+
+      assert.equal(await srcFile.exists, true)
+      assert.equal(await srcFile.read(), "original content")
+    })
+
+    it("copies binary files without corruption", async () => {
+      const binaryFixture = new FileObject(path.join(process.cwd(), "tests", "fixtures", "2015-01-13.jpg"))
+      const original = await binaryFixture.readBinary()
+
+      const destPath = path.join(testDir, "copied.jpg")
+      const copied = await binaryFixture.copy(destPath)
+
+      const copiedData = await copied.readBinary()
+      assert.deepEqual(copiedData, original)
+    })
+
+    it("throws Sass error when source file does not exist", async () => {
+      const srcFile = new FileObject(path.join(testDir, "missing.txt"))
+
+      await assert.rejects(
+        () => srcFile.copy(path.join(testDir, "dest.txt")),
+        error => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /No such file/)
+          return true
+        }
+      )
+    })
+
+    it("throws Sass error when destination directory does not exist", async () => {
+      const srcPath = path.join(testDir, "source.txt")
+      await fs.writeFile(srcPath, "content")
+      const srcFile = new FileObject(srcPath)
+
+      await assert.rejects(
+        () => srcFile.copy(path.join(testDir, "nonexistent", "dest.txt")),
+        error => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /no such file or directory/)
+          return true
+        }
+      )
+    })
+
+    it("overwrites existing destination file", async () => {
+      const srcPath = path.join(testDir, "source.txt")
+      const destPath = path.join(testDir, "dest.txt")
+      await fs.writeFile(srcPath, "new content")
+      await fs.writeFile(destPath, "old content")
+
+      const srcFile = new FileObject(srcPath)
+      const destFile = await srcFile.copy(destPath)
+
+      assert.equal(await destFile.read(), "new content")
+    })
+
+    it("validates destination is a non-empty string", async () => {
+      const srcPath = path.join(testDir, "source.txt")
+      await fs.writeFile(srcPath, "content")
+      const srcFile = new FileObject(srcPath)
+
+      await assert.rejects(
+        () => srcFile.copy(""),
+        Sass
+      )
+
+      await assert.rejects(
+        () => srcFile.copy(null),
+        Sass
+      )
+    })
+  })
+
+  describe("move method", () => {
+    let testDir
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("file-move-test")
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("moves file to new location and returns new FileObject", async () => {
+      const srcPath = path.join(testDir, "source.txt")
+      await fs.writeFile(srcPath, "hello world")
+      const srcFile = new FileObject(srcPath)
+
+      const destPath = path.join(testDir, "moved.txt")
+      const destFile = await srcFile.move(destPath)
+
+      assert.ok(destFile instanceof FileObject)
+      assert.equal(await destFile.exists, true)
+      assert.equal(await destFile.read(), "hello world")
+    })
+
+    it("removes original file after move", async () => {
+      const srcPath = path.join(testDir, "source.txt")
+      await fs.writeFile(srcPath, "content")
+      const srcFile = new FileObject(srcPath)
+
+      await srcFile.move(path.join(testDir, "moved.txt"))
+
+      assert.equal(await srcFile.exists, false)
+    })
+
+    it("moves binary files without corruption", async () => {
+      const binaryFixture = new FileObject(path.join(process.cwd(), "tests", "fixtures", "2015-01-13.jpg"))
+      const original = await binaryFixture.readBinary()
+
+      // Copy the fixture first so we don't destroy it
+      const srcPath = path.join(testDir, "source.jpg")
+      await fs.copyFile(binaryFixture.path, srcPath)
+      const srcFile = new FileObject(srcPath)
+
+      const destPath = path.join(testDir, "moved.jpg")
+      const moved = await srcFile.move(destPath)
+
+      const movedData = await moved.readBinary()
+      assert.deepEqual(movedData, original)
+      assert.equal(await srcFile.exists, false)
+    })
+
+    it("throws Sass error when source file does not exist", async () => {
+      const srcFile = new FileObject(path.join(testDir, "missing.txt"))
+
+      await assert.rejects(
+        () => srcFile.move(path.join(testDir, "dest.txt")),
+        error => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /No such file/)
+          return true
+        }
+      )
+    })
+
+    it("throws Sass error when destination directory does not exist", async () => {
+      const srcPath = path.join(testDir, "source.txt")
+      await fs.writeFile(srcPath, "content")
+      const srcFile = new FileObject(srcPath)
+
+      await assert.rejects(
+        () => srcFile.move(path.join(testDir, "nonexistent", "dest.txt")),
+        error => {
+          assert.ok(error instanceof Sass)
+          assert.match(error.message, /no such file or directory/)
+          return true
+        }
+      )
+    })
+
+    it("validates destination is a non-empty string", async () => {
+      const srcPath = path.join(testDir, "source.txt")
+      await fs.writeFile(srcPath, "content")
+      const srcFile = new FileObject(srcPath)
+
+      await assert.rejects(
+        () => srcFile.move(""),
+        Sass
+      )
+
+      await assert.rejects(
+        () => srcFile.move(null),
+        Sass
+      )
+    })
+  })
+
   describe("loadData method", () => {
     it("loads JSON5 data successfully", async () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "config-lpc-to-markdown.json5"))
