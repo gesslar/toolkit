@@ -471,6 +471,80 @@ export default class FileObject extends FS {
   }
 
   /**
+   * Copies the file to a new location and returns a new FileObject for the copy.
+   * Performs a byte-for-byte copy of the file contents.
+   *
+   * @param {string} destination - The destination file path
+   * @returns {Promise<FileObject>} A new FileObject representing the copied file
+   * @throws {Sass} If the source file does not exist
+   * @throws {Sass} If the copy operation fails
+   * @example
+   * const file = new FileObject('./image.png')
+   * const copied = await file.copy('./backup/image.png')
+   * console.log(copied.path) // /absolute/path/to/backup/image.png
+   */
+  async copy(destination) {
+    Valid.type(destination, "String", {allowEmpty: false})
+
+    const filePath = this.path
+
+    if(!(await this.exists))
+      throw Sass.new(`No such file '${filePath}'`)
+
+    const destFile = new FileObject(destination)
+
+    try {
+      await fs.copyFile(filePath, destFile.path)
+    } catch(error) {
+      throw Sass.new(`Failed to copy file to '${destFile.path}'`, error)
+    }
+
+    return destFile
+  }
+
+  /**
+   * Moves the file to a new location and returns a new FileObject for the
+   * moved file. Uses rename when possible, falling back to copy and delete
+   * for cross-device moves.
+   *
+   * @param {string} destination - The destination file path
+   * @returns {Promise<FileObject>} A new FileObject representing the moved file
+   * @throws {Sass} If the source file does not exist
+   * @throws {Sass} If the move operation fails
+   * @example
+   * const file = new FileObject('./data.json')
+   * const moved = await file.move('./archive/data.json')
+   * console.log(moved.path) // /absolute/path/to/archive/data.json
+   */
+  async move(destination) {
+    Valid.type(destination, "String", {allowEmpty: false})
+
+    const filePath = this.path
+
+    if(!(await this.exists))
+      throw Sass.new(`No such file '${filePath}'`)
+
+    const destFile = new FileObject(destination)
+
+    try {
+      await fs.rename(filePath, destFile.path)
+    } catch(error) {
+      if(error.code === "EXDEV") {
+        try {
+          await fs.copyFile(filePath, destFile.path)
+          await fs.unlink(filePath)
+        } catch(fallbackError) {
+          throw Sass.new(`Failed to move file to '${destFile.path}'`, fallbackError)
+        }
+      } else {
+        throw Sass.new(`Failed to move file to '${destFile.path}'`, error)
+      }
+    }
+
+    return destFile
+  }
+
+  /**
    * Deletes the file from the filesystem.
    *
    * @returns {Promise<void>} Resolves when file is deleted
