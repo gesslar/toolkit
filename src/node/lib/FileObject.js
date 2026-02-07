@@ -531,7 +531,15 @@ export default class FileObject extends FS {
     } catch(error) {
       if(error.code === "EXDEV") {
         try {
-          await fs.copyFile(filePath, destFile.path)
+          const stat = await fs.lstat(filePath)
+
+          if(stat.isSymbolicLink()) {
+            const target = await fs.readlink(filePath)
+            await fs.symlink(target, destFile.path)
+          } else {
+            await fs.copyFile(filePath, destFile.path)
+          }
+
           await fs.unlink(filePath)
         } catch(fallbackError) {
           throw Sass.new(`Failed to move file to '${destFile.path}'`, fallbackError)
