@@ -1,7 +1,7 @@
 /**
- * Thin wrapper around `window` event handling to centralize emit/on/off
- * helpers. Used to dispatch simple CustomEvents and manage listeners in one
- * place.
+ * Thin wrapper around event dispatching to centralize emit/on/off helpers.
+ * Uses `globalThis` for safe resolution in server-side build environments
+ * (e.g. esm.sh) while defaulting to `window` at runtime.
  */
 /**
  * @typedef {object} NotifyEventOptions
@@ -31,26 +31,26 @@ export class Notify {
      */
     request(type: string, payload?: unknown, options?: boolean | NotifyEventOptions): unknown;
     /**
-     * Registers a listener for the given event type on an HTMLElement (or
-     * window, if not specified).
+     * Registers a listener for the given event type on an EventTarget.
+     * Defaults to window when no element is provided.
      *
      * @param {string} type - Event name to listen for.
-     * @param {(evt: Notify) => void} handler - Listener callback.
-     * @param {HTMLElement | Window} [element] - The object to which to attach the handler. Default is window.
+     * @param {(evt: Event) => void} handler - Listener callback.
+     * @param {EventTarget} [element] - The target to attach the handler to. Defaults to window.
      * @param {boolean | object} [options] - Options to pass to addEventListener.
      * @returns {() => void} Dispose function to unregister the handler.
      */
-    on(type: string, handler: (evt: Notify) => void, element?: HTMLElement | Window, options?: boolean | object): () => void;
+    on(type: string, handler: (evt: Event) => void, element?: EventTarget, options?: boolean | object): () => void;
     /**
      * Removes a previously registered listener for the given event type.
      *
      * @param {string} type - Event name to remove.
-     * @param {(evt: Notify) => void} handler - Listener callback to detach.
-     * @param {HTMLElement | Window} [element] - The object from which to remove the handler. Default is window.
+     * @param {(evt: Event) => void} handler - Listener callback to detach.
+     * @param {EventTarget} [element] - The target to remove the handler from. Defaults to window.
      * @param {boolean | object} [options] - Options to pass to removeEventListener.
      * @returns {void}
      */
-    off(type: string, handler: (evt: Notify) => void, element?: HTMLElement | Window, options?: boolean | object): void;
+    off(type: string, handler: (evt: Event) => void, element?: EventTarget, options?: boolean | object): void;
     #private;
 }
 declare const _default: Notify;
