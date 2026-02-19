@@ -147,7 +147,8 @@ export default class Data {
      */
     static isBaseType(value: unknown, type: string): boolean;
     /**
-     * Returns the type of a value, whether it be a primitive, object, or function.
+     * Returns the type of a value, whether it be a primitive, object, or
+     * function.
      *
      * @param {unknown} value - The value to check
      * @returns {string} The type of the value

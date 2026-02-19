@@ -24,7 +24,6 @@
     "browser",
     "node"
   ],
-  "packageManager": "pnpm@10.30.0",
   "main": "./src/node/index.js",
   "type": "module",
   "types": "./types/node/index.d.ts",
@@ -56,19 +55,19 @@
   "scripts": {
     "preinstall": "node ./scripts/check-node-version.mjs",
     "types": "node -e \"require('fs').rmSync('types',{recursive:true,force:true});\" && tsc -p tsconfig.types.json",
-    "prepublishOnly": "pnpm run types",
+    "prepublishOnly": "npm run types",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "submit": "pnpm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
-    "update": "pnpm self-update && pnpx npm-check-updates -u && pnpm install",
+    "submit": "npm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
+    "update": "npx npm-check-updates -u && npm install",
     "test": "node --test tests/**/*.test.js",
     "test:coverage": "node --experimental-config-file=node.config.json --experimental-test-coverage --test-timeout=3000 --test tests/**/*.test.js",
     "test:node": "node --test tests/node/*.test.js",
     "test:browser": "node --test tests/browser/*.test.js",
     "pr": "gt submit -p --ai",
-    "patch": "pnpm version patch",
-    "minor": "pnpm version minor",
-    "major": "pnpm version major"
+    "patch": "npm version patch",
+    "minor": "npm version minor",
+    "major": "npm version major"
   },
   "dependencies": {
     "@gesslar/colours": "^0.8.0",

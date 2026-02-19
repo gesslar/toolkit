@@ -281,14 +281,24 @@ describe("Data", () => {
       assert.equal(Data.isBaseType(null, "Object"), false) // null excluded
       assert.equal(Data.isBaseType(NaN, "Number"), false) // NaN excluded
       assert.equal(Data.isBaseType(null, "Null"), true)
+
+      // Class detection
+      assert.equal(Data.isBaseType(class Foo {}, "Class"), true)
+      assert.equal(Data.isBaseType(function() {}, "Class"), false) // regular functions are not classes
+      assert.equal(Data.isBaseType(() => {}, "Class"), false) // arrow functions are not classes
+      class _TestClass {}
+      assert.equal(Data.isBaseType(new _TestClass(), "Class"), false) // instances are not classes
     })
 
     it("typeOf returns enhanced typeof", () => {
       assert.equal(Data.typeOf("hello"), "String")
-      assert.equal(Data.typeOf([]), "Array") // enhanced for arrays
+      assert.equal(Data.typeOf([]), "Array")
       assert.equal(Data.typeOf({}), "Object")
-      assert.equal(Data.typeOf(null), "Null") // enhanced to distinguish null from object
-      assert.equal(Data.typeOf(new RegExp), "RegExp") // enhanced to distinguish null from object
+      assert.equal(Data.typeOf(null), "Null")
+      assert.equal(Data.typeOf(new RegExp), "RegExp")
+      assert.equal(Data.typeOf(class Foo {}), "Class") // uninstantiated class
+      assert.equal(Data.typeOf(function() {}), "Function") // regular function
+      assert.equal(Data.typeOf(() => {}), "Function") // arrow function
     })
   })
 

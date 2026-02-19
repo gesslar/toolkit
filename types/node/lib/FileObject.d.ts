@@ -252,7 +252,9 @@ export default class FileObject extends FS {
     #private;
 }
 import FS from "./FileSystem.js";
+import { URL } from "node:url";
 import DirectoryObject from "./DirectoryObject.js";
+import { Buffer } from "node:buffer";
 import JSON5 from "json5";
 import YAML from "yaml";
 //# sourceMappingURL=FileObject.d.ts.map
