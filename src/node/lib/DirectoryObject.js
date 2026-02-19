@@ -300,7 +300,10 @@ export default class DirectoryObject extends FS {
   /**
    * Lists the contents of a directory, optionally filtered by a glob pattern.
    *
-   * Returns FileObject and DirectoryObject instances for regular directories.
+   * Returns FileObject and DirectoryObject instances. Symbolic links are
+   * resolved to their target type: links to files appear in `files`, links
+   * to directories appear in `directories`. Broken symlinks propagate the
+   * stat error to the caller.
    *
    * @async
    * @param {string} [pat=""] - Optional glob pattern to filter results (e.g., "*.txt", "test-*")
@@ -344,12 +347,14 @@ export default class DirectoryObject extends FS {
    * Recursively searches directory tree for files and directories matching a glob pattern.
    * Unlike read(), this method searches recursively through subdirectories.
    *
-   * Returns FileObject and DirectoryObject instances for regular directories.
+   * Returns FileObject and DirectoryObject instances. Symbolic links are
+   * resolved to their target type: links to files appear in `files`, links
+   * to directories appear in `directories`. Broken symlinks propagate the
+   * stat error to the caller.
    *
    * @async
    * @param {string} [pat=""] - Glob pattern to filter results
-   * @returns {Promise<{files: Array<FileObject|FileObject>, directories: Array<DirectoryObject>}>} Object containing arrays of matching files and directories
-   * @throws {Sass} If an entry is neither a file nor directory
+   * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} Object containing arrays of matching files and directories
    * @example
    * const dir = new DirectoryObject("./src")
    * const {files} = await dir.glob("**\/*.test.js")
@@ -377,6 +382,15 @@ export default class DirectoryObject extends FS {
     return await this.#categorize(found)
   }
 
+  /**
+   * Categorizes an array of Dirent objects into files and directories.
+   * Resolves symbolic links to their target type via `fs.stat()`. Broken
+   * symlinks propagate the stat error to the caller.
+   *
+   * @private
+   * @param {Array<import("node:fs").Dirent>} dirents - Directory entries to categorize
+   * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} Categorized entries
+   */
   async #categorize(dirents) {
     const result = {
       files: [],

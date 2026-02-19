@@ -157,7 +157,8 @@ export default class Util {
         .map(i => trim ? i.trim() : i)
         .filter(i => trim ? Boolean(i) : true)
         .join("")
-      , flags?.join(""))
+      , flags?.join("")
+    )
   }
 
   static semver = {
@@ -174,13 +175,14 @@ export default class Util {
       if(suppliedSemver[0] < targetSemver[0])
         return false
 
-      if(suppliedSemver[0] === targetSemver[0])
+      if(suppliedSemver[0] === targetSemver[0]) {
         if(suppliedSemver[1] < targetSemver[1])
           return false
 
-      if(suppliedSemver[1] === targetSemver[1])
-        if(suppliedSemver[2] < targetSemver[2])
-          return false
+        if(suppliedSemver[1] === targetSemver[1])
+          if(suppliedSemver[2] < targetSemver[2])
+            return false
+      }
 
       return true
     }
