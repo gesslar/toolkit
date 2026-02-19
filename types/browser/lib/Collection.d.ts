@@ -244,5 +244,17 @@ export default class Collection {
      * @returns {object} Transposed object with arrays of values
      */
     static flattenObjectArray(input: Array<object> | Array<Array<object>>): object;
+    /**
+     * Computes the difference between two objects.
+     * Returns only the properties that differ, with nested objects diffed recursively.
+     * Properties present in `original` but absent from `updated` are included with
+     * a value of `undefined`.
+     *
+     * @param {object} original - The original object to compare from
+     * @param {object} updated - The updated object to compare against
+     * @returns {object} Object containing only the changed properties. Removed
+     *   properties are set to `undefined`. Returns an empty object if identical.
+     */
+    static diff(original: object, updated: object): object;
 }
 //# sourceMappingURL=Collection.d.ts.map

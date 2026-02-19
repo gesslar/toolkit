@@ -709,4 +709,118 @@ describe("Collection", () => {
       assert.throws(() => Collection.transposeObjects([new Date()]), /Invalid array element/)
     })
   })
+
+  describe("diff()", () => {
+    it("returns empty object for identical flat objects", () => {
+      const result = Collection.diff({a: 1, b: 2}, {a: 1, b: 2})
+      assert.deepEqual(result, {})
+    })
+
+    it("detects changed primitive values", () => {
+      const result = Collection.diff({a: 1, b: 2}, {a: 1, b: 3})
+      assert.deepEqual(result, {b: 3})
+    })
+
+    it("detects new properties added in updated", () => {
+      const result = Collection.diff({a: 1}, {a: 1, b: 2})
+      assert.deepEqual(result, {b: 2})
+    })
+
+    it("marks removed properties as undefined", () => {
+      const result = Collection.diff({a: 1, b: 2}, {a: 1})
+      assert.deepEqual(result, {b: undefined})
+    })
+
+    it("diffs nested objects recursively", () => {
+      const original = {a: {x: 1, y: 2}}
+      const updated = {a: {x: 1, y: 3}}
+      const result = Collection.diff(original, updated)
+      assert.deepEqual(result, {a: {y: 3}})
+    })
+
+    it("returns empty object for unchanged nested objects", () => {
+      const result = Collection.diff({a: {x: 1}}, {a: {x: 1}})
+      assert.deepEqual(result, {})
+    })
+
+    it("detects new properties inside nested objects", () => {
+      const result = Collection.diff({a: {x: 1}}, {a: {x: 1, y: 2}})
+      assert.deepEqual(result, {a: {y: 2}})
+    })
+
+    it("marks removed nested properties as undefined", () => {
+      const result = Collection.diff({a: {x: 1, y: 2}}, {a: {x: 1}})
+      assert.deepEqual(result, {a: {y: undefined}})
+    })
+
+    it("detects type change from object to primitive", () => {
+      const result = Collection.diff({a: {x: 1}}, {a: 42})
+      assert.deepEqual(result, {a: 42})
+    })
+
+    it("detects type change from primitive to object", () => {
+      const result = Collection.diff({a: 42}, {a: {x: 1}})
+      assert.deepEqual(result, {a: {x: 1}})
+    })
+
+    it("handles both objects being empty", () => {
+      assert.deepEqual(Collection.diff({}, {}), {})
+    })
+
+    it("handles original being empty", () => {
+      assert.deepEqual(Collection.diff({}, {a: 1}), {a: 1})
+    })
+
+    it("handles updated being empty", () => {
+      assert.deepEqual(Collection.diff({a: 1}, {}), {a: undefined})
+    })
+
+    it("treats unchanged null values as equal", () => {
+      assert.deepEqual(Collection.diff({a: null}, {a: null}), {})
+    })
+
+    it("detects change from primitive to null", () => {
+      assert.deepEqual(Collection.diff({a: 1}, {a: null}), {a: null})
+    })
+
+    it("detects change from null to primitive", () => {
+      assert.deepEqual(Collection.diff({a: null}, {a: 1}), {a: 1})
+    })
+
+    it("handles multiple simultaneous changes", () => {
+      const original = {a: 1, b: 2, c: 3}
+      const updated = {a: 99, b: 2, d: 4}
+      const result = Collection.diff(original, updated)
+      assert.deepEqual(result, {a: 99, c: undefined, d: 4})
+    })
+
+    it("handles deeply nested changes", () => {
+      const original = {a: {b: {c: 1}}}
+      const updated = {a: {b: {c: 2}}}
+      const result = Collection.diff(original, updated)
+      assert.deepEqual(result, {a: {b: {c: 2}}})
+    })
+
+    it("returns empty object for identical arrays", () => {
+      assert.deepEqual(Collection.diff([1, 2, 3], [1, 2, 3]), {})
+    })
+
+    it("detects changed array element by index key", () => {
+      assert.deepEqual(Collection.diff([1, 2, 3], [1, 2, 4]), {"2": 4})
+    })
+
+    it("marks removed array element as undefined by index key", () => {
+      const result = Collection.diff([1, 2, 3], [1, 2])
+      assert.ok("2" in result)
+      assert.equal(result["2"], undefined)
+    })
+
+    it("detects added array element by index key", () => {
+      assert.deepEqual(Collection.diff([1, 2], [1, 2, 3]), {"2": 3})
+    })
+
+    it("diffs arrays nested as property values", () => {
+      assert.deepEqual(Collection.diff({a: [1, 2, 3]}, {a: [1, 2, 4]}), {a: {"2": 4}})
+    })
+  })
 })
