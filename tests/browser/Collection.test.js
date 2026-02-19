@@ -711,116 +711,213 @@ describe("Collection", () => {
   })
 
   describe("diff()", () => {
-    it("returns empty object for identical flat objects", () => {
-      const result = Collection.diff({a: 1, b: 2}, {a: 1, b: 2})
-      assert.deepEqual(result, {})
+    it("always returns added, removed, and changed keys", () => {
+      const result = Collection.diff({a: 1}, {a: 1})
+      assert.ok("added" in result)
+      assert.ok("removed" in result)
+      assert.ok("changed" in result)
     })
 
-    it("detects changed primitive values", () => {
+    it("returns empty buckets for identical flat objects", () => {
+      assert.deepEqual(
+        Collection.diff({a: 1, b: 2}, {a: 1, b: 2}),
+        {added: {}, removed: {}, changed: {}}
+      )
+    })
+
+    it("reports changed primitive as {from, to}", () => {
       const result = Collection.diff({a: 1, b: 2}, {a: 1, b: 3})
-      assert.deepEqual(result, {b: 3})
+      assert.deepEqual(result, {added: {}, removed: {}, changed: {b: {from: 2, to: 3}}})
     })
 
-    it("detects new properties added in updated", () => {
+    it("reports new key in added with its new value", () => {
       const result = Collection.diff({a: 1}, {a: 1, b: 2})
-      assert.deepEqual(result, {b: 2})
+      assert.deepEqual(result, {added: {b: 2}, removed: {}, changed: {}})
     })
 
-    it("marks removed properties as undefined", () => {
+    it("reports deleted key in removed with its old value", () => {
       const result = Collection.diff({a: 1, b: 2}, {a: 1})
-      assert.deepEqual(result, {b: undefined})
+      assert.deepEqual(result, {added: {}, removed: {b: 2}, changed: {}})
     })
 
-    it("diffs nested objects recursively", () => {
-      const original = {a: {x: 1, y: 2}}
-      const updated = {a: {x: 1, y: 3}}
-      const result = Collection.diff(original, updated)
-      assert.deepEqual(result, {a: {y: 3}})
+    it("recurses into nested objects", () => {
+      const result = Collection.diff({a: {x: 1, y: 2}}, {a: {x: 1, y: 3}})
+      assert.deepEqual(result, {
+        added: {},
+        removed: {},
+        changed: {a: {added: {}, removed: {}, changed: {y: {from: 2, to: 3}}}}
+      })
     })
 
-    it("returns empty object for unchanged nested objects", () => {
+    it("omits nested key from changed when nested content is identical", () => {
       const result = Collection.diff({a: {x: 1}}, {a: {x: 1}})
-      assert.deepEqual(result, {})
+      assert.deepEqual(result, {added: {}, removed: {}, changed: {}})
     })
 
-    it("detects new properties inside nested objects", () => {
-      const result = Collection.diff({a: {x: 1}}, {a: {x: 1, y: 2}})
-      assert.deepEqual(result, {a: {y: 2}})
+    it("reports nested added and removed keys", () => {
+      const result = Collection.diff({a: {x: 1, y: 2}}, {a: {x: 1, z: 3}})
+      assert.deepEqual(result, {
+        added: {},
+        removed: {},
+        changed: {a: {added: {z: 3}, removed: {y: 2}, changed: {}}}
+      })
     })
 
-    it("marks removed nested properties as undefined", () => {
-      const result = Collection.diff({a: {x: 1, y: 2}}, {a: {x: 1}})
-      assert.deepEqual(result, {a: {y: undefined}})
-    })
-
-    it("detects type change from object to primitive", () => {
+    it("reports type change from object to primitive in changed", () => {
       const result = Collection.diff({a: {x: 1}}, {a: 42})
-      assert.deepEqual(result, {a: 42})
+      assert.deepEqual(result, {added: {}, removed: {}, changed: {a: {from: {x: 1}, to: 42}}})
     })
 
-    it("detects type change from primitive to object", () => {
+    it("reports type change from primitive to object in changed", () => {
       const result = Collection.diff({a: 42}, {a: {x: 1}})
-      assert.deepEqual(result, {a: {x: 1}})
+      assert.deepEqual(result, {added: {}, removed: {}, changed: {a: {from: 42, to: {x: 1}}}})
     })
 
     it("handles both objects being empty", () => {
-      assert.deepEqual(Collection.diff({}, {}), {})
+      assert.deepEqual(Collection.diff({}, {}), {added: {}, removed: {}, changed: {}})
     })
 
     it("handles original being empty", () => {
-      assert.deepEqual(Collection.diff({}, {a: 1}), {a: 1})
+      assert.deepEqual(Collection.diff({}, {a: 1}), {added: {a: 1}, removed: {}, changed: {}})
     })
 
     it("handles updated being empty", () => {
-      assert.deepEqual(Collection.diff({a: 1}, {}), {a: undefined})
+      assert.deepEqual(Collection.diff({a: 1}, {}), {added: {}, removed: {a: 1}, changed: {}})
     })
 
     it("treats unchanged null values as equal", () => {
-      assert.deepEqual(Collection.diff({a: null}, {a: null}), {})
+      assert.deepEqual(Collection.diff({a: null}, {a: null}), {added: {}, removed: {}, changed: {}})
     })
 
     it("detects change from primitive to null", () => {
-      assert.deepEqual(Collection.diff({a: 1}, {a: null}), {a: null})
+      assert.deepEqual(
+        Collection.diff({a: 1}, {a: null}),
+        {added: {}, removed: {}, changed: {a: {from: 1, to: null}}}
+      )
     })
 
     it("detects change from null to primitive", () => {
-      assert.deepEqual(Collection.diff({a: null}, {a: 1}), {a: 1})
+      assert.deepEqual(
+        Collection.diff({a: null}, {a: 1}),
+        {added: {}, removed: {}, changed: {a: {from: null, to: 1}}}
+      )
     })
 
     it("handles multiple simultaneous changes", () => {
-      const original = {a: 1, b: 2, c: 3}
-      const updated = {a: 99, b: 2, d: 4}
-      const result = Collection.diff(original, updated)
-      assert.deepEqual(result, {a: 99, c: undefined, d: 4})
+      const result = Collection.diff({a: 1, b: 2, c: 3}, {a: 99, b: 2, d: 4})
+      assert.deepEqual(result, {
+        added:   {d: 4},
+        removed: {c: 3},
+        changed: {a: {from: 1, to: 99}}
+      })
     })
 
-    it("handles deeply nested changes", () => {
-      const original = {a: {b: {c: 1}}}
-      const updated = {a: {b: {c: 2}}}
-      const result = Collection.diff(original, updated)
-      assert.deepEqual(result, {a: {b: {c: 2}}})
+    it("recurses deeply", () => {
+      const result = Collection.diff({a: {b: {c: 1}}}, {a: {b: {c: 2}}})
+      assert.deepEqual(result, {
+        added: {},
+        removed: {},
+        changed: {
+          a: {
+            added: {},
+            removed: {},
+            changed: {b: {added: {}, removed: {}, changed: {c: {from: 1, to: 2}}}}
+          }
+        }
+      })
     })
 
-    it("returns empty object for identical arrays", () => {
-      assert.deepEqual(Collection.diff([1, 2, 3], [1, 2, 3]), {})
+    it("returns empty buckets for identical arrays", () => {
+      assert.deepEqual(Collection.diff([1, 2, 3], [1, 2, 3]), {added: {}, removed: {}, changed: {}})
     })
 
-    it("detects changed array element by index key", () => {
-      assert.deepEqual(Collection.diff([1, 2, 3], [1, 2, 4]), {"2": 4})
+    it("reports changed array element by index key", () => {
+      const result = Collection.diff([1, 2, 3], [1, 2, 4])
+      assert.deepEqual(result, {added: {}, removed: {}, changed: {"2": {from: 3, to: 4}}})
     })
 
-    it("marks removed array element as undefined by index key", () => {
+    it("reports removed array element in removed with its old value", () => {
       const result = Collection.diff([1, 2, 3], [1, 2])
-      assert.ok("2" in result)
-      assert.equal(result["2"], undefined)
+      assert.deepEqual(result, {added: {}, removed: {"2": 3}, changed: {}})
     })
 
-    it("detects added array element by index key", () => {
-      assert.deepEqual(Collection.diff([1, 2], [1, 2, 3]), {"2": 3})
+    it("reports added array element in added", () => {
+      const result = Collection.diff([1, 2], [1, 2, 3])
+      assert.deepEqual(result, {added: {"2": 3}, removed: {}, changed: {}})
     })
 
     it("diffs arrays nested as property values", () => {
-      assert.deepEqual(Collection.diff({a: [1, 2, 3]}, {a: [1, 2, 4]}), {a: {"2": 4}})
+      const result = Collection.diff({a: [1, 2, 3]}, {a: [1, 2, 4]})
+      assert.deepEqual(result, {
+        added: {},
+        removed: {},
+        changed: {a: {added: {}, removed: {}, changed: {"2": {from: 3, to: 4}}}}
+      })
+    })
+
+    it("treats non-plain objects as direct value changes, not recursed", () => {
+      const d1 = new Date("2024-01-01")
+      const d2 = new Date("2025-01-01")
+      const result = Collection.diff({d: d1}, {d: d2})
+      assert.deepEqual(result, {added: {}, removed: {}, changed: {d: {from: d1, to: d2}}})
+    })
+
+    it("reports non-plain object added correctly", () => {
+      const d = new Date("2024-01-01")
+      const result = Collection.diff({}, {d})
+      assert.deepEqual(result, {added: {d}, removed: {}, changed: {}})
+    })
+
+    it("treats array-to-object type swap as a direct value change", () => {
+      const result = Collection.diff({a: [1, 2]}, {a: {0: 1, 1: 2}})
+      assert.deepEqual(result, {
+        added: {},
+        removed: {},
+        changed: {a: {from: [1, 2], to: {0: 1, 1: 2}}}
+      })
+    })
+
+    it("treats object-to-array type swap as a direct value change", () => {
+      const result = Collection.diff({a: {0: 1, 1: 2}}, {a: [1, 2]})
+      assert.deepEqual(result, {
+        added: {},
+        removed: {},
+        changed: {a: {from: {0: 1, 1: 2}, to: [1, 2]}}
+      })
+    })
+
+    it("treats identical NaN values as equal", () => {
+      assert.deepEqual(
+        Collection.diff({a: NaN}, {a: NaN}),
+        {added: {}, removed: {}, changed: {}}
+      )
+    })
+
+    it("detects change from NaN to a number", () => {
+      assert.deepEqual(
+        Collection.diff({a: NaN}, {a: 1}),
+        {added: {}, removed: {}, changed: {a: {from: NaN, to: 1}}}
+      )
+    })
+
+    it("correctly reports own keys that shadow prototype names as removed", () => {
+      const result = Collection.diff({toString: 1}, {})
+      assert.deepEqual(result, {added: {}, removed: {toString: 1}, changed: {}})
+    })
+
+    it("correctly reports own keys that shadow prototype names as added", () => {
+      const result = Collection.diff({}, {toString: 1})
+      assert.deepEqual(result, {added: {toString: 1}, removed: {}, changed: {}})
+    })
+
+    it("throws on prototype-polluting keys in updated", () => {
+      const malicious = JSON.parse('{"__proto__": {"pwned": 1}}')
+      assert.throws(() => Collection.diff({}, malicious), /don't pee in your pool/)
+    })
+
+    it("throws on prototype-polluting keys in original", () => {
+      const malicious = JSON.parse('{"__proto__": {"pwned": 1}}')
+      assert.throws(() => Collection.diff(malicious, {}), /don't pee in your pool/)
     })
   })
 })
