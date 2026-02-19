@@ -288,6 +288,8 @@ describe("Data", () => {
       assert.equal(Data.isBaseType(() => {}, "Class"), false) // arrow functions are not classes
       class _TestClass {}
       assert.equal(Data.isBaseType(new _TestClass(), "Class"), false) // instances are not classes
+      assert.equal(Data.isBaseType(Array, "Class"), false) // native constructors are not classes
+      assert.equal(Data.isBaseType(Array, "Function"), true)
     })
 
     it("typeOf returns enhanced typeof", () => {
@@ -299,6 +301,9 @@ describe("Data", () => {
       assert.equal(Data.typeOf(class Foo {}), "Class") // uninstantiated class
       assert.equal(Data.typeOf(function() {}), "Function") // regular function
       assert.equal(Data.typeOf(() => {}), "Function") // arrow function
+      assert.equal(Data.typeOf(Array), "Function") // native constructors are not classes
+      assert.equal(Data.typeOf(Date), "Function")
+      assert.equal(Data.typeOf(Map), "Function")
     })
   })
 
