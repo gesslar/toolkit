@@ -160,7 +160,10 @@ export default class DirectoryObject extends FS {
     /**
      * Lists the contents of a directory, optionally filtered by a glob pattern.
      *
-     * Returns FileObject and DirectoryObject instances for regular directories.
+     * Returns FileObject and DirectoryObject instances. Symbolic links are
+     * resolved to their target type: links to files appear in `files`, links
+     * to directories appear in `directories`. Broken symlinks propagate the
+     * stat error to the caller.
      *
      * @async
      * @param {string} [pat=""] - Optional glob pattern to filter results (e.g., "*.txt", "test-*")
@@ -183,12 +186,14 @@ export default class DirectoryObject extends FS {
      * Recursively searches directory tree for files and directories matching a glob pattern.
      * Unlike read(), this method searches recursively through subdirectories.
      *
-     * Returns FileObject and DirectoryObject instances for regular directories.
+     * Returns FileObject and DirectoryObject instances. Symbolic links are
+     * resolved to their target type: links to files appear in `files`, links
+     * to directories appear in `directories`. Broken symlinks propagate the
+     * stat error to the caller.
      *
      * @async
      * @param {string} [pat=""] - Glob pattern to filter results
-     * @returns {Promise<{files: Array<FileObject|FileObject>, directories: Array<DirectoryObject>}>} Object containing arrays of matching files and directories
-     * @throws {Sass} If an entry is neither a file nor directory
+     * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} Object containing arrays of matching files and directories
      * @example
      * const dir = new DirectoryObject("./src")
      * const {files} = await dir.glob("**\/*.test.js")
@@ -199,7 +204,7 @@ export default class DirectoryObject extends FS {
      * const {files} = await dir.glob("**\/package.json")
      */
     glob(pat?: string, options?: {}): Promise<{
-        files: Array<FileObject | FileObject>;
+        files: Array<FileObject>;
         directories: Array<DirectoryObject>;
     }>;
     /**

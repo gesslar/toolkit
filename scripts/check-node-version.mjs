@@ -1,3 +1,5 @@
+/* -- temporarily turning off
+
 import {readFile} from "node:fs/promises"
 import {dirname, join} from "node:path"
 import {fileURLToPath} from "node:url"
@@ -55,3 +57,4 @@ await(async() => {
     process.exit(0)
   }
 })()
+*/

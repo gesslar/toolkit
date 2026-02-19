@@ -413,6 +413,95 @@ describe("DirectoryObject", () => {
     })
   })
 
+  describe("symlink handling", () => {
+    let testDirObj
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("dir-symlink-test")
+      testDirObj = new DirectoryObject(testDir)
+
+      await fs.writeFile(path.join(testDir, "real-file.txt"), "content")
+      await fs.mkdir(path.join(testDir, "real-dir"))
+      await fs.symlink(
+        path.join(testDir, "real-file.txt"),
+        path.join(testDir, "link-to-file.txt")
+      )
+      await fs.symlink(
+        path.join(testDir, "real-dir"),
+        path.join(testDir, "link-to-dir")
+      )
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("read() resolves symlink to file into files array", async () => {
+      const {files} = await testDirObj.read()
+
+      assert.ok(files.some(f => f.name === "link-to-file.txt"))
+    })
+
+    it("read() resolves symlink to directory into directories array", async () => {
+      const {directories} = await testDirObj.read()
+
+      assert.ok(directories.some(d => d.name === "link-to-dir"))
+    })
+
+    it("read() still returns real files alongside symlinked files", async () => {
+      const {files} = await testDirObj.read()
+
+      const names = files.map(f => f.name)
+      assert.ok(names.includes("real-file.txt"))
+      assert.ok(names.includes("link-to-file.txt"))
+    })
+
+    it("read() still returns real directories alongside symlinked directories", async () => {
+      const {directories} = await testDirObj.read()
+
+      const names = directories.map(d => d.name)
+      assert.ok(names.includes("real-dir"))
+      assert.ok(names.includes("link-to-dir"))
+    })
+
+    it("glob() resolves symlink to file into files array", async () => {
+      const {files} = await testDirObj.glob("*")
+
+      assert.ok(files.some(f => f.name === "link-to-file.txt"))
+    })
+
+    it("glob() resolves symlink to directory into directories array", async () => {
+      const {directories} = await testDirObj.glob("*")
+
+      assert.ok(directories.some(d => d.name === "link-to-dir"))
+    })
+
+    it("symlinked files are FileObject instances", async () => {
+      const {files} = await testDirObj.read()
+
+      const linked = files.find(f => f.name === "link-to-file.txt")
+      assert.ok(linked instanceof FileObject)
+    })
+
+    it("symlinked directories are DirectoryObject instances", async () => {
+      const {directories} = await testDirObj.read()
+
+      const linked = directories.find(d => d.name === "link-to-dir")
+      assert.ok(linked instanceof DirectoryObject)
+    })
+
+    it("broken symlink causes read() to throw", async () => {
+      await fs.symlink(
+        path.join(testDir, "nonexistent-target"),
+        path.join(testDir, "broken-link")
+      )
+
+      await assert.rejects(() => testDirObj.read())
+    })
+  })
+
   describe("assureExists method", () => {
     let testDirPath, testDirObj
 

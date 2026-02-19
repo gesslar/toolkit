@@ -58,5 +58,8 @@ export default class Util {
      */
     static findClosestMatch(input: string, allowedValues: Array<string>, threshold?: number): string;
     static regexify(input: any, trim?: boolean, flags?: any[]): RegExp;
+    static semver: {
+        meetsOrExceeds: (supplied: any, target: any) => boolean;
+    };
 }
 //# sourceMappingURL=Util.d.ts.map
