@@ -277,9 +277,11 @@ export default class Data {
     if(type === "object")
       return value.constructor?.name ?? "Object"
 
-    if(typeof value === "function" &&
-       Object.getOwnPropertyDescriptor(value, "prototype")?.writable === false)
+    if(typeof value === "function"
+      && Object.getOwnPropertyDescriptor(value, "prototype")?.writable === false
+      && /^class[\s{]/.test(Function.prototype.toString.call(value))) {
       return "Class"
+    }
 
     const [first, ...rest] = Array.from(type)
 
