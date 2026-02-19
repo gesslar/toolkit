@@ -688,42 +688,58 @@ export default class Collection {
   }
 
   /**
-   * Computes the difference between two objects.
-   * Returns only the properties that differ, with nested objects diffed recursively.
-   * Properties present in `original` but absent from `updated` are included with
-   * a value of `undefined`.
+   * Computes the structured difference between two objects.
+   * Returns an object with three keys: `added`, `removed`, and `changed`.
+   * Nested objects are recursed into, producing the same structure.
+   * Primitive changes are represented as `{from, to}` pairs.
    *
-   * @param {object} original - The original object to compare from
-   * @param {object} updated - The updated object to compare against
-   * @returns {object} Object containing only the changed properties. Removed
-   *   properties are set to `undefined`. Returns an empty object if identical.
+   * @param {object|Array<unknown>} original - The original object or array to compare from
+   * @param {object|Array<unknown>} updated - The updated object or array to compare against
+   * @returns {{added: object, removed: object, changed: object}} Structured diff.
+   *   `added` contains keys new in `updated` with their new values.
+   *   `removed` contains keys absent from `updated` with their old values.
+   *   `changed` contains keys present in both but with different values;
+   *   primitives are `{from, to}` pairs, nested objects recurse.
+   *   All three keys are always present, empty when there are no differences.
    */
   static diff(original, updated) {
-    const changes = {}
+    const added = {}
+    const removed = {}
+    const changed = {}
 
-    // Check for updated and new properties in the 'updated' object
-    for(const key in updated) {
-      if(original[key] !== updated[key]) {
-        // Handle nested objects recursively
-        if(typeof updated[key] === "object" && updated[key] !== null && typeof original[key] === "object" && original[key] !== null) {
-          const nestedDiff = this.diff(original[key], updated[key])
-          if(Object.keys(nestedDiff).length > 0) {
-            changes[key] = nestedDiff
-          }
+    for(const key of Object.keys(updated)) {
+      Valid.prototypePollutionProtection([key])
+
+      if(!Object.hasOwn(original, key)) {
+        added[key] = updated[key]
+      } else if(!Object.is(original[key], updated[key])) {
+        if(
+          (Data.isPlainObject(original[key]) &&
+            Data.isPlainObject(updated[key])) ||
+          (Array.isArray(original[key]) && Array.isArray(updated[key]))
+        ) {
+          const nested = Collection.diff(original[key], updated[key])
+          const hasChanges =
+            Object.keys(nested.added).length > 0 ||
+            Object.keys(nested.removed).length > 0 ||
+            Object.keys(nested.changed).length > 0
+
+          if(hasChanges)
+            changed[key] = nested
+
         } else {
-          // Primitive value change or type mismatch
-          changes[key] = updated[key]
+          changed[key] = {from: original[key], to: updated[key]}
         }
       }
     }
 
-    // Check for removed properties (present in original but not in updated)
-    for(const key in original) {
-      if(!(key in updated)) {
-        changes[key] = undefined // Mark as deleted
-      }
+    for(const key of Object.keys(original)) {
+      Valid.prototypePollutionProtection([key])
+
+      if(!Object.hasOwn(updated, key))
+        removed[key] = original[key]
     }
 
-    return changes
+    return {added, removed, changed}
   }
 }
