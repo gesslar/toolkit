@@ -250,15 +250,6 @@ export default class Data {
     if(!Data.isValidType(type))
       return false
 
-    // We gotta do classes up front. Ugh.
-    if(/^[Cc]lass$/.test(type)) {
-      if(typeof value === "function" &&
-      value.prototype &&
-      value.prototype.constructor === value)
-
-        return true
-    }
-
     const valueType = Data.typeOf(value)
 
     // Special cases that need extra validation
@@ -271,7 +262,8 @@ export default class Data {
   }
 
   /**
-   * Returns the type of a value, whether it be a primitive, object, or function.
+   * Returns the type of a value, whether it be a primitive, object, or
+   * function.
    *
    * @param {unknown} value - The value to check
    * @returns {string} The type of the value
@@ -284,6 +276,10 @@ export default class Data {
 
     if(type === "object")
       return value.constructor?.name ?? "Object"
+
+    if(typeof value === "function" &&
+       Object.getOwnPropertyDescriptor(value, "prototype")?.writable === false)
+      return "Class"
 
     const [first, ...rest] = Array.from(type)
 
