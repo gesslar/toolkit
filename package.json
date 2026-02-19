@@ -24,7 +24,7 @@
     "browser",
     "node"
   ],
-  "packageManager": "pnpm@10.28.2",
+  "packageManager": "pnpm@10.30.0",
   "main": "./src/node/index.js",
   "type": "module",
   "types": "./types/node/index.d.ts",
@@ -53,6 +53,7 @@
     "node": ">=24.13.0"
   },
   "scripts": {
+    "preinstall": "node ./scripts/check-node-version.mjs",
     "types": "node -e \"require('fs').rmSync('types',{recursive:true,force:true});\" && tsc -p tsconfig.types.json",
     "prepublishOnly": "pnpm run types",
     "lint": "eslint src/",
@@ -70,15 +71,15 @@
   },
   "dependencies": {
     "@gesslar/colours": "^0.8.0",
-    "ajv": "^8.17.1",
+    "ajv": "^8.18.0",
     "json5": "^2.2.3",
     "supports-color": "^10.2.2",
     "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@gesslar/uglier": "^1.2.0",
-    "eslint": "^9.39.2",
-    "happy-dom": "^20.4.0",
+    "@gesslar/uglier": "^1.4.1",
+    "eslint": "^10.0.0",
+    "happy-dom": "^20.6.3",
     "typescript": "^5.9.3"
   }
 }

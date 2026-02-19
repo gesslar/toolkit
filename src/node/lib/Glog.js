@@ -598,15 +598,13 @@ class Glog {
    * @throws {Error} If level < 1 (level 0 = debug OFF)
    */
   debug(message, level = 1, ...arg) {
-    if(level < 1) {
+    if(level < 1)
       throw new Error("Debug level must be >= 1 (level 0 = debug OFF)")
-    }
 
     const currentLevel = this.#logLevel || Glog.logLevel
 
-    if(currentLevel > 0 && level <= currentLevel) {
+    if(currentLevel > 0 && level <= currentLevel)
       Term.debug(this.#compose("debug", message, level), ...arg)
-    }
   }
 
   /**

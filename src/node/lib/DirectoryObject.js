@@ -4,9 +4,8 @@
  * resolution and existence checks.
  */
 
-import {glob, mkdir, opendir, readdir, rmdir} from "node:fs/promises"
-import {relative} from "node:path"
-import path from "node:path"
+import {glob, mkdir, opendir, readdir, rmdir, stat} from "node:fs/promises"
+import path, {relative} from "node:path"
 import {URL} from "node:url"
 
 import Data from "../../browser/lib/Data.js"
@@ -338,19 +337,7 @@ export default class DirectoryObject extends FS {
         )
       )
 
-    const files = found
-      .filter(dirent => dirent.isFile())
-      .map(dirent => this.getFile(dirent.name))
-
-    const directories = found
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => {
-        const dirPath = FS.resolvePath(this.path, dirent.name)
-
-        return new this.constructor(dirPath, this)
-      })
-
-    return {files, directories}
+    return await this.#categorize(found)
   }
 
   /**
@@ -387,29 +374,33 @@ export default class DirectoryObject extends FS {
       )
     )
 
-    const files = [], directories = []
+    return await this.#categorize(found)
+  }
 
-    for(const e of found) {
-      if(e.isFile()) {
-        const {name, parentPath} = e
-        const resolved = FS.resolvePath(parentPath, name)
+  async #categorize(dirents) {
+    const result = {
+      files: [],
+      directories: [],
+    }
 
-        const file = new FileObject(resolved, this)
+    for(const dirent of dirents) {
+      const fullPath = FS.resolvePath(dirent.parentPath, dirent.name)
 
-        files.push(file)
-      } else if(e.isDirectory()) {
-        const {name, parentPath} = e
-        const resolved = FS.resolvePath(parentPath, name)
-        const relativePath = resolved
-        const directory = new this.constructor(relativePath)
+      if(dirent.isFile()) {
+        result.files.push(new FileObject(fullPath, this))
+      } else if(dirent.isDirectory()) {
+        result.directories.push(new this.constructor(fullPath))
+      } else if(dirent.isSymbolicLink()) {
+        const stats = await stat(fullPath)
 
-        directories.push(directory)
-      } else {
-        throw Sass.new(`wtf is this? ${JSON.stringify(e)}`)
+        if(stats.isFile())
+          result.files.push(new FileObject(fullPath, this))
+        else if(stats.isDirectory())
+          result.directories.push(new this.constructor(fullPath))
       }
     }
 
-    return {files, directories}
+    return result
   }
 
   /**

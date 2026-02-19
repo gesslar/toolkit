@@ -159,4 +159,30 @@ export default class Util {
         .join("")
       , flags?.join(""))
   }
+
+  static semver = {
+    meetsOrExceeds: (supplied, target) => {
+      Valid.type(supplied, "String", {allowEmpty: false})
+      Valid.type(target, "String", {allowEmpty: false})
+
+      const suppliedSemver = supplied.split(".").filter(Boolean).map(Number).filter(e => !isNaN(e))
+      const targetSemver = target.split(".").filter(Boolean).map(Number).filter(e => !isNaN(e))
+
+      Valid.assert(suppliedSemver.length === 3, "Invalid format for supplied semver.")
+      Valid.assert(targetSemver.length === 3, "Invalid format for target semver.")
+
+      if(suppliedSemver[0] < targetSemver[0])
+        return false
+
+      if(suppliedSemver[0] === targetSemver[0])
+        if(suppliedSemver[1] < targetSemver[1])
+          return false
+
+      if(suppliedSemver[1] === targetSemver[1])
+        if(suppliedSemver[2] < targetSemver[2])
+          return false
+
+      return true
+    }
+  }
 }
