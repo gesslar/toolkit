@@ -47,6 +47,7 @@
   "files": [
     "src/",
     "types/",
+    "scripts/",
     "UNLICENSE.txt"
   ],
   "engines": {
