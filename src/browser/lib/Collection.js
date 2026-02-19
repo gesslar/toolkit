@@ -686,4 +686,44 @@ export default class Collection {
 
     return Collection.transposeObjects(flattened)
   }
+
+  /**
+   * Computes the difference between two objects.
+   * Returns only the properties that differ, with nested objects diffed recursively.
+   * Properties present in `original` but absent from `updated` are included with
+   * a value of `undefined`.
+   *
+   * @param {object} original - The original object to compare from
+   * @param {object} updated - The updated object to compare against
+   * @returns {object} Object containing only the changed properties. Removed
+   *   properties are set to `undefined`. Returns an empty object if identical.
+   */
+  static diff(original, updated) {
+    const changes = {}
+
+    // Check for updated and new properties in the 'updated' object
+    for(const key in updated) {
+      if(original[key] !== updated[key]) {
+        // Handle nested objects recursively
+        if(typeof updated[key] === "object" && updated[key] !== null && typeof original[key] === "object" && original[key] !== null) {
+          const nestedDiff = this.diff(original[key], updated[key])
+          if(Object.keys(nestedDiff).length > 0) {
+            changes[key] = nestedDiff
+          }
+        } else {
+          // Primitive value change or type mismatch
+          changes[key] = updated[key]
+        }
+      }
+    }
+
+    // Check for removed properties (present in original but not in updated)
+    for(const key in original) {
+      if(!(key in updated)) {
+        changes[key] = undefined // Mark as deleted
+      }
+    }
+
+    return changes
+  }
 }
