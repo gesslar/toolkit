@@ -97,4 +97,5 @@ export default class Util extends BrowserUtil {
     static getEnv(ev: string, def?: unknown): unknown;
 }
 import BrowserUtil from "../../browser/lib/Util.js";
+import { EventEmitter } from "node:events";
 //# sourceMappingURL=Util.d.ts.map

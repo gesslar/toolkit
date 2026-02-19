@@ -378,5 +378,6 @@ export type DirectoryMeta = {
     url: URL | null;
 };
 import FS from "./FileSystem.js";
+import { URL } from "node:url";
 import FileObject from "./FileObject.js";
 //# sourceMappingURL=DirectoryObject.d.ts.map
