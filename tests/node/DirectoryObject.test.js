@@ -171,7 +171,7 @@ describe("DirectoryObject", () => {
       const output = inspect(dir)
 
       assert.ok(output.includes("DirectoryObject"))
-      assert.ok(output.includes(dir.path))
+      assert.ok(output.includes(dir.path.replace(/\\/g, "\\\\")))
     })
 
     it("[Symbol.toPrimitive] returns path for string hint", () => {
