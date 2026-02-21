@@ -1,13 +1,13 @@
+import c from "@gesslar/colours"
 import console, {Console} from "node:console"
 import process from "node:process"
 import {Writable} from "node:stream"
-import supportsColor from "supports-color"
 import {stripVTControlCharacters} from "node:util"
-import c from "@gesslar/colours"
+import supportsColor from "supports-color"
 
-import Sass from "./Sass.js"
-import Time from "../../browser/lib/Time.js"
 import Promised from "../../browser/lib/Promised.js"
+import Time from "../../browser/lib/Time.js"
+import Sass from "./Sass.js"
 
 c.alias.set("success", "{F035}")
 c.alias.set("info", "{F033}")
