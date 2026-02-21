@@ -266,11 +266,13 @@ export default class Term {
      * If in Char Mode, it resolves on Enter, Ctrl+D, or the ANSI 'R' terminator.
      *
      * @param {(text: string) => boolean} [terminator] - Optional callback to check if input is complete.
-     * @returns {Promise<string>} Resolves with the input data.
+     * @param {number} [timeoutMs=0] - Optional timeout in milliseconds. Resolves with empty string if exceeded.
+     * @returns {Promise<string>} Resolves with the input data, or empty string on timeout.
      */
-    static data(terminator?: (text: string) => boolean): Promise<string>;
+    static data(terminator?: (text: string) => boolean, timeoutMs?: number): Promise<string>;
     /**
      * Gets the current cursor position in the terminal.
+     * Returns [0, 0] for non-interactive terminals or if the terminal does not respond within the timeout.
      *
      * @returns {Promise<[number, number]>} Resolves with [x, y] cursor position.
      */
@@ -282,6 +284,11 @@ export default class Term {
      * @returns {Promise<void>} Resolves when write completes.
      */
     static directWrite(output: string): Promise<void>;
+    /**
+     * Spinner animation frames using Braille patterns (widely supported).
+     *
+     * @type {readonly string[]}
+     */
     static spinFrames: readonly string[];
     /**
      * Pause stdin, preventing it from emitting data events.
@@ -301,5 +308,36 @@ export default class Term {
      * @returns {typeof Term} The Term class for chaining.
      */
     static utf8(): typeof Term;
+    /**
+     * Switch to the alternate screen buffer.
+     *
+     * @returns {void}
+     */
+    static altScreen(): void;
+    /**
+     * Switch back to the main screen buffer.
+     *
+     * @returns {void}
+     */
+    static mainScreen(): void;
+    /**
+     * Queries the terminal to determine whether the alternate screen buffer is currently active.
+     * Returns undefined for non-interactive terminals or if the terminal does not respond within the timeout.
+     *
+     * @returns {Promise<boolean|undefined>} true if in alt screen, false if in main screen, undefined if unknown.
+     */
+    static isAltScreen(): Promise<boolean | undefined>;
+    /**
+     * Save the current screen contents.
+     *
+     * @returns {void}
+     */
+    static saveScreen(): void;
+    /**
+     * Restore previously saved screen contents.
+     *
+     * @returns {void}
+     */
+    static restoreScreen(): void;
 }
 //# sourceMappingURL=Term.d.ts.map
