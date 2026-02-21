@@ -6,7 +6,8 @@ import {stripVTControlCharacters} from "node:util"
 import c from "@gesslar/colours"
 
 import Sass from "./Sass.js"
-import {Promised} from "../../browser/index.js"
+import Time from "../../browser/lib/Time.js"
+import Promised from "../../browser/lib/Promised.js"
 
 c.alias.set("success", "{F035}")
 c.alias.set("info", "{F033}")
@@ -582,7 +583,7 @@ export default class Term {
 
     // 4. Now await the response
     const positionData = await Promised.race([
-      setTimeout(25, undefined),
+      Time.after(25),
       dataPromise
     ])
 
@@ -705,7 +706,7 @@ export default class Term {
     this.write("\x1b[?1049$p")
 
     const response = await Promised.race([
-      setTimeout(25, undefined),
+      Time.after(25),
       dataPromise
     ])
 
