@@ -262,7 +262,7 @@ describe("FileObject", () => {
       const output = inspect(file)
 
       assert.ok(output.includes("FileObject"))
-      assert.ok(output.includes(file.path))
+      assert.ok(output.includes(file.path.replace(/\\/g, "\\\\")))
     })
 
     it("[Symbol.toPrimitive] returns path for string hint", () => {
