@@ -6,6 +6,7 @@ import {stripVTControlCharacters} from "node:util"
 import c from "@gesslar/colours"
 
 import Sass from "./Sass.js"
+import {Promised} from "../../browser/index.js"
 
 c.alias.set("success", "{F035}")
 c.alias.set("info", "{F033}")
@@ -488,13 +489,15 @@ export default class Term {
    * If in Char Mode, it resolves on Enter, Ctrl+D, or the ANSI 'R' terminator.
    *
    * @param {(text: string) => boolean} [terminator] - Optional callback to check if input is complete.
-   * @returns {Promise<string>} Resolves with the input data.
+   * @param {number} [timeoutMs=0] - Optional timeout in milliseconds. Resolves with empty string if exceeded.
+   * @returns {Promise<string>} Resolves with the input data, or empty string on timeout.
    */
-  static data(terminator = () => false) {
+  static data(terminator = () => false, timeoutMs = 0) {
     process.stdin.resume()
 
     return new Promise((resolve, reject) => {
       const chunks = []
+      let timer = null
 
       function onData(chunk) {
         const s = chunk.toString()
@@ -532,6 +535,7 @@ export default class Term {
       }
 
       function cleanup() {
+        clearTimeout(timer)
         process.stdin.off("data", onData)
         process.stdin.off("end", onEnd)
         process.stdin.off("error", onError)
@@ -544,11 +548,15 @@ export default class Term {
       process.stdin.on("data", onData)
       process.stdin.once("end", onEnd)
       process.stdin.once("error", onError)
+
+      if(timeoutMs > 0)
+        timer = setTimeout(onEnd, timeoutMs)
     })
   }
 
   /**
    * Gets the current cursor position in the terminal.
+   * Returns [0, 0] for non-interactive terminals or if the terminal does not respond within the timeout.
    *
    * @returns {Promise<[number, number]>} Resolves with [x, y] cursor position.
    */
@@ -567,13 +575,16 @@ export default class Term {
     // 2. Start the listener FIRST (do not await yet)
     const dataPromise = this.data((text => {
       return this.isCharMode && text.endsWith("R")
-    }).bind(this))
+    }).bind(this), 25)
 
     // 3. Write to stdout AFTER the listener is ready
     this.write("\x1b[6n")
 
     // 4. Now await the response
-    const positionData = await dataPromise
+    const positionData = await Promised.race([
+      setTimeout(25, undefined),
+      dataPromise
+    ])
 
     // 5. Restore the previous mode
     prevRawMode ? this.setCharMode() : this.setLineMode()
@@ -601,8 +612,11 @@ export default class Term {
     })
   }
 
-  // Spinner frames - using Braille patterns (widely supported)
-  // Falls back to ASCII when spinimate is implemented with proper detection
+  /**
+   * Spinner animation frames using Braille patterns (widely supported).
+   *
+   * @type {readonly string[]}
+   */
   static spinFrames = Object.freeze(["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
 
   // static async spinimate(delay=300, options = {position: {x: 0,y: 0}}) {
@@ -647,5 +661,80 @@ export default class Term {
     process.stdin.setEncoding("utf8")
 
     return this
+  }
+
+  /**
+   * Switch to the alternate screen buffer.
+   *
+   * @returns {void}
+   */
+  static altScreen() {
+    this.write("\x1b[?1049h")
+  }
+
+  /**
+   * Switch back to the main screen buffer.
+   *
+   * @returns {void}
+   */
+  static mainScreen() {
+    this.write("\x1b[?1049l")
+  }
+
+  /**
+   * Queries the terminal to determine whether the alternate screen buffer is currently active.
+   * Returns undefined for non-interactive terminals or if the terminal does not respond within the timeout.
+   *
+   * @returns {Promise<boolean|undefined>} true if in alt screen, false if in main screen, undefined if unknown.
+   */
+  static async isAltScreen() {
+    if(!this.isInteractive)
+      return undefined
+
+    const prevRawMode = this.isCharMode
+
+    // 1. Force Raw Mode so the terminal sends the report immediately
+    this.setCharMode()
+    process.stdin.setEncoding("utf8")
+
+    // 2. Start the listener FIRST (do not await yet)
+    const dataPromise = this.data((text => {
+      return this.isCharMode && text.endsWith("$y")
+    }).bind(this), 25)
+
+    this.write("\x1b[?1049$p")
+
+    const response = await Promised.race([
+      setTimeout(25, undefined),
+      dataPromise
+    ])
+
+    prevRawMode ? this.setCharMode() : this.setLineMode()
+
+    if(response === "\x1b[?1049;1$y")
+      return true
+
+    if(response === "\x1b[?1049;2$y")
+      return false
+
+    return undefined
+  }
+
+  /**
+   * Save the current screen contents.
+   *
+   * @returns {void}
+   */
+  static saveScreen() {
+    this.write("\x1b[?47h")
+  }
+
+  /**
+   * Restore previously saved screen contents.
+   *
+   * @returns {void}
+   */
+  static restoreScreen() {
+    this.write("\x1b[?47l")
   }
 }

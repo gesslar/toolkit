@@ -377,6 +377,65 @@ describe("Term", () => {
     it("up returns ANSI move up sequence", () => {
       assert.equal(Term.up, "\x1b[1A")
     })
+
+    it("isCharMode returns false in non-interactive environments", () => {
+      assert.equal(Term.isCharMode, false)
+    })
+
+    it("isLineMode returns false in non-interactive environments", () => {
+      assert.equal(Term.isLineMode, false)
+    })
+  })
+
+  describe("data()", () => {
+    it("resolves with empty string after timeout when no data arrives", async () => {
+      const result = await Term.data(() => false, 10)
+
+      assert.equal(result, "")
+    })
+  })
+
+  describe("screen buffer methods", () => {
+    it("altScreen exists and is a function", () => {
+      assert.equal(typeof Term.altScreen, "function")
+    })
+
+    it("mainScreen exists and is a function", () => {
+      assert.equal(typeof Term.mainScreen, "function")
+    })
+
+    it("isAltScreen exists and is a function", () => {
+      assert.equal(typeof Term.isAltScreen, "function")
+    })
+
+    it("isAltScreen returns undefined in non-interactive environments", async () => {
+      const result = await Term.isAltScreen()
+
+      assert.equal(result, undefined)
+    })
+
+    it("saveScreen exists and is a function", () => {
+      assert.equal(typeof Term.saveScreen, "function")
+    })
+
+    it("restoreScreen exists and is a function", () => {
+      assert.equal(typeof Term.restoreScreen, "function")
+    })
+
+    it("spinFrames is a frozen array of strings", () => {
+      assert.ok(Array.isArray(Term.spinFrames))
+      assert.ok(Term.spinFrames.length > 0)
+      assert.ok(Term.spinFrames.every(f => typeof f === "string"))
+      assert.throws(() => { Term.spinFrames.push("x") }, TypeError)
+    })
+  })
+
+  describe("getCursorPosition()", () => {
+    it("returns [0, 0] in non-interactive environments", async () => {
+      const result = await Term.getCursorPosition()
+
+      assert.deepEqual(result, [0, 0])
+    })
   })
 
   describe("stdin wrapper methods", () => {
