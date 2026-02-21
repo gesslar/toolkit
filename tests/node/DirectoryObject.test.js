@@ -1,9 +1,9 @@
 import assert from "node:assert/strict"
 import fs from "node:fs/promises"
-
 import path from "node:path"
 import {URL} from "node:url"
 import {afterEach,beforeEach,describe,it} from "node:test"
+import {inspect} from "node:util"
 
 import {DirectoryObject, FileObject, Sass} from "../../src/node/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
@@ -139,6 +139,75 @@ describe("DirectoryObject", () => {
 
       assert.ok(str.includes("DirectoryObject"))
       assert.ok(str.includes(dir.path))
+    })
+
+    it("toJSON returns plain object with expected keys and values", () => {
+      const dir = new DirectoryObject("/test/path")
+      const json = dir.toJSON()
+
+      assert.equal(typeof json, "object")
+      assert.equal(json.supplied, dir.supplied)
+      assert.equal(json.path, dir.path)
+      assert.equal(json.name, dir.name)
+      assert.equal(json.module, dir.module)
+      assert.equal(json.extension, dir.extension)
+      assert.equal(json.isDirectory, true)
+      assert.equal(json.sep, dir.sep)
+      assert.ok(Array.isArray(json.trail))
+    })
+
+    it("toJSON output is JSON.stringify compatible", () => {
+      const dir = new DirectoryObject("/test/path")
+      const parsed = JSON.parse(JSON.stringify(dir))
+
+      assert.equal(parsed.path, dir.path)
+      assert.equal(parsed.name, dir.name)
+      assert.equal(parsed.isDirectory, true)
+      assert.ok(Array.isArray(parsed.trail))
+    })
+
+    it("[inspect.custom] output includes class name and path", () => {
+      const dir = new DirectoryObject("/test/path")
+      const output = inspect(dir)
+
+      assert.ok(output.includes("DirectoryObject"))
+      assert.ok(output.includes(dir.path))
+    })
+
+    it("[Symbol.toPrimitive] returns path for string hint", () => {
+      const dir = new DirectoryObject("/test/path")
+
+      assert.equal(dir[Symbol.toPrimitive]("string"), dir.path)
+    })
+
+    it("[Symbol.toPrimitive] returns path for default hint", () => {
+      const dir = new DirectoryObject("/test/path")
+
+      assert.equal(dir[Symbol.toPrimitive]("default"), dir.path)
+    })
+
+    it("[Symbol.toPrimitive] returns NaN for number hint", () => {
+      const dir = new DirectoryObject("/test/path")
+
+      assert.ok(Number.isNaN(dir[Symbol.toPrimitive]("number")))
+    })
+
+    it("coerces to path in template literals", () => {
+      const dir = new DirectoryObject("/test/path")
+
+      assert.equal(`${dir}`, dir.path)
+    })
+
+    it("coerces to path in string concatenation", () => {
+      const dir = new DirectoryObject("/test/path")
+
+      assert.equal("" + dir, dir.path)
+    })
+
+    it("valueOf returns path", () => {
+      const dir = new DirectoryObject("/test/path")
+
+      assert.equal(dir.valueOf(), dir.path)
     })
   })
 

@@ -9,6 +9,7 @@ import fs from "node:fs/promises"
 import YAML from "yaml"
 import {URL} from "node:url"
 import {Buffer} from "node:buffer"
+import {inspect} from "node:util"
 
 import Data from "../../browser/lib/Data.js"
 import DirectoryObject from "./DirectoryObject.js"
@@ -145,6 +146,60 @@ export default class FileObject extends FS {
    */
   toString() {
     return `[${this.constructor.name}: ${this.path}]`
+  }
+
+  /**
+   * Returns a JSON-serializable representation of the FileObject.
+   *
+   * @returns {object} Plain object with file metadata
+   */
+  toJSON() {
+    return {
+      supplied: this.supplied,
+      path: this.path,
+      name: this.name,
+      module: this.module,
+      extension: this.extension,
+      isFile: this.isFile,
+      parentPath: this.parentPath,
+    }
+  }
+
+  /**
+   * Custom Node.js inspect implementation for console.log output.
+   *
+   * @param {number} depth - Inspection depth
+   * @param {object} options - Inspect options
+   * @param {Function} ins - The inspect function
+   * @returns {string} Formatted string representation
+   */
+  [inspect.custom](depth, options, ins) {
+    return `${this.constructor.name} ${ins(this.toJSON(), options)}`
+  }
+
+  /**
+   * Returns the file path as a primitive value, enabling natural use in
+   * string contexts. String and default hints return the file path; number
+   * hint returns NaN.
+   *
+   * @param {"string"|"number"|"default"} hint - The coercion type hint
+   * @returns {string|number} The file path, or NaN for numeric coercion
+   */
+  [Symbol.toPrimitive](hint) {
+    if(hint === "number") {
+      return NaN
+    }
+
+    return this.path
+  }
+
+  /**
+   * Returns the file path as a primitive string value.
+   *
+   * @returns {string} The file path
+   */
+  valueOf() {
+    return this.path
   }
 
   /**

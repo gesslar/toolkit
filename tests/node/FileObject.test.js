@@ -5,6 +5,7 @@ import {URL} from "node:url"
 import {afterEach, beforeEach, describe, it} from "node:test"
 import process from "node:process"
 import {Buffer} from "node:buffer"
+import {inspect} from "node:util"
 
 import {DirectoryObject,FileObject,Sass} from "../../src/node/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
@@ -231,6 +232,73 @@ describe("FileObject", () => {
 
       assert.ok(str.includes("FileObject"))
       assert.ok(str.includes(file.path))
+    })
+
+    it("toJSON returns plain object with expected keys and values", () => {
+      const file = new FileObject("/test/path/file.txt")
+      const json = file.toJSON()
+
+      assert.equal(typeof json, "object")
+      assert.equal(json.supplied, file.supplied)
+      assert.equal(json.path, file.path)
+      assert.equal(json.name, file.name)
+      assert.equal(json.module, file.module)
+      assert.equal(json.extension, file.extension)
+      assert.equal(json.isFile, true)
+      assert.equal(json.parentPath, file.parentPath)
+    })
+
+    it("toJSON output is JSON.stringify compatible", () => {
+      const file = new FileObject("/test/path/file.txt")
+      const parsed = JSON.parse(JSON.stringify(file))
+
+      assert.equal(parsed.path, file.path)
+      assert.equal(parsed.name, file.name)
+      assert.equal(parsed.isFile, true)
+    })
+
+    it("[inspect.custom] output includes class name and path", () => {
+      const file = new FileObject("/test/path/file.txt")
+      const output = inspect(file)
+
+      assert.ok(output.includes("FileObject"))
+      assert.ok(output.includes(file.path))
+    })
+
+    it("[Symbol.toPrimitive] returns path for string hint", () => {
+      const file = new FileObject("/test/path/file.txt")
+
+      assert.equal(file[Symbol.toPrimitive]("string"), file.path)
+    })
+
+    it("[Symbol.toPrimitive] returns path for default hint", () => {
+      const file = new FileObject("/test/path/file.txt")
+
+      assert.equal(file[Symbol.toPrimitive]("default"), file.path)
+    })
+
+    it("[Symbol.toPrimitive] returns NaN for number hint", () => {
+      const file = new FileObject("/test/path/file.txt")
+
+      assert.ok(Number.isNaN(file[Symbol.toPrimitive]("number")))
+    })
+
+    it("coerces to path in template literals", () => {
+      const file = new FileObject("/test/path/file.txt")
+
+      assert.equal(`${file}`, file.path)
+    })
+
+    it("coerces to path in string concatenation", () => {
+      const file = new FileObject("/test/path/file.txt")
+
+      assert.equal("" + file, file.path)
+    })
+
+    it("valueOf returns path", () => {
+      const file = new FileObject("/test/path/file.txt")
+
+      assert.equal(file.valueOf(), file.path)
     })
   })
 
