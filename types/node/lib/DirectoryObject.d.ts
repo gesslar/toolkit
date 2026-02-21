@@ -81,6 +81,18 @@ export default class DirectoryObject extends FS {
      */
     constructor(supplied?: string | null);
     /**
+     * Returns a JSON-serializable representation of the DirectoryObject.
+     *
+     * @returns {object} Plain object with directory metadata
+     */
+    toJSON(): object;
+    /**
+     * Returns the directory path as a primitive string value.
+     *
+     * @returns {string} The directory path
+     */
+    valueOf(): string;
+    /**
      * Checks if the directory exists (async).
      *
      * @returns {Promise<boolean>} - A Promise that resolves to true or false
@@ -322,6 +334,24 @@ export default class DirectoryObject extends FS {
      * console.log(escaped.path) // "/projects/git/toolkit/foo/bar.js"
      */
     getFile(filename: string): FileObject;
+    /**
+     * Custom Node.js inspect implementation for console.log output.
+     *
+     * @param {number} depth - Inspection depth
+     * @param {object} options - Inspect options
+     * @param {Function} ins - The inspect function
+     * @returns {string} Formatted string representation
+     */
+    [inspect.custom](depth: number, options: object, ins: Function): string;
+    /**
+     * Returns the directory path as a primitive value, enabling natural use in
+     * string contexts. String and default hints return the directory path; number
+     * hint returns NaN.
+     *
+     * @param {"string"|"number"|"default"} hint - The coercion type hint
+     * @returns {string|number} The directory path, or NaN for numeric coercion
+     */
+    [Symbol.toPrimitive](hint: "string" | "number" | "default"): string | number;
     #private;
 }
 export type GeneratorType = {
@@ -380,4 +410,5 @@ export type DirectoryMeta = {
 import FS from "./FileSystem.js";
 import { URL } from "node:url";
 import FileObject from "./FileObject.js";
+import { inspect } from "node:util";
 //# sourceMappingURL=DirectoryObject.d.ts.map

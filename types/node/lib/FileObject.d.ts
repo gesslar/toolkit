@@ -43,6 +43,18 @@ export default class FileObject extends FS {
      */
     constructor(submitted: string, parent?: DirectoryObject | string | null);
     /**
+     * Returns a JSON-serializable representation of the FileObject.
+     *
+     * @returns {object} Plain object with file metadata
+     */
+    toJSON(): object;
+    /**
+     * Returns the file path as a primitive string value.
+     *
+     * @returns {string} The file path
+     */
+    valueOf(): string;
+    /**
      * Checks if the file exists (async).
      *
      * @returns {Promise<boolean>} - A Promise that resolves to true or false
@@ -249,12 +261,31 @@ export default class FileObject extends FS {
      * await file.delete()
      */
     delete(): Promise<void>;
+    /**
+     * Custom Node.js inspect implementation for console.log output.
+     *
+     * @param {number} depth - Inspection depth
+     * @param {object} options - Inspect options
+     * @param {Function} ins - The inspect function
+     * @returns {string} Formatted string representation
+     */
+    [inspect.custom](depth: number, options: object, ins: Function): string;
+    /**
+     * Returns the file path as a primitive value, enabling natural use in
+     * string contexts. String and default hints return the file path; number
+     * hint returns NaN.
+     *
+     * @param {"string"|"number"|"default"} hint - The coercion type hint
+     * @returns {string|number} The file path, or NaN for numeric coercion
+     */
+    [Symbol.toPrimitive](hint: "string" | "number" | "default"): string | number;
     #private;
 }
 import FS from "./FileSystem.js";
 import { URL } from "node:url";
 import DirectoryObject from "./DirectoryObject.js";
 import { Buffer } from "node:buffer";
+import { inspect } from "node:util";
 import JSON5 from "json5";
 import YAML from "yaml";
 //# sourceMappingURL=FileObject.d.ts.map

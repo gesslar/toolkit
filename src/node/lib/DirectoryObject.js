@@ -7,6 +7,7 @@
 import {glob, mkdir, opendir, readdir, rmdir, stat} from "node:fs/promises"
 import path, {relative} from "node:path"
 import {URL} from "node:url"
+import {inspect} from "node:util"
 
 import Data from "../../browser/lib/Data.js"
 import FileObject from "./FileObject.js"
@@ -156,6 +157,62 @@ export default class DirectoryObject extends FS {
    */
   toString() {
     return `[${this.constructor.name}: ${this.path}]`
+  }
+
+  /**
+   * Returns a JSON-serializable representation of the DirectoryObject.
+   *
+   * @returns {object} Plain object with directory metadata
+   */
+  toJSON() {
+    return {
+      supplied: this.supplied,
+      path: this.path,
+      name: this.name,
+      module: this.module,
+      extension: this.extension,
+      isDirectory: this.isDirectory,
+      parentPath: this.#meta.parentPath,
+      sep: this.sep,
+      trail: this.trail,
+    }
+  }
+
+  /**
+   * Custom Node.js inspect implementation for console.log output.
+   *
+   * @param {number} depth - Inspection depth
+   * @param {object} options - Inspect options
+   * @param {Function} ins - The inspect function
+   * @returns {string} Formatted string representation
+   */
+  [inspect.custom](depth, options, ins) {
+    return `${this.constructor.name} ${ins(this.toJSON(), options)}`
+  }
+
+  /**
+   * Returns the directory path as a primitive value, enabling natural use in
+   * string contexts. String and default hints return the directory path; number
+   * hint returns NaN.
+   *
+   * @param {"string"|"number"|"default"} hint - The coercion type hint
+   * @returns {string|number} The directory path, or NaN for numeric coercion
+   */
+  [Symbol.toPrimitive](hint) {
+    if(hint === "number") {
+      return NaN
+    }
+
+    return this.path
+  }
+
+  /**
+   * Returns the directory path as a primitive string value.
+   *
+   * @returns {string} The directory path
+   */
+  valueOf() {
+    return this.path
   }
 
   /**
