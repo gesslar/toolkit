@@ -394,12 +394,14 @@ describe("Term", () => {
   })
 
   describe("screen buffer methods", () => {
-    it("altScreen exists and is a function", () => {
+    it("altScreen returns Term class for chaining", () => {
       assert.equal(typeof Term.altScreen, "function")
+      assert.equal(Term.altScreen(), Term)
     })
 
-    it("mainScreen exists and is a function", () => {
+    it("mainScreen returns Term class for chaining", () => {
       assert.equal(typeof Term.mainScreen, "function")
+      assert.equal(Term.mainScreen(), Term)
     })
 
     it("isAltScreen exists and is a function", () => {
@@ -412,12 +414,14 @@ describe("Term", () => {
       assert.equal(result, undefined)
     })
 
-    it("saveScreen exists and is a function", () => {
+    it("saveScreen returns Term class for chaining", () => {
       assert.equal(typeof Term.saveScreen, "function")
+      assert.equal(Term.saveScreen(), Term)
     })
 
-    it("restoreScreen exists and is a function", () => {
+    it("restoreScreen returns Term class for chaining", () => {
       assert.equal(typeof Term.restoreScreen, "function")
+      assert.equal(Term.restoreScreen(), Term)
     })
 
     it("spinFrames is a frozen array of strings", () => {
@@ -425,6 +429,19 @@ describe("Term", () => {
       assert.ok(Term.spinFrames.length > 0)
       assert.ok(Term.spinFrames.every(f => typeof f === "string"))
       assert.throws(() => { Term.spinFrames.push("x") }, TypeError)
+    })
+  })
+
+  describe("cls", () => {
+    it("returns Term class for chaining", () => {
+      assert.equal(typeof Term.cls, "function")
+      assert.equal(Term.cls(), Term)
+    })
+
+    it("supports chaining with other methods", () => {
+      assert.doesNotThrow(() => {
+        Term.cls().write("")
+      })
     })
   })
 
