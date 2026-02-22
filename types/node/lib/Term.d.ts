@@ -277,13 +277,7 @@ export default class Term {
      * @returns {Promise<[number, number]>} Resolves with [x, y] cursor position.
      */
     static getCursorPosition(): Promise<[number, number]>;
-    /**
-     * Write output to stdout and return a promise that resolves when complete.
-     *
-     * @param {string} output - The string to write.
-     * @returns {Promise<void>} Resolves when write completes.
-     */
-    static directWrite(output: string): Promise<void>;
+    static directWrite(output: any): void;
     /**
      * Spinner animation frames using Braille patterns (widely supported).
      *

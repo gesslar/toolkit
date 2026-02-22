@@ -282,13 +282,6 @@ describe("Term", () => {
   })
 
   describe("terminal control methods", () => {
-    it("directWrite exists and returns a promise", async () => {
-      assert.equal(typeof Term.directWrite, "function")
-      const result = Term.directWrite("")
-      assert.ok(result instanceof Promise)
-      await result // Should resolve without error
-    })
-
     it("clearLines exists", () => {
       assert.equal(typeof Term.clearLines, "function")
     })

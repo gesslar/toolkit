@@ -4,6 +4,7 @@ import process from "node:process"
 import {Writable} from "node:stream"
 import {stripVTControlCharacters} from "node:util"
 import supportsColor from "supports-color"
+import fs from "node:fs"
 
 import Promised from "../../browser/lib/Promised.js"
 import Time from "../../browser/lib/Time.js"
@@ -480,7 +481,7 @@ export default class Term {
    * @returns {typeof Term} The Term class for chaining.
    */
   static write(output) {
-    this.directWrite(output).catch(console.error)
+    fs.writeSync(1, output)
 
     return this
   }
@@ -599,18 +600,6 @@ export default class Term {
 
     // ANSI returns [row;col], which is [y;x]
     return [parseInt(x, 10), parseInt(y, 10)]
-  }
-
-  /**
-   * Write output to stdout and return a promise that resolves when complete.
-   *
-   * @param {string} output - The string to write.
-   * @returns {Promise<void>} Resolves when write completes.
-   */
-  static directWrite(output) {
-    return new Promise(resolve => {
-      process.stdout.write(output, () => resolve())
-    })
   }
 
   /**
