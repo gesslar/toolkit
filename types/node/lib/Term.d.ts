@@ -311,15 +311,15 @@ export default class Term {
     /**
      * Switch to the alternate screen buffer.
      *
-     * @returns {void}
+     * @returns {typeof Term} The Term class for chaining.
      */
-    static altScreen(): void;
+    static altScreen(): typeof Term;
     /**
      * Switch back to the main screen buffer.
      *
-     * @returns {void}
+     * @returns {typeof Term} The Term class for chaining.
      */
-    static mainScreen(): void;
+    static mainScreen(): typeof Term;
     /**
      * Queries the terminal to determine whether the alternate screen buffer is currently active.
      * Returns undefined for non-interactive terminals or if the terminal does not respond within the timeout.
@@ -330,14 +330,20 @@ export default class Term {
     /**
      * Save the current screen contents.
      *
-     * @returns {void}
+     * @returns {typeof Term} The Term class for chaining.
      */
-    static saveScreen(): void;
+    static saveScreen(): typeof Term;
     /**
      * Restore previously saved screen contents.
      *
-     * @returns {void}
+     * @returns {typeof Term} The Term class for chaining.
      */
-    static restoreScreen(): void;
+    static restoreScreen(): typeof Term;
+    /**
+     * Clear the entire screen and move cursor to the home position.
+     *
+     * @returns {typeof Term} The Term class for chaining.
+     */
+    static cls(): typeof Term;
 }
 //# sourceMappingURL=Term.d.ts.map

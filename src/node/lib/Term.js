@@ -667,19 +667,23 @@ export default class Term {
   /**
    * Switch to the alternate screen buffer.
    *
-   * @returns {void}
+   * @returns {typeof Term} The Term class for chaining.
    */
   static altScreen() {
     this.write("\x1b[?1049h")
+
+    return this
   }
 
   /**
    * Switch back to the main screen buffer.
    *
-   * @returns {void}
+   * @returns {typeof Term} The Term class for chaining.
    */
   static mainScreen() {
     this.write("\x1b[?1049l")
+
+    return this
   }
 
   /**
@@ -724,18 +728,33 @@ export default class Term {
   /**
    * Save the current screen contents.
    *
-   * @returns {void}
+   * @returns {typeof Term} The Term class for chaining.
    */
   static saveScreen() {
     this.write("\x1b[?47h")
+
+    return this
   }
 
   /**
    * Restore previously saved screen contents.
    *
-   * @returns {void}
+   * @returns {typeof Term} The Term class for chaining.
    */
   static restoreScreen() {
     this.write("\x1b[?47l")
+
+    return this
+  }
+
+  /**
+   * Clear the entire screen and move cursor to the home position.
+   *
+   * @returns {typeof Term} The Term class for chaining.
+   */
+  static cls() {
+    this.write("\x1b[2J\x1b[H")
+
+    return this
   }
 }
