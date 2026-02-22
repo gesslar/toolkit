@@ -277,7 +277,6 @@ export default class Term {
      * @returns {Promise<[number, number]>} Resolves with [x, y] cursor position.
      */
     static getCursorPosition(): Promise<[number, number]>;
-    static directWrite(output: any): void;
     /**
      * Spinner animation frames using Braille patterns (widely supported).
      *
