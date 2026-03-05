@@ -12,22 +12,22 @@ import Sass from "./Sass.js"
 
 c.alias.set("success", "{F035}")
 c.alias.set("info", "{F033}")
-c.alias.set("warn", "{F208}")
-c.alias.set("error", "{F032}")
-c.alias.set("modified", "{F147}")
+c.alias.set("warn", "{F214}")
+c.alias.set("error", "{F124}")
+
+c.alias.set("debug", "{F033}")
+
+c.alias.set("modified", "{F099}")
+
+c.alias.set("muted", "{F244}")
+c.alias.set("bold", "{<B}")
+c.alias.set("dim", "{<D}")
 
 /**
  * Terminal output utilities with ANSI colour support.
  *
  * Provides console logging wrappers, cursor control, and formatted message
  * output with colour styling via `@gesslar/colours`.
- *
- * Predefined colour aliases:
- * - `success` - green (F035)
- * - `info` - blue (F033)
- * - `warn` - orange (F208)
- * - `error` - red (F032)
- * - `modified` - purple (F147)
  */
 export default class Term {
   static #cache = new Map()

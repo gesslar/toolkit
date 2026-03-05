@@ -209,7 +209,7 @@ declare class Glog {
      * @param {boolean} [options.stackTrace=false] - Enable stack trace extraction
      * @param {boolean} [options.tagsAsStrings=false] - Use string tags instead of symbols
      * @param {boolean} [options.displayName=true] - Display logger name in output
-     * @param {string} [options.env] - Environment mode ("extension" for VSCode integration)
+     * @param {object} [options.vscode] - VS Code API object (auto-detected if not provided)
      */
     constructor(options?: {
         name?: string;
@@ -221,7 +221,7 @@ declare class Glog {
         stackTrace?: boolean;
         tagsAsStrings?: boolean;
         displayName?: boolean;
-        env?: string;
+        vscode?: object;
     });
     /**
      * Set configuration options for this logger instance

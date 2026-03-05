@@ -24,20 +24,17 @@ export default class Sass extends BrowserSass {
    * Optionally includes detailed stack trace information.
    *
    * @param {boolean} [nerdMode] - Whether to include detailed stack trace
-   * @param {boolean} [isNested] - Whether this is a nested error report
    */
-  report(nerdMode=false, isNested=false) {
-    if(isNested)
-      Term.error()
-
+  report(nerdMode=false) {
     Term.group(
+      "\r\n" +
       `${Term.terminalBracket(["error", "Something Went Wrong"])}\n` +
       this.trace.join("\n")
     )
 
     if(nerdMode) {
       Term.error(
-        "\n" +
+        "\r\n" +
         `${Term.terminalBracket(["error", "Nerd Victuals"])}\n` +
         this.#fullBodyMassage(this.stack)
       )

@@ -11,11 +11,23 @@
  * 5. Traditional logger: logger.debug("message", level)
  */
 
+import {createRequire} from "node:module"
+
 import c from "@gesslar/colours"
 
 import Data from "../../browser/lib/Data.js"
 import Term from "./Term.js"
 import Util from "../../browser/lib/Util.js"
+
+// Auto-detect VS Code extension environment
+let vscodeApi = null
+try {
+  const _require = createRequire(import.meta.url)
+
+  vscodeApi = _require("vscode")
+} catch {
+  // Not in a VS Code extension environment
+}
 
 /**
  * Default colour configuration for logger output using @gesslar/colours format
@@ -61,16 +73,6 @@ export const logSymbols = {
   success: "✓"
 }
 
-// Set up convenient aliases for common log colours
-c.alias.set("debug", "{F033}")
-c.alias.set("info", "{F036}")
-c.alias.set("warn", "{F214}")
-c.alias.set("error", "{F196}")
-c.alias.set("success", "{F046}")
-c.alias.set("muted", "{F244}")
-c.alias.set("bold", "{<B}")
-c.alias.set("dim", "{<D}")
-
 class Glog {
   // Static properties (for global usage)
   static logLevel = 0
@@ -90,9 +92,9 @@ class Glog {
   #tagsAsStrings = false
   #displayName = true
   #symbols = null
-  #vscodeError = null
-  #vscodeWarn = null
-  #vscodeInfo = null
+  #vscodeWindow = null
+  #vscodeApi = null
+  #outputChannel = null
 
   /**
    * Create a new Glog logger instance with optional configuration
@@ -107,23 +109,18 @@ class Glog {
    * @param {boolean} [options.stackTrace=false] - Enable stack trace extraction
    * @param {boolean} [options.tagsAsStrings=false] - Use string tags instead of symbols
    * @param {boolean} [options.displayName=true] - Display logger name in output
-   * @param {string} [options.env] - Environment mode ("extension" for VSCode integration)
+   * @param {object} [options.vscode] - VS Code API object (auto-detected if not provided)
    */
   constructor(options = {}) {
     this.setOptions(options)
     this.constructor.name = "Glog"
 
-    // VSCode integration if specified
-    if(options.env === "extension") {
-      try {
-        const vscode = require("vscode")
+    // VSCode integration - prefer passed-in vscode, fall back to auto-detected
+    const vsapi = options.vscode ?? vscodeApi
 
-        this.#vscodeError = vscode.window.showErrorMessage
-        this.#vscodeWarn = vscode.window.showWarningMessage
-        this.#vscodeInfo = vscode.window.showInformationMessage
-      } catch {
-        // VSCode not available, ignore
-      }
+    if(vsapi) {
+      this.#vscodeApi = vsapi
+      this.#vscodeWindow = vsapi.window
     }
   }
 
@@ -514,6 +511,23 @@ class Glog {
     }
   }
 
+  get #channel() {
+    if(!this.#outputChannel && this.#vscodeApi) {
+      const name = this.#name || "Log"
+
+      this.#outputChannel = this.#vscodeApi.window.createOutputChannel(name)
+    }
+
+    return this.#outputChannel
+  }
+
+  #appendToChannel(level, message, ...arg) {
+    const timestamp = new Date().toISOString()
+    const parts = [timestamp, `[${level.toUpperCase()}]`, message, ...arg].join(" ")
+
+    this.#channel?.appendLine(parts)
+  }
+
   #compose(level, message, debugLevel = 0) {
     const colours = this.#colours || Glog.colours || loggerColours
     const name = this.#name || Glog.name || "Log"
@@ -603,8 +617,10 @@ class Glog {
 
     const currentLevel = this.#logLevel || Glog.logLevel
 
-    if(currentLevel > 0 && level <= currentLevel)
+    if(currentLevel > 0 && level <= currentLevel) {
       Term.debug(this.#compose("debug", message, level), ...arg)
+      this.#appendToChannel("debug", message, ...arg)
+    }
   }
 
   /**
@@ -615,7 +631,8 @@ class Glog {
    */
   info(message, ...arg) {
     Term.info(this.#compose("info", message), ...arg)
-    this.#vscodeInfo?.(JSON.stringify(message))
+    this.#appendToChannel("info", message, ...arg)
+    this.#vscodeWindow?.showInformationMessage(message)
   }
 
   /**
@@ -626,7 +643,8 @@ class Glog {
    */
   warn(message, ...arg) {
     Term.warn(this.#compose("warn", message), ...arg)
-    this.#vscodeWarn?.(JSON.stringify(message))
+    this.#appendToChannel("warn", message, ...arg)
+    this.#vscodeWindow?.showWarningMessage(message)
   }
 
   /**
@@ -637,7 +655,8 @@ class Glog {
    */
   error(message, ...arg) {
     Term.error(this.#compose("error", message), ...arg)
-    this.#vscodeError?.(JSON.stringify(message))
+    this.#appendToChannel("error", message, ...arg)
+    this.#vscodeWindow?.showErrorMessage(message)
   }
 
   /**

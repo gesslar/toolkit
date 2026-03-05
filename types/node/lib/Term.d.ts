@@ -3,13 +3,6 @@
  *
  * Provides console logging wrappers, cursor control, and formatted message
  * output with colour styling via `@gesslar/colours`.
- *
- * Predefined colour aliases:
- * - `success` - green (F035)
- * - `info` - blue (F033)
- * - `warn` - orange (F208)
- * - `error` - red (F032)
- * - `modified` - purple (F147)
  */
 export default class Term {
     static "__#private@#cache": Map<any, any>;
