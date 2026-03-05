@@ -51,17 +51,14 @@ export default class Valid {
    *                         met (optional)
    */
   static assert(condition, message, arg = null) {
-    if(!Data.isType(condition, "boolean")) {
+    if(!Data.isType(condition, "boolean"))
       throw Sass.new(`Condition must be a boolean, got ${condition}`)
-    }
 
-    if(!Data.isType(message, "string")) {
+    if(!Data.isType(message, "string"))
       throw Sass.new(`Message must be a string, got ${message}`)
-    }
 
-    if(!(arg === null || arg === undefined || typeof arg === "number")) {
+    if(!(arg === null || arg === undefined || typeof arg === "number"))
       throw Sass.new(`Arg must be a number, got ${arg}`)
-    }
 
     if(!condition)
       throw Sass.new(`${message}${arg ? `: ${arg}` : ""}`)

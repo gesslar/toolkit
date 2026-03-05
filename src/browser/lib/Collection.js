@@ -216,9 +216,8 @@ export default class Collection {
     Valid.type(arr, req, `Invalid array. Expected '${req}', got '${arrType}'`)
 
     // Validate type parameter if provided
-    if(type !== undefined) {
+    if(type !== undefined)
       Valid.type(type, "string", `Invalid type parameter. Expected 'string', got '${Data.typeOf(type)}'`)
-    }
 
     const checkType = type ? Util.capitalize(type) : Data.typeOf(arr[0])
 
