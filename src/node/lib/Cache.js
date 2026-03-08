@@ -22,7 +22,7 @@ export default class Cache {
    *
    * @private
    * @param {import("./FileObject.js").FileObject} file - The file object to remove from cache
-   * @returns {void}
+   * @returns {undefined}
    */
   #cleanup(file) {
     this.#modifiedTimes.delete(file.path)

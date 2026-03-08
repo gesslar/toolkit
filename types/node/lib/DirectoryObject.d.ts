@@ -18,7 +18,8 @@
  * @property {Array<string>|null} trail - Path segments
  * @property {URL|null} url - The directory URL
  */
-/** * DirectoryObject encapsulates metadata and operations for a directory,
+/**
+ * DirectoryObject encapsulates metadata and operations for a directory,
  * providing immutable path resolution, existence checks, and content enumeration.
  *
  * Features:
@@ -225,14 +226,14 @@ export default class DirectoryObject extends FS {
      *
      * @async
      * @param {object} [options] - Options to pass to fs.mkdir (e.g., {recursive: true, mode: 0o755})
-     * @returns {Promise<void>}
+     * @returns {Promise<undefined>}
      * @throws {Sass} If directory creation fails for reasons other than already existing
      * @example
      * // Create directory recursively
      * const dir = new DirectoryObject('./build/output')
      * await dir.assureExists({recursive: true})
      */
-    assureExists(options?: object): Promise<void>;
+    assureExists(options?: object): Promise<undefined>;
     /**
      * Generator that walks up the directory tree, yielding each parent directory.
      * Starts from the current directory and yields each parent until reaching the root.
@@ -257,7 +258,7 @@ export default class DirectoryObject extends FS {
      * a directory with contents, you must imperatively decide your deletion
      * strategy and handle it explicitly.
      *
-     * @returns {Promise<void>} Resolves when directory is deleted
+     * @returns {Promise<undefined>} Resolves when directory is deleted
      * @throws {Sass} If the directory URL is invalid
      * @throws {Sass} If the directory does not exist
      * @throws {Error} If the directory is not empty (from fs.rmdir)
@@ -265,7 +266,7 @@ export default class DirectoryObject extends FS {
      * const dir = new DirectoryObject('./temp/cache')
      * await dir.delete() // Only works if directory is empty
      */
-    delete(): Promise<void>;
+    delete(): Promise<undefined>;
     /**
      * Checks if a file exists within this directory.
      *

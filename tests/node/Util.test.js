@@ -231,9 +231,11 @@ describe("Util (Node-specific features)", () => {
       })
 
       try {
+        debugger
         await Util.asyncEmit(emitter, "test")
         assert.fail("Should have thrown")
       } catch(error) {
+        debugger
         // Sass errors get wrapped via addTrace - message preserved, context in trace
         assert.ok(error instanceof Sass)
         assert.equal(error.message, "Original Sass error")

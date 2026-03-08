@@ -31,7 +31,7 @@ export class Notify {
    *
    * @param {string} type - Event name to dispatch.
    * @param {unknown} [payload] - Data to send with the event.
-   * @returns {void}
+   * @returns {undefined}
    */
   emit(type, payload=undefined) {
     Valid.type(type, "String", {allowEmpty: false})
@@ -46,7 +46,7 @@ export class Notify {
    *
    * @param {string} type - Event name to dispatch.
    * @param {unknown} [payload] - Data to send with the event.
-   * @returns {Promise<void>} Resolves when all listeners have completed.
+   * @returns {Promise<undefined>} Resolves when all listeners have completed.
    */
   async asyncEmit(type, payload) {
     Valid.type(type, "String", {allowEmpty: false})
@@ -74,10 +74,10 @@ export class Notify {
    * Registers a listener for the given event type.
    *
    * @param {string} type - Event name to listen for.
-   * @param {(payload: unknown) => void} handler - Listener callback.
+   * @param {(payload: unknown) => undefined} handler - Listener callback.
    * @param {EventEmitter} [emitter] - The EventEmitter to attach to. Default is internal emitter.
    * @param {NotifyEventOptions} [options] - Options for the listener.
-   * @returns {() => void} Dispose function to unregister the handler.
+   * @returns {() => undefined} Dispose function to unregister the handler.
    */
   on(type, handler, emitter=this.#emitter, options=undefined) {
     Valid.type(type, "String", {allowEmpty: false})
@@ -96,9 +96,9 @@ export class Notify {
    * Removes a previously registered listener for the given event type.
    *
    * @param {string} type - Event name to remove.
-   * @param {(payload: unknown) => void} handler - Listener callback to detach.
+   * @param {(payload: unknown) => undefined} handler - Listener callback to detach.
    * @param {EventEmitter} [emitter] - The EventEmitter from which to remove. Default is internal emitter.
-   * @returns {void}
+   * @returns {undefined}
    */
   off(type, handler, emitter=this.#emitter) {
     Valid.type(type, "String", {allowEmpty: false})

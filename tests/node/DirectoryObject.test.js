@@ -1341,6 +1341,7 @@ describe("DirectoryObject", () => {
       const absolute = dir.getDirectory("/absolute/path")
       assert.ok(absolute.path.startsWith(path.resolve("/test")))
     })
+
   })
 
   describe("fromCwd() static method", () => {
@@ -1416,5 +1417,6 @@ describe("DirectoryObject", () => {
 
       assert.ok(file.path.includes("file with spaces & symbols!.json"))
     })
+
   })
 })
