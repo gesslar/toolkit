@@ -1,5 +1,5 @@
 export { default as Collection } from "../browser/lib/Collection.js";
-export { default as Data } from "../browser/lib/Data.js";
+export { default as Data } from "./lib/Data.js";
 export { default as Promised } from "../browser/lib/Promised.js";
 export { default as Time } from "../browser/lib/Time.js";
 export { default as Type } from "../browser/lib/TypeSpec.js";

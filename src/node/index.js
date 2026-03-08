@@ -1,6 +1,6 @@
 // Browser-compatible utilities (pure JS)
 export {default as Collection} from "../browser/lib/Collection.js"
-export {default as Data} from "../browser/lib/Data.js"
+export {default as Data} from "./lib/Data.js"
 export {default as Disposer} from "../browser/lib/Disposer.js"
 export {Disposer as DisposerClass} from "../browser/lib/Disposer.js"
 export {default as Promised} from "../browser/lib/Promised.js"

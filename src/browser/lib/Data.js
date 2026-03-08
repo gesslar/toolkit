@@ -530,4 +530,5 @@ export default class Data {
              Data.isType(value, "ArrayBuffer|Blob|Buffer")
            )
   }
+
 }

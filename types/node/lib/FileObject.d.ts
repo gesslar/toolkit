@@ -14,15 +14,6 @@
  */
 export default class FileObject extends FS {
     /**
-     * Configuration mapping data types to their respective parser modules for loadData method.
-     * Each parser module must have a .parse() method that accepts a string and returns parsed data.
-     *
-     * @type {{[key: string]: Array<typeof JSON5 | typeof YAML>}}
-     */
-    static dataLoaderConfig: {
-        [key: string]: Array<typeof JSON5 | typeof YAML>;
-    };
-    /**
      * Creates a FileObject representing the current working file (the file
      * that called this method). Parses the stack trace to determine the
      * caller's file path.
@@ -150,12 +141,44 @@ export default class FileObject extends FS {
      */
     modified(): Promise<Date | null>;
     /**
+     * Whether this FileObject has an active cache attached.
+     *
+     * @returns {boolean} True if a Cache instance is attached
+     */
+    get cached(): boolean;
+    /**
+     * Attaches a Cache instance to this FileObject for caching read and
+     * loadData results. If no cache is provided, a new Cache is created.
+     *
+     * @param {Cache} [cache] - The Cache instance to attach
+     * @returns {FileObject} This FileObject for chaining
+     * @throws {Sass} If a cache is already attached
+     */
+    withCache(cache?: Cache): FileObject;
+    /**
+     * Removes the attached cache, clearing any cached data for this file first.
+     *
+     * @returns {FileObject} This FileObject for chaining
+     */
+    removeCache(): FileObject;
+    /**
+     * Clears cached data for this file without removing the cache itself.
+     *
+     * @returns {FileObject} This FileObject for chaining
+     */
+    resetCache(): FileObject;
+    /**
      * Reads the content of a file asynchronously.
      *
-     * @param {string} [encoding] - The encoding to read the file as.
+     * @param {object} [options] - Read options
+     * @param {string} [options.encoding="utf8"] - The encoding to read the file as
+     * @param {boolean} [options.skipCache=false] - If true, bypass the cache
      * @returns {Promise<string>} The file contents
      */
-    read(encoding?: string): Promise<string>;
+    read({ encoding, skipCache }?: {
+        encoding?: string;
+        skipCache?: boolean;
+    }): Promise<string>;
     /**
      * Reads binary data from a file asynchronously.
      * Returns the file contents as a Buffer (Node.js binary data type).
@@ -200,21 +223,27 @@ export default class FileObject extends FS {
      */
     writeBinary(data: ArrayBuffer | Blob | Buffer): Promise<undefined>;
     /**
-     * Loads an object from JSON or YAML file.
-     * Attempts to parse content as JSON5 first, then falls back to YAML if specified.
+     * Loads an object from JSON or YAML file. Attempts to parse content as JSON5
+     * first, then falls back to YAML if specified.
      *
-     * @param {string} [type] - The expected type of data to parse ("json", "json5", "yaml", or "any")
-     * @param {string} [encoding] - The encoding to read the file as (default: "utf8")
+     * @param {object} [options] - Load options
+     * @param {string} [options.type="any"] - The expected type of data to parse ("json", "json5", "yaml", or "any")
+     * @param {string} [options.encoding="utf8"] - The encoding to read the file as
+     * @param {boolean} [options.skipCache=false] - If true, bypass the cache
      * @returns {Promise<unknown>} The parsed data object
      * @throws {Sass} If the content cannot be parsed or type is unsupported
      * @example
      * const configFile = new FileObject('./config.json5')
-     * const config = await configFile.loadData('json5')
+     * const config = await configFile.loadData({type: 'json5'})
      *
      * // Auto-detect format
-     * const data = await configFile.loadData('any')
+     * const data = await configFile.loadData()
      */
-    loadData(type?: string, encoding?: string): Promise<unknown>;
+    loadData({ type, encoding, skipCache }?: {
+        type?: string;
+        encoding?: string;
+        skipCache?: boolean;
+    }): Promise<unknown>;
     /**
      * Loads a file as a module and returns it.
      *
@@ -284,8 +313,7 @@ export default class FileObject extends FS {
 import FS from "./FileSystem.js";
 import { URL } from "node:url";
 import DirectoryObject from "./DirectoryObject.js";
+import Cache from "./Cache.js";
 import { Buffer } from "node:buffer";
 import { inspect } from "node:util";
-import JSON5 from "json5";
-import YAML from "yaml";
 //# sourceMappingURL=FileObject.d.ts.map

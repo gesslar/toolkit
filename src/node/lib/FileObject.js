@@ -4,18 +4,17 @@
  * resolution and existence checks.
  */
 
-import JSON5 from "json5"
 import fs from "node:fs/promises"
-import YAML from "yaml"
 import {URL} from "node:url"
 import {Buffer} from "node:buffer"
 import {inspect} from "node:util"
 
-import Data from "../../browser/lib/Data.js"
+import Data from "./Data.js"
 import DirectoryObject from "./DirectoryObject.js"
 import FS from "./FileSystem.js"
 import Sass from "./Sass.js"
 import Valid from "./Valid.js"
+import Cache from "./Cache.js"
 
 /**
  * FileObject encapsulates metadata and operations for a file, including path
@@ -33,19 +32,6 @@ import Valid from "./Valid.js"
  */
 
 export default class FileObject extends FS {
-  /**
-   * Configuration mapping data types to their respective parser modules for loadData method.
-   * Each parser module must have a .parse() method that accepts a string and returns parsed data.
-   *
-   * @type {{[key: string]: Array<typeof JSON5 | typeof YAML>}}
-   */
-  static dataLoaderConfig = Object.freeze({
-    json5: [JSON5],
-    json: [JSON5],
-    yaml: [YAML],
-    any: [JSON5, YAML]
-  })
-
   /**
    * @type {object}
    * @property {string|null} supplied - User-supplied path
@@ -69,6 +55,8 @@ export default class FileObject extends FS {
     parentPath: null,
     real: null,
   })
+
+  #cache = null
 
   /**
    * Constructs a FileObject instance.
@@ -162,6 +150,7 @@ export default class FileObject extends FS {
       extension: this.extension,
       isFile: this.isFile,
       parentPath: this.parentPath,
+      cached: this.cached
     }
   }
 
@@ -378,16 +367,73 @@ export default class FileObject extends FS {
   }
 
   /**
+   * Whether this FileObject has an active cache attached.
+   *
+   * @returns {boolean} True if a Cache instance is attached
+   */
+  get cached() {
+    return Data.isType(this.#cache, "Cache")
+  }
+
+  /**
+   * Attaches a Cache instance to this FileObject for caching read and
+   * loadData results. If no cache is provided, a new Cache is created.
+   *
+   * @param {Cache} [cache] - The Cache instance to attach
+   * @returns {FileObject} This FileObject for chaining
+   * @throws {Sass} If a cache is already attached
+   */
+  withCache(cache) {
+    Valid.type(cache, "Undefined|Cache")
+    Valid.assert(!this.#cache, "Cache already set. Remove the cache before re-assigning.")
+
+    cache ??= new Cache()
+
+    this.#cache = cache
+
+    return this
+  }
+
+  /**
+   * Removes the attached cache, clearing any cached data for this file first.
+   *
+   * @returns {FileObject} This FileObject for chaining
+   */
+  removeCache() {
+    this.resetCache()
+    this.#cache = null
+
+    return this
+  }
+
+  /**
+   * Clears cached data for this file without removing the cache itself.
+   *
+   * @returns {FileObject} This FileObject for chaining
+   */
+  resetCache() {
+    this.#cache?.resetCache(this)
+
+    return this
+  }
+
+  /**
    * Reads the content of a file asynchronously.
    *
-   * @param {string} [encoding] - The encoding to read the file as.
+   * @param {object} [options] - Read options
+   * @param {string} [options.encoding="utf8"] - The encoding to read the file as
+   * @param {boolean} [options.skipCache=false] - If true, bypass the cache
    * @returns {Promise<string>} The file contents
    */
-  async read(encoding="utf8") {
+  async read({encoding="utf8", skipCache=false} = {}) {
     const filePath = this.path
 
+    if(this.#cache && skipCache === false)
+      return await this.#cache.loadFromCache(
+        this, {encoding})
+
     if(!(await this.exists))
-      throw Sass.new(`No such file '${filePath}'`)
+      throw Sass.new(`No such file '${this}'`)
 
     return await fs.readFile(filePath, encoding)
   }
@@ -471,44 +517,34 @@ export default class FileObject extends FS {
   }
 
   /**
-   * Loads an object from JSON or YAML file.
-   * Attempts to parse content as JSON5 first, then falls back to YAML if specified.
+   * Loads an object from JSON or YAML file. Attempts to parse content as JSON5
+   * first, then falls back to YAML if specified.
    *
-   * @param {string} [type] - The expected type of data to parse ("json", "json5", "yaml", or "any")
-   * @param {string} [encoding] - The encoding to read the file as (default: "utf8")
+   * @param {object} [options] - Load options
+   * @param {string} [options.type="any"] - The expected type of data to parse ("json", "json5", "yaml", or "any")
+   * @param {string} [options.encoding="utf8"] - The encoding to read the file as
+   * @param {boolean} [options.skipCache=false] - If true, bypass the cache
    * @returns {Promise<unknown>} The parsed data object
    * @throws {Sass} If the content cannot be parsed or type is unsupported
    * @example
    * const configFile = new FileObject('./config.json5')
-   * const config = await configFile.loadData('json5')
+   * const config = await configFile.loadData({type: 'json5'})
    *
    * // Auto-detect format
-   * const data = await configFile.loadData('any')
+   * const data = await configFile.loadData()
    */
-  async loadData(type="any", encoding="utf8") {
-    const content = await this.read(encoding)
-    const normalizedType = type.toLowerCase()
-    const toTry = {
-      json5: [JSON5],
-      json: [JSON5],
-      yaml: [YAML],
-      any: [JSON5,YAML]
-    }[normalizedType]
+  async loadData({type="any", encoding="utf8", skipCache=false} = {}) {
+    if(this.#cache && skipCache === false)
+      return await this.#cache.loadDataFromCache(
+        this, {encoding, type})
 
-    if(!toTry)
-      throw Sass.new(`Unsupported data type '${type}'. Supported types: json, json5, yaml.`)
+    if(!(await this.exists))
+      throw Sass.new(`No such file '${this}'`)
 
-    for(const format of toTry) {
-      try {
-        const result = format.parse(content)
+    const content = await this.read({encoding, skipCache})
+    const result = Data.textAsData(content, type)
 
-        return result
-      } catch {
-        // nothing to see here
-      }
-    }
-
-    throw Sass.new(`Content is neither valid JSON5 nor valid YAML:\n'${this.path}'`)
+    return result
   }
 
   /**
