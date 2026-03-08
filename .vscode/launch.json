@@ -2,28 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run cap.mjs",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/work/cap.mjs",
-      "console": "integratedTerminal",
-      "preLaunchTask": "clear"
-    },
-    {
-      "name": "Run VFO.mjs",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/work/vfo.mjs",
-      "console": "integratedTerminal",
-      "preLaunchTask": "clear"
-    },
-    {
       "name": "Run Tests",
       "type": "node",
       "request": "launch",

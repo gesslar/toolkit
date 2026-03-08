@@ -42,9 +42,9 @@ export default class Util extends BrowserUtil {
      * @param {object} emitter - The emitter object (already validated)
      * @param {string} event - The event name to emit
      * @param {...unknown} args - Arguments to pass to event listeners
-     * @returns {Promise<void>} Resolves when all listeners have completed
+     * @returns {Promise<undefined>} Resolves when all listeners have completed
      */
-    static "__#private@#performAsyncEmit"(emitter: object, event: string, ...args: unknown[]): Promise<void>;
+    static "__#private@#performAsyncEmit"(emitter: object, event: string, ...args: unknown[]): Promise<undefined>;
     /**
      * Emits an event asynchronously and waits for all listeners to complete.
      * Unlike the standard EventEmitter.emit() which is synchronous, this method
@@ -56,9 +56,9 @@ export default class Util extends BrowserUtil {
      * @param {EventEmitter} emitter - The EventEmitter instance to emit on
      * @param {string} event - The event name to emit
      * @param {...unknown} args - Arguments to pass to event listeners
-     * @returns {Promise<void>} Resolves when all listeners have completed
+     * @returns {Promise<undefined>} Resolves when all listeners have completed
      */
-    static asyncEmit(emitter: EventEmitter, event: string, ...args: unknown[]): Promise<void>;
+    static asyncEmit(emitter: EventEmitter, event: string, ...args: unknown[]): Promise<undefined>;
     /**
      * Emits an event asynchronously and waits for all listeners to complete.
      * Like asyncEmit, but uses duck typing for more flexible emitter validation.
@@ -68,9 +68,9 @@ export default class Util extends BrowserUtil {
      * @param {object} emitter - Any object with EventEmitter-like interface
      * @param {string} event - The event name to emit
      * @param {...unknown} args - Arguments to pass to event listeners
-     * @returns {Promise<void>} Resolves when all listeners have completed, but no grapes.
+     * @returns {Promise<undefined>} Resolves when all listeners have completed, but no grapes.
      */
-    static asyncEmitQuack(emitter: object, event: string, ...args: unknown[]): Promise<void>;
+    static asyncEmitQuack(emitter: object, event: string, ...args: unknown[]): Promise<undefined>;
     /**
      * Retrieves an environment variable and parses it as JSON5.
      *

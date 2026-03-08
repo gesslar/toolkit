@@ -107,11 +107,11 @@ export default class Term {
      * @param {string | Array<string | [string, string]>} args - Message or segments.
      * @param {object} [options] - Behaviour flags.
      * @param {boolean} options.silent - When true, suppress output.
-     * @returns {void}
+     * @returns {undefined}
      */
     static status(args: string | Array<string | [string, string]>, { silent }?: {
         silent: boolean;
-    }): void;
+    }): undefined;
     /**
      * Constructs a formatted status line with optional colour styling.
      *

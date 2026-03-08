@@ -65,7 +65,7 @@ export default class Util extends BrowserUtil {
    * @param {object} emitter - The emitter object (already validated)
    * @param {string} event - The event name to emit
    * @param {...unknown} args - Arguments to pass to event listeners
-   * @returns {Promise<void>} Resolves when all listeners have completed
+   * @returns {Promise<undefined>} Resolves when all listeners have completed
    */
   static async #performAsyncEmit(emitter, event, ...args) {
     const listeners = emitter.listeners(event)
@@ -97,7 +97,7 @@ export default class Util extends BrowserUtil {
    * @param {EventEmitter} emitter - The EventEmitter instance to emit on
    * @param {string} event - The event name to emit
    * @param {...unknown} args - Arguments to pass to event listeners
-   * @returns {Promise<void>} Resolves when all listeners have completed
+   * @returns {Promise<undefined>} Resolves when all listeners have completed
    */
   static async asyncEmit(emitter, event, ...args) {
     try {
@@ -124,7 +124,7 @@ export default class Util extends BrowserUtil {
    * @param {object} emitter - Any object with EventEmitter-like interface
    * @param {string} event - The event name to emit
    * @param {...unknown} args - Arguments to pass to event listeners
-   * @returns {Promise<void>} Resolves when all listeners have completed, but no grapes.
+   * @returns {Promise<undefined>} Resolves when all listeners have completed, but no grapes.
    */
   static async asyncEmitQuack(emitter, event, ...args) {
     try {

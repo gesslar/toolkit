@@ -419,7 +419,7 @@ export default class FileObject extends FS {
    *
    * @param {string} content - The content to write
    * @param {string} [encoding] - The encoding in which to write (default: "utf8")
-   * @returns {Promise<void>}
+   * @returns {Promise<undefined>}
    * @throws {Sass} If the file URL is invalid or the parent directory doesn't exist
    * @example
    * const file = new FileObject('./output/data.json')
@@ -444,7 +444,7 @@ export default class FileObject extends FS {
    * Supports ArrayBuffer, TypedArrays (Uint8Array, etc.), Blob, and Node Buffer types.
    *
    * @param {ArrayBuffer|Blob|Buffer} data - The binary data to write
-   * @returns {Promise<void>}
+   * @returns {Promise<undefined>}
    * @throws {Sass} If the file URL is invalid
    * @throws {Sass} If the parent directory doesn't exist
    * @throws {Sass} If the data is not a valid binary type
@@ -610,7 +610,7 @@ export default class FileObject extends FS {
   /**
    * Deletes the file from the filesystem.
    *
-   * @returns {Promise<void>} Resolves when file is deleted
+   * @returns {Promise<undefined>} Resolves when file is deleted
    * @throws {Sass} If the file URL is invalid
    * @throws {Sass} If the file does not exist
    * @example

@@ -37,7 +37,8 @@ import Valid from "./Valid.js"
  * @property {URL|null} url - The directory URL
  */
 
-/** * DirectoryObject encapsulates metadata and operations for a directory,
+/**
+ * DirectoryObject encapsulates metadata and operations for a directory,
  * providing immutable path resolution, existence checks, and content enumeration.
  *
  * Features:
@@ -480,7 +481,7 @@ export default class DirectoryObject extends FS {
    *
    * @async
    * @param {object} [options] - Options to pass to fs.mkdir (e.g., {recursive: true, mode: 0o755})
-   * @returns {Promise<void>}
+   * @returns {Promise<undefined>}
    * @throws {Sass} If directory creation fails for reasons other than already existing
    * @example
    * // Create directory recursively
@@ -555,7 +556,7 @@ export default class DirectoryObject extends FS {
    * a directory with contents, you must imperatively decide your deletion
    * strategy and handle it explicitly.
    *
-   * @returns {Promise<void>} Resolves when directory is deleted
+   * @returns {Promise<undefined>} Resolves when directory is deleted
    * @throws {Sass} If the directory URL is invalid
    * @throws {Sass} If the directory does not exist
    * @throws {Error} If the directory is not empty (from fs.rmdir)
@@ -629,8 +630,6 @@ export default class DirectoryObject extends FS {
   getDirectory(newPath) {
     Valid.type(newPath, "String", {allowEmpty: false})
 
-    // New direction: every path is relative to THIS path. Absolute?
-    //  ../../../..? up to this path and then down again if required.
     const thisPath = this.path
     const merged = FS.mergeOverlappingPaths(thisPath, newPath)
     const resolved = FS.resolvePath(thisPath, merged)
@@ -679,8 +678,6 @@ export default class DirectoryObject extends FS {
   getFile(filename) {
     Valid.type(filename, "String", {allowEmpty: false})
 
-    // Every path is relative to THIS path. Absolute or .. paths
-    // are constrained to this directory.
     const thisPath = this.path
     const merged = FS.mergeOverlappingPaths(thisPath, filename)
     const resolved = FS.resolvePath(thisPath, merged)

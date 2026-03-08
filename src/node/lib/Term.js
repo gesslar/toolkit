@@ -230,7 +230,7 @@ export default class Term {
    * @param {string | Array<string | [string, string]>} args - Message or segments.
    * @param {object} [options] - Behaviour flags.
    * @param {boolean} options.silent - When true, suppress output.
-   * @returns {void}
+   * @returns {undefined}
    */
   static status(args, {silent=false} = {}) {
     if(silent)

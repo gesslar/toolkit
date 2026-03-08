@@ -175,20 +175,20 @@ export default class FileObject extends FS {
      *
      * @param {string} content - The content to write
      * @param {string} [encoding] - The encoding in which to write (default: "utf8")
-     * @returns {Promise<void>}
+     * @returns {Promise<undefined>}
      * @throws {Sass} If the file URL is invalid or the parent directory doesn't exist
      * @example
      * const file = new FileObject('./output/data.json')
      * await file.write(JSON.stringify({key: 'value'}))
      */
-    write(content: string, encoding?: string): Promise<void>;
+    write(content: string, encoding?: string): Promise<undefined>;
     /**
      * Writes binary data to a file asynchronously.
      * Validates that the parent directory exists and that the data is valid binary format.
      * Supports ArrayBuffer, TypedArrays (Uint8Array, etc.), Blob, and Node Buffer types.
      *
      * @param {ArrayBuffer|Blob|Buffer} data - The binary data to write
-     * @returns {Promise<void>}
+     * @returns {Promise<undefined>}
      * @throws {Sass} If the file URL is invalid
      * @throws {Sass} If the parent directory doesn't exist
      * @throws {Sass} If the data is not a valid binary type
@@ -198,7 +198,7 @@ export default class FileObject extends FS {
      * const buffer = await response.arrayBuffer()
      * await file.writeBinary(buffer)
      */
-    writeBinary(data: ArrayBuffer | Blob | Buffer): Promise<void>;
+    writeBinary(data: ArrayBuffer | Blob | Buffer): Promise<undefined>;
     /**
      * Loads an object from JSON or YAML file.
      * Attempts to parse content as JSON5 first, then falls back to YAML if specified.
@@ -253,14 +253,14 @@ export default class FileObject extends FS {
     /**
      * Deletes the file from the filesystem.
      *
-     * @returns {Promise<void>} Resolves when file is deleted
+     * @returns {Promise<undefined>} Resolves when file is deleted
      * @throws {Sass} If the file URL is invalid
      * @throws {Sass} If the file does not exist
      * @example
      * const file = new FileObject('./temp/data.json')
      * await file.delete()
      */
-    delete(): Promise<void>;
+    delete(): Promise<undefined>;
     /**
      * Custom Node.js inspect implementation for console.log output.
      *
