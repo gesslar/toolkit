@@ -59,9 +59,9 @@ describe('Cache', () => {
     })
   })
 
-  describe('loadCachedData', () => {
+  describe('loadDataFromCache', () => {
     it('loads and caches JSON data', async () => {
-      const data = await cache.loadCachedData(jsonFile)
+      const data = await cache.loadDataFromCache(jsonFile)
 
       assert.equal(typeof data, 'object')
       assert.equal(data['eslint.format.enable'], true)
@@ -70,7 +70,7 @@ describe('Cache', () => {
     })
 
     it('loads and caches YAML data', async () => {
-      const data = await cache.loadCachedData(yamlFile)
+      const data = await cache.loadDataFromCache(yamlFile)
 
       assert.equal(typeof data, 'object')
       assert.ok(data.vars)
@@ -81,10 +81,10 @@ describe('Cache', () => {
 
     it('returns cached data on subsequent calls', async () => {
       // First call - loads from file
-      const data1 = await cache.loadCachedData(jsonFile)
+      const data1 = await cache.loadDataFromCache(jsonFile)
 
       // Second call - should return cached data
-      const data2 = await cache.loadCachedData(jsonFile)
+      const data2 = await cache.loadDataFromCache(jsonFile)
 
       assert.deepEqual(data1, data2)
       assert.equal(data1['editor.tabSize'], 2)
@@ -92,11 +92,60 @@ describe('Cache', () => {
 
     it('throws error for non-existent file', async () => {
       await assert.rejects(
-        () => cache.loadCachedData(nonExistentFile),
+        () => cache.loadDataFromCache(nonExistentFile),
         {
-          message: new RegExp(`Unable to find file '.*does-not-exist.json'`)
+          message: new RegExp(`No such file '.*does-not-exist.json'`)
         }
       )
+    })
+  })
+
+  describe('loadFromCache', () => {
+    it('loads and caches raw file content', async () => {
+      const data = await cache.loadFromCache(jsonFile)
+
+      assert.equal(typeof data, 'string')
+      assert.ok(data.includes('"editor.tabSize"'))
+    })
+
+    it('returns cached content on subsequent calls', async () => {
+      const data1 = await cache.loadFromCache(jsonFile)
+      const data2 = await cache.loadFromCache(jsonFile)
+
+      assert.equal(data1, data2)
+    })
+
+    it('throws error for non-existent file', async () => {
+      await assert.rejects(
+        () => cache.loadFromCache(nonExistentFile),
+        {
+          message: new RegExp(`No such file '.*does-not-exist.json'`)
+        }
+      )
+    })
+  })
+
+  describe('resetCache', () => {
+    it('clears cached data for a file', async () => {
+      // Load to populate cache
+      await cache.loadFromCache(jsonFile)
+
+      // Reset and re-load (should re-read from disk)
+      cache.resetCache(jsonFile)
+
+      const data = await cache.loadFromCache(jsonFile)
+      assert.equal(typeof data, 'string')
+    })
+
+    it('does not affect other cached files', async () => {
+      await cache.loadFromCache(jsonFile)
+      await cache.loadFromCache(yamlFile)
+
+      cache.resetCache(jsonFile)
+
+      // YAML should still be cached
+      const yamlData = await cache.loadFromCache(yamlFile)
+      assert.equal(typeof yamlData, 'string')
     })
   })
 
@@ -109,7 +158,7 @@ describe('Cache', () => {
       const modifiableFile = new FileObject(copyPath)
 
       // Load initial data
-      const initialData = await cache.loadCachedData(modifiableFile)
+      const initialData = await cache.loadDataFromCache(modifiableFile)
       assert.equal(initialData['editor.tabSize'], 2)
 
       // Wait a bit to ensure different modification time
@@ -123,14 +172,14 @@ describe('Cache', () => {
       await fs.writeFile(modifiableFile.path, updatedContent)
 
       // Load again - should get updated data
-      const newData = await cache.loadCachedData(modifiableFile)
+      const newData = await cache.loadDataFromCache(modifiableFile)
       assert.equal(newData['editor.tabSize'], 4)
       assert.equal(newData.modified, true)
     })
 
     it('maintains separate caches for different files', async () => {
-      const jsonData = await cache.loadCachedData(jsonFile)
-      const yamlData = await cache.loadCachedData(yamlFile)
+      const jsonData = await cache.loadDataFromCache(jsonFile)
+      const yamlData = await cache.loadDataFromCache(yamlFile)
 
       // Both should be cached independently
       assert.equal(jsonData['editor.tabSize'], 2)
@@ -142,11 +191,83 @@ describe('Cache', () => {
     })
   })
 
+  describe('raw and structured interplay', () => {
+    it('raw then structured returns correct types', async () => {
+      const raw = await cache.loadFromCache(jsonFile)
+      const structured = await cache.loadDataFromCache(jsonFile)
+
+      assert.equal(typeof raw, 'string')
+      assert.equal(typeof structured, 'object')
+      assert.equal(structured['editor.tabSize'], 2)
+    })
+
+    it('structured then raw returns correct types', async () => {
+      const structured = await cache.loadDataFromCache(jsonFile)
+      const raw = await cache.loadFromCache(jsonFile)
+
+      assert.equal(typeof structured, 'object')
+      assert.equal(typeof raw, 'string')
+      assert.ok(raw.includes('"editor.tabSize"'))
+    })
+
+    it('structured populates raw as well', async () => {
+      await cache.loadDataFromCache(jsonFile)
+
+      // raw should already be populated, no re-read needed
+      const raw = await cache.loadFromCache(jsonFile)
+
+      assert.equal(typeof raw, 'string')
+      assert.ok(raw.includes('"editor.tabSize"'))
+    })
+
+    it('invalidation clears both raw and structured', async () => {
+      const copyPath = path.join(testDir, 'interplay-test.json')
+      await fs.writeFile(copyPath, '{"v": 1}')
+      const file = new FileObject(copyPath)
+
+      await cache.loadFromCache(file)
+      await cache.loadDataFromCache(file)
+
+      await new Promise(resolve => setTimeout(resolve, 10))
+      await fs.writeFile(copyPath, '{"v": 2}')
+
+      const raw = await cache.loadFromCache(file)
+      const structured = await cache.loadDataFromCache(file)
+
+      assert.ok(raw.includes('"v": 2'))
+      assert.equal(structured.v, 2)
+    })
+  })
+
+  describe('encoding forwarding', () => {
+    it('forwards encoding through loadFromCache', async () => {
+      const copyPath = path.join(testDir, 'encoding-test.txt')
+      await fs.writeFile(copyPath, 'hello', 'utf8')
+      const file = new FileObject(copyPath)
+
+      const data = await cache.loadFromCache(
+        file, {encoding: 'utf8'})
+
+      assert.equal(data, 'hello')
+    })
+
+    it('forwards encoding through loadDataFromCache', async () => {
+      const copyPath = path.join(testDir, 'encoding-data.json')
+      await fs.writeFile(copyPath, '{"ok": true}', 'utf8')
+      const file = new FileObject(copyPath)
+
+      const data = await cache.loadDataFromCache(
+        file, {encoding: 'utf8'})
+
+      assert.equal(data.ok, true)
+    })
+  })
+
   describe('cache consistency', () => {
     it('handles race conditions gracefully', async () => {
       // Simulate concurrent access
       const promises = Array(5).fill(null).map(() =>
-        cache.loadCachedData(jsonFile)
+        cache.loadDataFromCache(jsonFile)
       )
 
       const results = await Promise.all(promises)
@@ -164,14 +285,14 @@ describe('Cache', () => {
       const modifiableFile = new FileObject(copyPath)
 
       // Load data to populate cache
-      await cache.loadCachedData(modifiableFile)
+      await cache.loadDataFromCache(modifiableFile)
 
       // Modify file to trigger cache invalidation
       await new Promise(resolve => setTimeout(resolve, 10))
       await fs.writeFile(modifiableFile.path, '{"modified": true}')
 
       // Load again - should get new data
-      const newData = await cache.loadCachedData(modifiableFile)
+      const newData = await cache.loadDataFromCache(modifiableFile)
       assert.equal(newData.modified, true)
     })
   })
@@ -182,10 +303,10 @@ describe('Cache', () => {
       // but cached data doesn't (which shouldn't happen normally)
 
       // Load data first to populate cache
-      await cache.loadCachedData(jsonFile)
+      await cache.loadDataFromCache(jsonFile)
 
       // File should load normally
-      const data = await cache.loadCachedData(jsonFile)
+      const data = await cache.loadDataFromCache(jsonFile)
       assert.equal(typeof data, 'object')
     })
 
@@ -196,7 +317,7 @@ describe('Cache', () => {
       const tempFile = new FileObject(tempPath)
 
       // Load and cache the file
-      const data = await cache.loadCachedData(tempFile)
+      const data = await cache.loadDataFromCache(tempFile)
       assert.equal(data.temp, true)
 
       // Delete the file
@@ -204,9 +325,9 @@ describe('Cache', () => {
 
       // Subsequent access should throw error
       await assert.rejects(
-        () => cache.loadCachedData(tempFile),
+        () => cache.loadDataFromCache(tempFile),
         {
-          message: new RegExp(`Unable to find file '.*temp-delete-test.json'`)
+          message: new RegExp(`No such file '.*temp-delete-test.json'`)
         }
       )
     })
@@ -214,14 +335,14 @@ describe('Cache', () => {
     it('handles invalid JSON/YAML files', async () => {
       // Use fixture broken files
       await assert.rejects(
-        () => cache.loadCachedData(brokenJsonFile),
+        () => cache.loadDataFromCache(brokenJsonFile),
         {
           message: /Content is neither valid JSON5 nor valid YAML/
         }
       )
 
       await assert.rejects(
-        () => cache.loadCachedData(brokenYamlFile),
+        () => cache.loadDataFromCache(brokenYamlFile),
         {
           message: /Content is neither valid JSON5 nor valid YAML/
         }
@@ -243,7 +364,7 @@ describe('Cache', () => {
 
       // Load all files
       const results = await Promise.all(
-        files.map(file => cache.loadCachedData(file))
+        files.map(file => cache.loadDataFromCache(file))
       )
 
       // Verify all files were loaded correctly

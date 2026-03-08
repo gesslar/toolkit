@@ -7,7 +7,7 @@ import process from "node:process"
 import {Buffer} from "node:buffer"
 import {inspect} from "node:util"
 
-import {DirectoryObject,FileObject,Sass} from "../../src/node/index.js"
+import {Cache,DirectoryObject,FileObject,Sass} from "../../src/node/index.js"
 import {TestUtils} from "../helpers/test-utils.js"
 
 describe("FileObject", () => {
@@ -412,7 +412,7 @@ describe("FileObject", () => {
     it("read with custom encoding", async () => {
       await fs.writeFile(testFilePath, "test content", "utf8")
 
-      const content = await testFile.read("utf8")
+      const content = await testFile.read({encoding: "utf8"})
       assert.equal(content, "test content")
     })
 
@@ -603,7 +603,7 @@ describe("FileObject", () => {
       await file.write(content, "utf16le")
 
       assert.equal(await file.exists, true)
-      const readContent = await file.read("utf16le")
+      const readContent = await file.read({encoding: "utf16le"})
       assert.equal(readContent, content)
     })
 
@@ -977,7 +977,7 @@ describe("FileObject", () => {
   describe("loadData method", () => {
     it("loads JSON5 data successfully", async () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "config-lpc-to-markdown.json5"))
-      const data = await file.loadData("json5")
+      const data = await file.loadData({type: "json5"})
 
       assert.ok(data)
       assert.equal(typeof data, "object")
@@ -985,7 +985,7 @@ describe("FileObject", () => {
 
     it("loads JSON data successfully", async () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
-      const data = await file.loadData("json")
+      const data = await file.loadData({type: "json"})
 
       assert.ok(data)
       assert.equal(typeof data, "object")
@@ -993,7 +993,7 @@ describe("FileObject", () => {
 
     it("loads YAML data successfully", async () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "colors.yaml"))
-      const data = await file.loadData("yaml")
+      const data = await file.loadData({type: "yaml"})
 
       assert.ok(data)
       assert.equal(typeof data, "object")
@@ -1001,7 +1001,7 @@ describe("FileObject", () => {
 
     it("auto-detects JSON5 format with 'any' type", async () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "config-lpc-to-markdown.json5"))
-      const data = await file.loadData("any")
+      const data = await file.loadData({type: "any"})
 
       assert.ok(data)
       assert.equal(typeof data, "object")
@@ -1009,7 +1009,7 @@ describe("FileObject", () => {
 
     it("auto-detects YAML format with 'any' type", async () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "colors.yaml"))
-      const data = await file.loadData("any")
+      const data = await file.loadData({type: "any"})
 
       assert.ok(data)
       assert.equal(typeof data, "object")
@@ -1019,9 +1019,9 @@ describe("FileObject", () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
 
       // These should work regardless of locale
-      const data1 = await file.loadData("JSON")
-      const data2 = await file.loadData("Json")
-      const data3 = await file.loadData("json")
+      const data1 = await file.loadData({type: "JSON"})
+      const data2 = await file.loadData({type: "Json"})
+      const data3 = await file.loadData({type: "json"})
 
       assert.ok(data1)
       assert.ok(data2)
@@ -1030,7 +1030,7 @@ describe("FileObject", () => {
 
     it("handles different encoding", async () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
-      const data = await file.loadData("json", "utf8")
+      const data = await file.loadData({type: "json", encoding: "utf8"})
 
       assert.ok(data)
       assert.equal(typeof data, "object")
@@ -1040,7 +1040,7 @@ describe("FileObject", () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
 
       await assert.rejects(
-        () => file.loadData("xml"),
+        () => file.loadData({type: "xml"}),
         (error) => {
           assert.ok(error instanceof Sass)
           assert.match(error.message, /Unsupported data type 'xml'/)
@@ -1053,7 +1053,7 @@ describe("FileObject", () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "broken.json5"))
 
       await assert.rejects(
-        () => file.loadData("json5"),
+        () => file.loadData({type: "json5"}),
         (error) => {
           assert.ok(error instanceof Sass)
           assert.match(error.message, /Content is neither valid JSON5 nor valid YAML/)
@@ -1066,7 +1066,7 @@ describe("FileObject", () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "broken.yaml"))
 
       await assert.rejects(
-        () => file.loadData("yaml"),
+        () => file.loadData({type: "yaml"}),
         (error) => {
           assert.ok(error instanceof Sass)
           assert.match(error.message, /Content is neither valid JSON5 nor valid YAML/)
@@ -1079,7 +1079,7 @@ describe("FileObject", () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "colors.yaml"))
 
       // Should try JSON5 first, fail, then succeed with YAML
-      const data = await file.loadData("any")
+      const data = await file.loadData({type: "any"})
 
       assert.ok(data)
       assert.equal(typeof data, "object")
@@ -1099,7 +1099,7 @@ describe("FileObject", () => {
       const testCases = ["JSON5", "Json5", "json5", "JSON", "Json", "json"]
 
       for(const type of testCases) {
-        const data = await file.loadData(type)
+        const data = await file.loadData({type})
         assert.ok(data, `Failed for type: ${type}`)
       }
     })
@@ -1110,9 +1110,182 @@ describe("FileObject", () => {
       const testCases = ["YAML", "Yaml", "yaml", "YaML"]
 
       for(const type of testCases) {
-        const data = await file.loadData(type)
+        const data = await file.loadData({type})
         assert.ok(data, `Failed for type: ${type}`)
       }
+    })
+  })
+
+  describe("cache integration", () => {
+    let testDir
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("cache-integration-test")
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("cached returns false when no cache is attached", () => {
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+
+      assert.equal(file.cached, false)
+    })
+
+    it("cached returns true after withCache", () => {
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+
+      file.withCache()
+
+      assert.equal(file.cached, true)
+    })
+
+    it("withCache accepts an existing Cache instance", () => {
+      const cache = new Cache()
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+
+      file.withCache(cache)
+
+      assert.equal(file.cached, true)
+    })
+
+    it("withCache throws if cache is already set", () => {
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+
+      file.withCache()
+
+      assert.throws(
+        () => file.withCache(),
+        /Cache already set/
+      )
+    })
+
+    it("removeCache clears the cache", () => {
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+
+      file.withCache()
+      assert.equal(file.cached, true)
+
+      file.removeCache()
+      assert.equal(file.cached, false)
+    })
+
+    it("withCache returns the FileObject for chaining", () => {
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+
+      const result = file.withCache()
+
+      assert.equal(result, file)
+    })
+
+    it("removeCache returns the FileObject for chaining", () => {
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+
+      file.withCache()
+      const result = file.removeCache()
+
+      assert.equal(result, file)
+    })
+
+    it("resetCache returns the FileObject for chaining", () => {
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+
+      file.withCache()
+      const result = file.resetCache()
+
+      assert.equal(result, file)
+    })
+
+    it("read uses cache when attached", async () => {
+      const filePath = path.join(testDir, "cached-read.txt")
+      await fs.writeFile(filePath, "original content")
+
+      const file = new FileObject(filePath)
+      file.withCache()
+
+      const first = await file.read()
+      assert.equal(first, "original content")
+
+      // Modify the file without changing mtime detection window
+      await fs.writeFile(filePath, "modified content")
+
+      // Should still return cached value (mtime might match)
+      const second = await file.read()
+      assert.equal(typeof second, "string")
+    })
+
+    it("read bypasses cache with skipCache option", async () => {
+      const filePath = path.join(testDir, "skip-cache.txt")
+      await fs.writeFile(filePath, "content")
+
+      const file = new FileObject(filePath)
+      file.withCache()
+
+      await file.read()
+
+      // Wait for mtime difference
+      await new Promise(resolve => setTimeout(resolve, 10))
+      await fs.writeFile(filePath, "new content")
+
+      const result = await file.read({skipCache: true})
+      assert.equal(result, "new content")
+    })
+
+    it("loadData uses cache when attached", async () => {
+      const filePath = path.join(testDir, "cached-data.json")
+      await fs.writeFile(filePath, '{"key": "value"}')
+
+      const file = new FileObject(filePath)
+      file.withCache()
+
+      const data = await file.loadData()
+      assert.equal(data.key, "value")
+
+      // Second call should hit cache
+      const data2 = await file.loadData()
+      assert.deepEqual(data, data2)
+    })
+
+    it("toJSON includes cached property", () => {
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+
+      assert.equal(file.toJSON().cached, false)
+
+      file.withCache()
+
+      assert.equal(file.toJSON().cached, true)
+    })
+
+    it("shared cache across multiple FileObjects", async () => {
+      const cache = new Cache()
+      const file1 = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+      const file2 = new FileObject(path.join(process.cwd(), "tests", "fixtures", "palette.yaml"))
+
+      file1.withCache(cache)
+      file2.withCache(cache)
+
+      const data1 = await file1.loadData()
+      const data2 = await file2.loadData()
+
+      assert.equal(typeof data1, "object")
+      assert.equal(typeof data2, "object")
+
+      // Both should be cached independently
+      assert.ok(data1["editor.tabSize"] !== undefined)
+      assert.ok(data2.vars !== undefined)
+    })
+
+    it("can re-attach cache after removeCache", () => {
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+
+      file.withCache()
+      file.removeCache()
+      file.withCache()
+
+      assert.equal(file.cached, true)
     })
   })
 
