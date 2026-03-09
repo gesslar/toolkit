@@ -45,6 +45,7 @@ Includes all browser functionality plus Node.js-specific modules for file I/O, l
 | Term | Terminal formatting and output utilities |
 | Util | General utility functions (Node-enhanced version) |
 | Valid | Validation and assertion methods |
+| Watcher | File and directory change watcher with debounce protection |
 
 
 ## Installation

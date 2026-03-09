@@ -197,5 +197,24 @@ export default class FileSystem {
      * @throws {Sass} If the parameter is not a FileObject or DirectoryObject
      */
     relativeTo(fileOrDirectoryObject: import("./FileObject.js").default | import("./DirectoryObject.js").default): string;
+    /**
+     * Watch this file or directory for changes.
+     *
+     * @param {object} [options] - Watch options
+     * @param {Function} [options.onChange] - Callback invoked on change
+     * @param {number} [options.debounceMs] - Debounce interval in milliseconds
+     * @param {boolean} [options.persistent] - Keep the process alive while watching
+     * @returns {Promise<undefined>}
+     */
+    watch(options?: {
+        onChange?: Function;
+        debounceMs?: number;
+        persistent?: boolean;
+    }): Promise<undefined>;
+    /**
+     * Stop watching this file or directory for changes.
+     */
+    stopWatching(): void;
+    #private;
 }
 //# sourceMappingURL=FileSystem.d.ts.map

@@ -11,12 +11,14 @@
 import path from "node:path"
 import url from "node:url"
 
-import Data from "../../browser/lib/Data.js"
-import Valid from "./Valid.js"
 import Collection from "../../browser/lib/Collection.js"
+import Data from "../../browser/lib/Data.js"
+import Glog from "./Glog.js"
+import Valid from "./Valid.js"
+import Watcher from "./Watcher.js"
 
 /**
- * @import {Sass} from "./Sass.js"
+ * @import Sass from "./Sass.js"
  */
 
 const fdTypes = Object.freeze(["file", "directory"])
@@ -32,6 +34,8 @@ export default class FileSystem {
   static fdTypes = fdTypes
   static upperFdTypes = upperFdTypes
   static fdType = fdType
+
+  #watcher = null
 
   /**
    * Compute the relative path from another file or directory to this instance.
@@ -51,6 +55,47 @@ export default class FileSystem {
     )
 
     return FileSystem.relativeOrAbsolute(fileOrDirectoryObject, this)
+  }
+
+  /**
+   * Watch this file or directory for changes.
+   *
+   * @param {object} [options] - Watch options
+   * @param {Function} [options.onChange] - Callback invoked on change
+   * @param {number} [options.debounceMs] - Debounce interval in milliseconds
+   * @param {boolean} [options.persistent] - Keep the process alive while watching
+   * @returns {Promise<undefined>}
+   */
+  async watch(options={}) {
+    Valid.type(options, "Object")
+
+    const localOptions = Collection.cloneObject(options)
+
+    const {onChange} = localOptions ?? {}
+    Valid.type(onChange, "Undefined|Function")
+
+    delete localOptions.onChange
+
+    this.stopWatching()
+
+    this.#watcher = new Watcher()
+
+    await this.#watcher.watch(this, Object.assign({},
+      localOptions,
+      {
+        onChange: onChange ?? (() => {
+          Glog(`${this} changed somehow.`)
+        })
+      }
+    ))
+  }
+
+  /**
+   * Stop watching this file or directory for changes.
+   */
+  stopWatching() {
+    this.#watcher?.stopWatching()
+    this.#watcher = null
   }
 
   /**
