@@ -106,15 +106,9 @@ export default class Data {
      * defining the type of a value and whether an array is expected.
      *
      * @param {string} string - The string to parse into a type spec.
-     * @param {TypeSpecOptions} [options] - Additional options for parsing.
-     * @returns {Array<object>} An array of type specs.
+     * @returns {TypeSpec} A new TypeSpec instance.
      */
-    static newTypeSpec(string: string, options?: {
-        /**
-         * - The delimiter for union types
-         */
-        delimiter?: string;
-    }): Array<object>;
+    static newTypeSpec(string: string): TypeSpec;
     /**
      * Checks if a value is of a specified type
      *

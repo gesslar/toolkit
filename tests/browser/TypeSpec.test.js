@@ -273,9 +273,9 @@ describe("Type", () => {
     })
   })
 
-  describe("custom delimiter option", () => {
-    it("uses custom delimiter when provided", () => {
-      const spec = new Type("String&Number&Boolean", { delimiter: "&" })
+  describe("pipe delimiter", () => {
+    it("uses pipe as delimiter", () => {
+      const spec = new Type("String|Number|Boolean")
 
       assert.equal(spec.length, 3)
       assert.equal(spec.specs[0].typeName, "String")
@@ -387,6 +387,130 @@ describe("Type", () => {
       assert.equal(objSpec.matches(new Set()), false)
       assert.equal(objSpec.matches(new Date()), false)
       assert.equal(objSpec.matches(new Error()), false)
+    })
+  })
+
+  describe("mixed array syntax (Type|Type)[]", () => {
+    it("parses grouped array syntax", () => {
+      const spec = new Type("(String|Number)[]")
+      assert.equal(spec.length, 2)
+      assert.equal(spec.specs[0].typeName, "String")
+      assert.equal(spec.specs[0].array, true)
+      assert.equal(spec.specs[0].mixed, 0)
+      assert.equal(spec.specs[1].typeName, "Number")
+      assert.equal(spec.specs[1].array, true)
+      assert.equal(spec.specs[1].mixed, 0)
+    })
+
+    it("toString reconstructs grouped syntax", () => {
+      const spec = new Type("(String|Number)[]")
+      assert.equal(spec.toString(), "(String|Number)[]")
+    })
+
+    it("toString with mixed and non-mixed specs", () => {
+      const spec = new Type("Boolean|(String|Number)[]")
+      assert.equal(spec.toString(), "Boolean|(String|Number)[]")
+    })
+
+    it("matches heterogeneous arrays", () => {
+      const spec = new Type("(String|Number)[]")
+      assert.equal(spec.matches([1, "a", 3]), true)
+      assert.equal(spec.matches(["a", 2, "b", 4]), true)
+    })
+
+    it("matches uniform arrays too", () => {
+      const spec = new Type("(String|Number)[]")
+      assert.equal(spec.matches([1, 2, 3]), true)
+      assert.equal(spec.matches(["a", "b"]), true)
+    })
+
+    it("rejects arrays with types outside the group", () => {
+      const spec = new Type("(String|Number)[]")
+      assert.equal(spec.matches([1, "a", true]), false)
+      assert.equal(spec.matches([1, "a", null]), false)
+      assert.equal(spec.matches([1, "a", {}]), false)
+      assert.equal(spec.matches([1, "a", Symbol("x")]), false)
+    })
+
+    it("handles empty arrays with allowEmpty", () => {
+      const spec = new Type("(String|Number)[]")
+      assert.equal(spec.matches([]), true)
+      assert.equal(spec.matches([], {allowEmpty: true}), true)
+    })
+
+    it("does not match non-array values", () => {
+      const spec = new Type("(String|Number)[]")
+      assert.equal(spec.matches("hello"), false)
+      assert.equal(spec.matches(42), false)
+      assert.equal(spec.matches({}), false)
+    })
+
+    it("works alongside non-mixed specs", () => {
+      const spec = new Type("Boolean|(String|Number)[]")
+      assert.equal(spec.matches(true), true)
+      assert.equal(spec.matches([1, "a"]), true)
+      assert.equal(spec.matches([1, true]), false)
+      assert.equal(spec.matches("hello"), false)
+    })
+
+    it("handles Object in mixed groups", () => {
+      const spec = new Type("(Object|String)[]")
+      assert.equal(spec.matches([{}, "a", {foo: 1}]), true)
+      assert.equal(spec.matches([new Date(), "a"]), false)
+    })
+
+    it("accepts custom types in groups", () => {
+      const spec = new Type("(Foo|String)[]")
+      assert.equal(spec.length, 2)
+      assert.equal(spec.specs[0].typeName, "Foo")
+    })
+
+    it("handles three types in a group", () => {
+      const spec = new Type("(String|Number|Boolean)[]")
+      assert.equal(spec.matches([1, "a", true]), true)
+      assert.equal(spec.matches([1, "a", true, null]), false)
+    })
+
+    it("respects allowEmpty: false for mixed groups", () => {
+      const spec = new Type("(String|Number)[]")
+      assert.equal(spec.matches([], {allowEmpty: true}), true)
+      assert.equal(spec.matches([], {allowEmpty: false}), false)
+    })
+
+    it("keeps multiple groups independent", () => {
+      const spec = new Type("(String|Number)[]|(Boolean|Bigint)[]")
+      // Matches first group
+      assert.equal(spec.matches([1, "a"]), true)
+      // Matches second group
+      assert.equal(spec.matches([true, false]), true)
+      // Cross-group mix should NOT match
+      assert.equal(spec.matches([1, true]), false)
+    })
+
+    it("rejects malformed delimiters with groups", () => {
+      assert.throws(() => new Type("(String|Number)[]|"), Sass)
+      assert.throws(() => new Type("|(String|Number)[]"), Sass)
+      assert.throws(() => new Type("Boolean||(String|Number)[]"), Sass)
+    })
+
+    it("rejects missing delimiter between group and type", () => {
+      assert.throws(() => new Type("(String|Number)[]Boolean"), Sass)
+      assert.throws(() => new Type("Boolean(String|Number)[]"), Sass)
+    })
+
+    it("preserves input ordering in toString", () => {
+      assert.equal(
+        new Type("(String|Number)[]|Boolean").toString(),
+        "(String|Number)[]|Boolean"
+      )
+      assert.equal(
+        new Type("Boolean|(String|Number)[]").toString(),
+        "Boolean|(String|Number)[]"
+      )
+      assert.equal(
+        new Type("String|(Number|Boolean)[]|Object").toString(),
+        "String|(Number|Boolean)[]|Object"
+      )
     })
   })
 })

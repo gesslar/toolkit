@@ -1,16 +1,4 @@
 /**
- * Options for creating a new TypeSpec.
- *
- * @typedef {object} TypeSpecOptions
- * @property {string} [delimiter="|"] - The delimiter for union types
- */
-/**
- * Options for type validation methods.
- *
- * @typedef {object} TypeValidationOptions
- * @property {boolean} [allowEmpty=true] - Whether empty values are allowed
- */
-/**
  * Type specification class for parsing and validating complex type definitions.
  * Supports union types, array types, and validation options.
  */
@@ -19,9 +7,8 @@ export default class TypeSpec {
      * Creates a new TypeSpec instance.
      *
      * @param {string} string - The type specification string (e.g., "string|number", "object[]")
-     * @param {TypeSpecOptions} [options] - Additional parsing options
      */
-    constructor(string: string, options?: TypeSpecOptions);
+    constructor(string: string);
     specs: any[];
     length: number;
     stringRepresentation: string;
@@ -91,36 +78,34 @@ export default class TypeSpec {
      * Handles array types, union types, and empty value validation.
      *
      * @param {unknown} value - The value to test against the type specifications
-     * @param {TypeValidationOptions} [options] - Validation options
+     * @param {TypeMatchOptions} [options] - Validation options
      * @returns {boolean} True if the value matches any type specification
      */
-    matches(value: unknown, options?: TypeValidationOptions): boolean;
+    matches(value: unknown, options?: {
+        /**
+         * - Permit a spec of {@link Data.emptyableTypes} to be empty
+         */
+        allowEmpty?: boolean;
+    }): boolean;
+    /**
+     * Options that can be passed to {@link TypeSpec.match}
+     *
+     * @typedef {object} TypeMatchOptions
+     * @property {boolean} [allowEmpty=true] - Permit a spec of {@link Data.emptyableTypes} to be empty
+     */
     /**
      * Returns matching type specifications for a value.
      *
      * @param {unknown} value - The value to test against the type specifications
-     * @param {TypeValidationOptions} [options] - Validation options
+     * @param {TypeMatchOptions} [options] - Validation options
      * @returns {Array<object>} Array of matching type specifications
      */
-    match(value: unknown, options?: TypeValidationOptions): Array<object>;
+    match(value: unknown, { allowEmpty, }?: {
+        /**
+         * - Permit a spec of {@link Data.emptyableTypes} to be empty
+         */
+        allowEmpty?: boolean;
+    }): Array<object>;
     #private;
 }
-/**
- * Options for creating a new TypeSpec.
- */
-export type TypeSpecOptions = {
-    /**
-     * - The delimiter for union types
-     */
-    delimiter?: string;
-};
-/**
- * Options for type validation methods.
- */
-export type TypeValidationOptions = {
-    /**
-     * - Whether empty values are allowed
-     */
-    allowEmpty?: boolean;
-};
 //# sourceMappingURL=TypeSpec.d.ts.map
