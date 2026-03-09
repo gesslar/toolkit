@@ -10,20 +10,6 @@ import Sass from "./Sass.js"
 import Util from "./Util.js"
 
 /**
- * Options for creating a new TypeSpec.
- *
- * @typedef {object} TypeSpecOptions
- * @property {string} [delimiter="|"] - The delimiter for union types
- */
-
-/**
- * Options for type validation methods.
- *
- * @typedef {object} TypeValidationOptions
- * @property {boolean} [allowEmpty=true] - Whether empty values are allowed
- */
-
-/**
  * Type specification class for parsing and validating complex type definitions.
  * Supports union types, array types, and validation options.
  */
@@ -34,11 +20,10 @@ export default class TypeSpec {
    * Creates a new TypeSpec instance.
    *
    * @param {string} string - The type specification string (e.g., "string|number", "object[]")
-   * @param {TypeSpecOptions} [options] - Additional parsing options
    */
-  constructor(string, options) {
+  constructor(string) {
     this.#specs = []
-    this.#parse(string, options)
+    this.#parse(string)
     Object.freeze(this.#specs)
     this.specs = this.#specs
     this.length = this.#specs.length
@@ -52,11 +37,21 @@ export default class TypeSpec {
    * @returns {string} The type specification as a string (e.g., "string|number[]")
    */
   toString() {
-    return this.#specs
-      .map(spec => {
-        return `${spec.typeName}${spec.array ? "[]" : ""}`
-      })
-      .join("|")
+    // Reconstruct in parse order, grouping consecutive mixed specs
+    const parts = []
+    const emittedGroups = new Set()
+
+    for(const spec of this.#specs) {
+      if(spec.mixed === false) {
+        parts.push(`${spec.typeName}${spec.array ? "[]" : ""}`)
+      } else if(!emittedGroups.has(spec.mixed)) {
+        emittedGroups.add(spec.mixed)
+        const group = this.#specs.filter(s => s.mixed === spec.mixed)
+        parts.push(`(${group.map(s => s.typeName).join("|")})[]`)
+      }
+    }
+
+    return parts.join("|")
   }
 
   /**
@@ -148,7 +143,7 @@ export default class TypeSpec {
    * Handles array types, union types, and empty value validation.
    *
    * @param {unknown} value - The value to test against the type specifications
-   * @param {TypeValidationOptions} [options] - Validation options
+   * @param {TypeMatchOptions} [options] - Validation options
    * @returns {boolean} True if the value matches any type specification
    */
   matches(value, options) {
@@ -156,14 +151,22 @@ export default class TypeSpec {
   }
 
   /**
+   * Options that can be passed to {@link TypeSpec.match}
+   *
+   * @typedef {object} TypeMatchOptions
+   * @property {boolean} [allowEmpty=true] - Permit a spec of {@link Data.emptyableTypes} to be empty
+   */
+
+  /**
    * Returns matching type specifications for a value.
    *
    * @param {unknown} value - The value to test against the type specifications
-   * @param {TypeValidationOptions} [options] - Validation options
+   * @param {TypeMatchOptions} [options] - Validation options
    * @returns {Array<object>} Array of matching type specifications
    */
-  match(value, options) {
-    const allowEmpty = options?.allowEmpty ?? true
+  match(value, {
+    allowEmpty = true,
+  } = {}) {
 
     // If we have a list of types, because the string was validly parsed, we
     // need to ensure that all of the types that were parsed are valid types in
@@ -179,10 +182,13 @@ export default class TypeSpec {
     // We need to ensure that we match the type and the consistency of the
     // types in an array, if it is an array and an array is allowed.
     const matchingTypeSpec = this.filter(spec => {
+      // Skip mixed specs — they are handled in the grouped-array check below
+      if(spec.mixed !== false)
+        return false
+
       const {typeName: allowedType, array: allowedArray} = spec
-      const empty =
-        Data.emptyableTypes.includes(allowedType) &&
-        Data.isEmpty(value)
+      const empty = Data.emptyableTypes.includes(allowedType)
+        && Data.isEmpty(value)
 
       // Handle non-array values
       if(!isArray && !allowedArray) {
@@ -222,6 +228,41 @@ export default class TypeSpec {
       return false
     })
 
+    // Check mixed-array groups independently. Each group (e.g.,
+    // (String|Number)[] vs (Boolean|Bigint)[]) is validated separately
+    // so that multiple groups don't merge into one.
+    if(isArray) {
+      const mixedSpecs = this.filter(spec => spec.mixed !== false)
+
+      if(mixedSpecs.length) {
+        const empty = Data.isEmpty(value)
+
+        if(empty)
+          return allowEmpty ? [...matchingTypeSpec, ...mixedSpecs] : []
+
+        // Collect unique group IDs
+        const groups = [...new Set(mixedSpecs.map(s => s.mixed))]
+
+        for(const gid of groups) {
+          const groupSpecs = mixedSpecs.filter(s => s.mixed === gid)
+
+          const allMatch = value.every(element => {
+            const elType = Data.typeOf(element)
+
+            return groupSpecs.some(spec => {
+              if(spec.typeName === "Object")
+                return Data.isPlainObject(element)
+
+              return elType === spec.typeName
+            })
+          })
+
+          if(allMatch)
+            return [...matchingTypeSpec, ...groupSpecs]
+        }
+      }
+    }
+
     return matchingTypeSpec
   }
 
@@ -231,29 +272,64 @@ export default class TypeSpec {
    *
    * @private
    * @param {string} string - The type specification string to parse
-   * @param {TypeSpecOptions} [options] - Parsing options
    * @throws {Sass} If the type specification is invalid
    */
-  #parse(string, options={delimiter: "|"}) {
-    const delimiter = options?.delimiter ?? "|"
-    const parts = string.split(delimiter)
+  #parse(string) {
+    const specs = []
+    const groupPattern = /\((\w+(?:\|\w+)*)\)\[\]/g
 
-    this.#specs = parts.map(part => {
-      const typeMatches = /^(\w+)(\[\])?$/.exec(part)
+    // Replace groups with placeholder X to validate structure and
+    // determine parse order
+    const groups = []
+    const stripped = string.replace(groupPattern, (_, inner) => {
+      groups.push(inner)
+
+      return "X"
+    })
+
+    // Validate for malformed delimiters and missing boundaries
+    if(/\|\||^\||\|$/.test(stripped) || /[^|]X|X[^|]/.test(stripped))
+      throw Sass.new(`Invalid type: ${string}`)
+
+    // Parse in order using the stripped template
+    const segments = stripped.split("|")
+    let groupId = 0
+
+    for(const segment of segments) {
+      if(segment === "X") {
+        const currentGroup = groupId++
+        const inner = groups[currentGroup]
+
+        for(const raw of inner.split("|")) {
+          const typeName = Util.capitalize(raw)
+
+          if(!Data.isValidType(typeName))
+            throw Sass.new(`Invalid type: ${raw}`)
+
+          specs.push({typeName, array: true, mixed: currentGroup})
+        }
+
+        continue
+      }
+
+      const typeMatches = /^(\w+)(\[\])?$/.exec(segment)
 
       if(!typeMatches || typeMatches.length !== 3)
-        throw Sass.new(`Invalid type: ${part}`)
+        throw Sass.new(`Invalid type: ${segment}`)
 
       const typeName = Util.capitalize(typeMatches[1])
 
       if(!Data.isValidType(typeName))
         throw Sass.new(`Invalid type: ${typeMatches[1]}`)
 
-      return {
+      specs.push({
         typeName,
         array: typeMatches[2] === "[]",
-      }
-    })
+        mixed: false,
+      })
+    }
+
+    this.#specs = specs
   }
 
   #getTypeLineage(value) {
