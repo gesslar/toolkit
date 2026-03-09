@@ -15,8 +15,8 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 npm test
 
 # Run a single test file
-node --test tests/unit/Cache.test.js
-node --test tests/unit/FileObject.test.js
+node --test tests/node/Cache.test.js
+node --test tests/node/FileObject.test.js
 ```
 
 ### Linting & Type Generation
@@ -29,7 +29,7 @@ npm run lint
 npm run lint:fix
 
 # Generate TypeScript definitions from JSDoc
-npm run types:build
+npm run types
 ```
 
 ### Publishing & Updates
@@ -47,7 +47,7 @@ npm run pr
 
 ## Architecture
 
-### Core Utilities (`src/lib/`)
+### Core Utilities (`src/node/lib/` and `src/browser/lib/`)
 
 The toolkit provides three categories of utilities:
 
@@ -122,7 +122,7 @@ Focus reviews on:
 ## Module System
 
 - **Type:** ES6 modules (`"type": "module"`)
-- **Node Version:** `>=22` (package.json specifies this)
+- **Node Version:** `>=24.13.0` (package.json specifies this)
 - **Import Extensions:** Always use `.js` extensions, even for type definitions
 
 ## Testing
@@ -136,7 +136,7 @@ import assert from 'node:assert/strict'
 
 **Test Structure:**
 
-- Unit tests: `tests/unit/*.test.js`
+- Unit tests: `tests/node/*.test.js` (Node.js) and `tests/browser/*.test.js` (browser)
 - Fixtures: `tests/fixtures/` (JSON5, YAML files for testing)
 - Helpers: `tests/helpers/` (shared test utilities)
 
@@ -182,9 +182,9 @@ import assert from 'node:assert/strict'
 
 - `@gesslar/colours` - Color formatting for terminal output
 - `ajv` - JSON Schema validation
-- `globby` - File globbing
 - `json5` - JSON5 parsing
 - `yaml` - YAML parsing
+- `supports-color` - Color support detection
 
 **DevDependencies:**
 
@@ -200,10 +200,20 @@ Package publishes to npm as `@gesslar/toolkit` with public access. Exports are c
 ```json
 "exports": {
   ".": {
-    "types": "./src/types/index.d.ts",
-    "default": "./src/index.js"
+    "types": "./types/node/index.d.ts",
+    "browser": "./src/browser/index.js",
+    "node": "./src/node/index.js",
+    "default": "./src/node/index.js"
+  },
+  "./browser": {
+    "types": "./types/browser/index.d.ts",
+    "default": "./src/browser/index.js"
+  },
+  "./node": {
+    "types": "./types/node/index.d.ts",
+    "default": "./src/node/index.js"
   }
 }
 ```
 
-All utilities are re-exported from `src/index.js` for convenience.
+Node.js and browser utilities are exported from their respective `index.js` files.
