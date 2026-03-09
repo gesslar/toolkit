@@ -11,7 +11,7 @@ import DirectoryObject from "./DirectoryObject.js"
 import FS from "./FileSystem.js"
 
 /**
- * @import {FileObject} from "./FileObject.js"
+ * @import FileObject from "./FileObject.js"
  */
 
 const execFile = promisify(child_process.execFile)

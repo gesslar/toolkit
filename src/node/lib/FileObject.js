@@ -4,17 +4,17 @@
  * resolution and existence checks.
  */
 
+import {Buffer} from "node:buffer"
 import fs from "node:fs/promises"
 import {URL} from "node:url"
-import {Buffer} from "node:buffer"
 import {inspect} from "node:util"
 
+import Cache from "./Cache.js"
 import Data from "./Data.js"
 import DirectoryObject from "./DirectoryObject.js"
 import FS from "./FileSystem.js"
 import Sass from "./Sass.js"
 import Valid from "./Valid.js"
-import Cache from "./Cache.js"
 
 /**
  * FileObject encapsulates metadata and operations for a file, including path
