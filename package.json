@@ -77,9 +77,9 @@
     "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@gesslar/uglier": "^2.0.0",
-    "eslint": "^10.0.2",
-    "happy-dom": "^20.8.3",
+    "@gesslar/uglier": "^2.1.0",
+    "eslint": "^10.0.3",
+    "happy-dom": "^20.8.4",
     "typescript": "^5.9.3"
   }
 }
