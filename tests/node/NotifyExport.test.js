@@ -287,6 +287,89 @@ describe("Notify (Node.js)", () => {
     })
   })
 
+  describe("fire", () => {
+    it("fires event without blocking", () => {
+      let resolved = false
+
+      const handler = async () => {
+        await new Promise(resolve => setTimeout(resolve, 10))
+        resolved = true
+      }
+
+      Notify.on("fire-test", handler)
+      const result = Notify.fire("fire-test", "data")
+
+      // fire returns undefined, not a Promise
+      assert.equal(result, undefined)
+      // Listener hasn't resolved yet since it yields
+      assert.ok(!resolved)
+      Notify.off("fire-test", handler)
+    })
+
+    it("calls error callback on listener failure", async () => {
+      let caughtError = null
+
+      const handler = async () => {
+        throw new Error("fire-boom")
+      }
+
+      Notify.on("fire-err", handler)
+
+      await new Promise(resolve => {
+        Notify.fire("fire-err", undefined, error => {
+          caughtError = error
+          resolve()
+        })
+      })
+
+      Notify.off("fire-err", handler)
+      assert.ok(caughtError instanceof Error)
+      assert.match(caughtError.message, /fire-boom/)
+    })
+
+    it("silently discards errors with no callback", async () => {
+      const handler = async () => {
+        throw new Error("ignored")
+      }
+
+      Notify.on("fire-silent", handler)
+      Notify.fire("fire-silent")
+
+      await new Promise(resolve => setTimeout(resolve, 10))
+      Notify.off("fire-silent", handler)
+    })
+
+    it("throws on invalid type", () => {
+      assert.throws(
+        () => Notify.fire(""),
+        /no empty values/
+      )
+
+      assert.throws(
+        () => Notify.fire(123),
+        /Invalid type.*Expected String/
+      )
+    })
+
+    it("does nothing when signal is already aborted", async () => {
+      let called = false
+
+      const handler = async () => {
+        called = true
+      }
+
+      const ac = new AbortController()
+      ac.abort()
+
+      Notify.on("fire-aborted", handler)
+      Notify.fire("fire-aborted", undefined, null, ac.signal)
+
+      await new Promise(resolve => setTimeout(resolve, 10))
+      Notify.off("fire-aborted", handler)
+      assert.ok(!called)
+    })
+  })
+
   describe("edge cases", () => {
     it("handles undefined payload gracefully", () => {
       const handler = payload => {
