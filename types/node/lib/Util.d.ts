@@ -60,6 +60,20 @@ export default class Util extends BrowserUtil {
      */
     static asyncEmit(emitter: EventEmitter, event: string, ...args: unknown[]): Promise<undefined>;
     /**
+     * Fires an event asynchronously without blocking the caller.
+     * Listeners run in the background via asyncEmit. If any listener rejects
+     * and an error callback is provided, it receives the error. If no callback
+     * is provided, errors are silently discarded.
+     *
+     * @param {EventEmitter} emitter - The EventEmitter instance to emit on
+     * @param {string} event - The event name to emit
+     * @param {unknown} [payload] - Data to send with the event
+     * @param {((error: Error) => void)|null} [errorCb] - Optional callback for errors
+     * @param {AbortSignal} [signal] - Optional AbortSignal to cancel the operation
+     * @returns {undefined}
+     */
+    static fire(emitter: EventEmitter, event: string, payload?: unknown, errorCb?: ((error: Error) => void) | null, signal?: AbortSignal): undefined;
+    /**
      * Emits an event asynchronously and waits for all listeners to complete.
      * Like asyncEmit, but uses duck typing for more flexible emitter validation.
      * Accepts any object that has the required EventEmitter-like methods.

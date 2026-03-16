@@ -29,6 +29,19 @@ export class Notify {
      */
     asyncEmit(type: string, payload?: unknown): Promise<undefined>;
     /**
+     * Fires an event asynchronously without blocking the caller.
+     * Listeners run in the background. If any listener throws and an error
+     * callback is provided, it receives the error. Otherwise errors are
+     * silently discarded.
+     *
+     * @param {string} type - Event name to dispatch.
+     * @param {unknown} [payload] - Data to send with the event.
+     * @param {((error: Error) => void)|null} [errorCb] - Optional callback for errors.
+     * @param {AbortSignal} [signal] - Optional AbortSignal to cancel the operation.
+     * @returns {undefined}
+     */
+    fire(type: string, payload?: unknown, errorCb?: ((error: Error) => void) | null, signal?: AbortSignal): undefined;
+    /**
      * Emits an event and returns the payload for simple request/response flows.
      * Listeners can mutate the payload object to provide responses.
      *
