@@ -8,7 +8,6 @@ import {EventEmitter} from "node:events"
 
 import Valid from "./Valid.js"
 import Util from "./Util.js"
-import {sign} from "node:crypto"
 
 /**
  * @typedef {object} NotifyEventOptions
