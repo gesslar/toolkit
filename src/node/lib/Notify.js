@@ -8,6 +8,7 @@ import {EventEmitter} from "node:events"
 
 import Valid from "./Valid.js"
 import Util from "./Util.js"
+import {sign} from "node:crypto"
 
 /**
  * @typedef {object} NotifyEventOptions
@@ -52,6 +53,26 @@ export class Notify {
     Valid.type(type, "String", {allowEmpty: false})
 
     await Util.asyncEmit(this.#emitter, type, payload)
+  }
+
+  /**
+   * Fires an event asynchronously without blocking the caller.
+   * Listeners run in the background. If any listener throws and an error
+   * callback is provided, it receives the error. Otherwise errors are
+   * silently discarded.
+   *
+   * @param {string} type - Event name to dispatch.
+   * @param {unknown} [payload] - Data to send with the event.
+   * @param {((error: Error) => void)|null} [errorCb] - Optional callback for errors.
+   * @param {AbortSignal} [signal] - Optional AbortSignal to cancel the operation.
+   * @returns {undefined}
+   */
+  fire(type, payload, errorCb, signal) {
+    Valid.type(type, "String", {allowEmpty: false})
+    Valid.type(errorCb, "Undefined|Null|Function")
+    Valid.type(signal, "Undefined|Null|AbortSignal")
+
+    Util.fire(this.#emitter, type, payload, errorCb, signal)
   }
 
   /**

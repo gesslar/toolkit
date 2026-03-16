@@ -150,7 +150,7 @@ describe("Util (Node-specific features)", () => {
       it("works with EventEmitter-like objects (duck typing)", async () => {
         let called = false
         const fakeEmitter = {
-          listeners: () => [
+          rawListeners: () => [
             async () => {
               called = true
             }
@@ -186,6 +186,109 @@ describe("Util (Node-specific features)", () => {
           Sass
         )
       })
+    })
+  })
+
+  describe("fire()", () => {
+    it("fires event without blocking", () => {
+      const emitter = new EventEmitter()
+      let resolved = false
+
+      emitter.on("test", async () => {
+        await new Promise(resolve => setTimeout(resolve, 10))
+        resolved = true
+      })
+
+      const result = Util.fire(emitter, "test")
+      // fire returns undefined, not a Promise
+      assert.equal(result, undefined)
+      // Listener hasn't resolved yet since it yields
+      assert.ok(!resolved)
+    })
+
+    it("calls error callback on listener failure", async () => {
+      const emitter = new EventEmitter()
+      let caughtError = null
+
+      emitter.on("test", async () => {
+        throw new Error("boom")
+      })
+
+      await new Promise(resolve => {
+        Util.fire(emitter, "test", undefined, error => {
+          caughtError = error
+          resolve()
+        })
+      })
+
+      assert.ok(caughtError instanceof Error)
+      assert.match(caughtError.message, /boom/)
+    })
+
+    it("silently discards errors when no callback provided", async () => {
+      const emitter = new EventEmitter()
+
+      emitter.on("test", async () => {
+        throw new Error("ignored")
+      })
+
+      // Should not throw or cause unhandled rejection
+      Util.fire(emitter, "test")
+
+      // Give the promise time to settle
+      await new Promise(resolve => setTimeout(resolve, 10))
+    })
+
+    it("passes payload to listeners", async () => {
+      const emitter = new EventEmitter()
+      let received = null
+
+      emitter.on("test", async payload => {
+        received = payload
+      })
+
+      Util.fire(emitter, "test", {data: 42})
+
+      await new Promise(resolve => setTimeout(resolve, 10))
+      assert.deepEqual(received, {data: 42})
+    })
+
+    it("does nothing when signal is already aborted", async () => {
+      const emitter = new EventEmitter()
+      let called = false
+
+      emitter.on("test", async () => {
+        called = true
+      })
+
+      const ac = new AbortController()
+      ac.abort()
+
+      Util.fire(emitter, "test", undefined, null, ac.signal)
+
+      await new Promise(resolve => setTimeout(resolve, 10))
+      assert.ok(!called)
+    })
+
+    it("suppresses error callback when signal is aborted", async () => {
+      const emitter = new EventEmitter()
+      let errorCalled = false
+
+      emitter.on("test", async () => {
+        await new Promise(resolve => setTimeout(resolve, 10))
+        throw new Error("too late")
+      })
+
+      const ac = new AbortController()
+
+      Util.fire(emitter, "test", undefined, () => {
+        errorCalled = true
+      }, ac.signal)
+
+      ac.abort()
+
+      await new Promise(resolve => setTimeout(resolve, 50))
+      assert.ok(!errorCalled)
     })
   })
 

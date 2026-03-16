@@ -68,7 +68,7 @@ export default class Util extends BrowserUtil {
    * @returns {Promise<undefined>} Resolves when all listeners have completed
    */
   static async #performAsyncEmit(emitter, event, ...args) {
-    const listeners = emitter.listeners(event)
+    const listeners = emitter.rawListeners(event)
 
     if(listeners.length === 0)
       return // No listeners, nothing to do
@@ -116,6 +116,48 @@ export default class Util extends BrowserUtil {
   }
 
   /**
+   * Fires an event asynchronously without blocking the caller.
+   * Listeners run in the background via asyncEmit. If any listener rejects
+   * and an error callback is provided, it receives the error. If no callback
+   * is provided, errors are silently discarded.
+   *
+   * @param {EventEmitter} emitter - The EventEmitter instance to emit on
+   * @param {string} event - The event name to emit
+   * @param {unknown} [payload] - Data to send with the event
+   * @param {((error: Error) => void)|null} [errorCb] - Optional callback for errors
+   * @param {AbortSignal} [signal] - Optional AbortSignal to cancel the operation
+   * @returns {undefined}
+   */
+  static fire(emitter, event, payload, errorCb, signal) {
+    Valid.type(errorCb, "Undefined|Null|Function")
+    Valid.type(signal, "Undefined|Null|AbortSignal")
+
+    if(signal?.aborted)
+      return
+
+    const promise = this.asyncEmit(emitter, event, payload)
+
+    if(signal) {
+      const onAbort = () => {}  // asyncEmit already in flight, nothing to cancel
+      signal.addEventListener("abort", onAbort, {once: true})
+      promise.then(
+        () => signal.removeEventListener("abort", onAbort),
+        error => {
+          signal.removeEventListener("abort", onAbort)
+
+          if(!signal.aborted && errorCb) {
+            errorCb(error)
+          }
+        }
+      )
+    } else if(errorCb) {
+      promise.catch(errorCb)
+    } else {
+      promise.catch(() => {})
+    }
+  }
+
+  /**
    * Emits an event asynchronously and waits for all listeners to complete.
    * Like asyncEmit, but uses duck typing for more flexible emitter validation.
    * Accepts any object that has the required EventEmitter-like methods.
@@ -129,7 +171,7 @@ export default class Util extends BrowserUtil {
   static async asyncEmitQuack(emitter, event, ...args) {
     try {
       if(!emitter ||
-         typeof emitter.listeners !== "function" ||
+         typeof emitter.rawListeners !== "function" ||
          typeof emitter.on !== "function" ||
          typeof emitter.emit !== "function") {
         throw Sass.new("First argument must be an EventEmitter-like object")
