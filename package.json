@@ -61,7 +61,7 @@
     "preinstall": "node ./scripts/check-node-version.mjs",
     "types": "node -e \"require('fs').rmSync('types',{recursive:true,force:true});\" && tsc -p tsconfig.types.json",
     "vendor:build": "node scripts/vendor-build.js",
-    "prepublishOnly": "npm run types && npm run vendor:build 1>/dev/null",
+    "prepack": "npm run types && npm run vendor:build",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "submit": "npm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",

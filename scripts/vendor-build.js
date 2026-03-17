@@ -12,19 +12,21 @@ const bundle = await rollup({
   plugins: [nodeResolve()],
 })
 
-await bundle.write({
-  file: `${vendorDir}/toolkit.esm.js`,
-  format: "es",
-  banner: `// @gesslar/toolkit v${version} - ES module bundle`,
-})
+try {
+  await bundle.write({
+    file: `${vendorDir}/toolkit.esm.js`,
+    format: "es",
+    banner: `// @gesslar/toolkit v${version} - ES module bundle`,
+  })
 
-await bundle.write({
-  file: `${vendorDir}/toolkit.umd.js`,
-  format: "umd",
-  name: "Toolkit",
-  banner: `// @gesslar/toolkit v${version} - UMD bundle`,
-})
-
-await bundle.close()
+  await bundle.write({
+    file: `${vendorDir}/toolkit.umd.js`,
+    format: "umd",
+    name: "Toolkit",
+    banner: `// @gesslar/toolkit v${version} - UMD bundle`,
+  })
+} finally {
+  await bundle.close()
+}
 
 console.log(`Built vendor bundles for @gesslar/toolkit@${version}`)
