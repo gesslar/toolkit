@@ -41,11 +41,16 @@
     "./node": {
       "types": "./types/node/index.d.ts",
       "default": "./src/node/index.js"
+    },
+    "./vendor": {
+      "types": "./types/browser/index.d.ts",
+      "default": "./vendor/toolkit.esm.js"
     }
   },
   "files": [
     "src/",
     "types/",
+    "vendor/",
     "scripts/",
     "UNLICENSE.txt"
   ],
@@ -55,7 +60,8 @@
   "scripts": {
     "preinstall": "node ./scripts/check-node-version.mjs",
     "types": "node -e \"require('fs').rmSync('types',{recursive:true,force:true});\" && tsc -p tsconfig.types.json",
-    "prepublishOnly": "npm run types",
+    "vendor:build": "node scripts/vendor-build.js",
+    "prepublishOnly": "npm run types && npm run vendor:build 1>/dev/null",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "submit": "npm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
@@ -78,6 +84,8 @@
   },
   "devDependencies": {
     "@gesslar/uglier": "^2.2.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "rollup": "^4.59.0",
     "eslint": "^10.0.3",
     "happy-dom": "^20.8.4",
     "typescript": "^5.9.3"

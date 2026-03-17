@@ -101,6 +101,37 @@ The browser version includes: Collection, Data, Disposer, HTML, Notify, Sass,
 Tantrum, Type (TypeSpec), Util, and Valid. Node-only modules (Cache,
 DirectoryObject, FileObject, FileSystem, Glog, Term) are not available in the browser version.
 
+### Vendor Bundle
+
+Pre-built bundles are included for environments without a build pipeline, such
+as webviews (VS Code, Tauri, Electron) or plain HTML pages. No bundler required.
+
+#### ES module
+
+```html
+<script type="module">
+  import {Data, Collection} from "./node_modules/@gesslar/toolkit/vendor/toolkit.esm.js"
+</script>
+```
+
+Or import via the package export:
+
+```javascript
+import {Data, Collection} from "@gesslar/toolkit/vendor"
+```
+
+#### UMD (global script)
+
+```html
+<script src="./node_modules/@gesslar/toolkit/vendor/toolkit.umd.js"></script>
+<script>
+  const {Data, Collection} = Toolkit
+</script>
+```
+
+The vendor bundles contain the same browser-compatible utilities listed above,
+fully self-contained with zero external dependencies.
+
 ## Post Partum
 
 If you made it this far, please understand that I have absolutely zero scruples
@@ -117,3 +148,19 @@ off klaxons about my fetish for breaking changes, so you should be all right
 if you're paying attention. 🤷🏻
 
 Sincerely, Senator Yabba of the Dabba (Doo)
+
+## License
+
+toolkit is released into the public domain under the
+[Unlicense](UNLICENSE.txt).
+
+This package includes or depends on third-party components under their own
+licenses:
+
+| Dependency | License |
+| --- | --- |
+| [@gesslar/colours](https://github.com/gesslar/colours) | Unlicense |
+| [ajv](https://github.com/ajv-validator/ajv) | MIT |
+| [json5](https://github.com/json5/json5) | MIT |
+| [supports-color](https://github.com/chalk/supports-color) | MIT |
+| [yaml](https://github.com/eemeli/yaml) | ISC |
