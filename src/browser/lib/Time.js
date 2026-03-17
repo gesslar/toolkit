@@ -40,10 +40,16 @@ export default class Time {
     Valid.assert(delay >= 0, "delay must be non-negative", delay)
 
     let timerId
-    const promise = new Promise(resolve => {
+    const promise = new Promise((resolve, reject) => {
       // Cap at max 32-bit signed integer to avoid Node.js timeout overflow warning
       const safeDelay = Math.min(delay, 2147483647)
-      timerId = setTimeout(() => resolve(Data.isType(value, "Function") ? value() : value), safeDelay)
+      timerId = setTimeout(() => {
+        try {
+          resolve(Data.isType(value, "Function") ? value() : value)
+        } catch(e) {
+          reject(e)
+        }
+      }, safeDelay)
     })
     promise.timerId = timerId
 

@@ -100,6 +100,17 @@ describe("Time", () => {
       assert.equal(result, null)
     })
 
+    it("rejects when function value throws", async () => {
+      await assert.rejects(
+        () => Time.after(10, () => { throw new Error("boom") }),
+        (error) => {
+          assert.ok(error instanceof Error)
+          assert.equal(error.message, "boom")
+          return true
+        }
+      )
+    })
+
     it("throws Sass error for non-number delay", () => {
       assert.throws(
         () => Time.after("100"),
