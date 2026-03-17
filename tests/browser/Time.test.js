@@ -67,6 +67,39 @@ describe("Time", () => {
       assert.equal(result, 42)
     })
 
+    it("invokes function value after delay", async () => {
+      const result = await Time.after(10, () => "computed")
+      assert.equal(result, "computed")
+    })
+
+    it("invokes function value and resolves with its return value", async () => {
+      const result = await Time.after(10, () => ({key: "value"}))
+      assert.deepEqual(result, {key: "value"})
+    })
+
+    it("invokes function value only after delay elapses", async () => {
+      let called = false
+      const promise = Time.after(50, () => {
+        called = true
+        return "done"
+      })
+
+      assert.equal(called, false, "Function should not be called immediately")
+      const result = await promise
+      assert.equal(called, true, "Function should be called after delay")
+      assert.equal(result, "done")
+    })
+
+    it("resolves with undefined if function returns nothing", async () => {
+      const result = await Time.after(10, () => {})
+      assert.equal(result, undefined)
+    })
+
+    it("resolves with null if function returns null", async () => {
+      const result = await Time.after(10, () => null)
+      assert.equal(result, null)
+    })
+
     it("throws Sass error for non-number delay", () => {
       assert.throws(
         () => Time.after("100"),

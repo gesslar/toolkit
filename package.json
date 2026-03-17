@@ -85,9 +85,9 @@
   "devDependencies": {
     "@gesslar/uglier": "^2.2.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "rollup": "^4.59.0",
     "eslint": "^10.0.3",
     "happy-dom": "^20.8.4",
+    "rollup": "^4.59.0",
     "typescript": "^5.9.3"
   }
 }
