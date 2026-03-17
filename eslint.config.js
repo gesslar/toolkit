@@ -3,7 +3,7 @@ import uglify from "@gesslar/uglier"
 export default [
   {
     name: "gesslar/vendor-ignore",
-    ignores: ["src/browser/lib/vendor/**"],
+    ignores: ["**/vendor/**"],
   },
   ...uglify({
     with: ["lints-js", "lints-jsdoc", "web", "node"],
