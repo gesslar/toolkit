@@ -88,6 +88,6 @@
     "eslint": "^10.0.3",
     "happy-dom": "^20.8.4",
     "rollup": "^4.59.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   }
 }
