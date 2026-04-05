@@ -458,7 +458,7 @@ declare class Glog {
      *
      * @returns {import('@gesslar/colours')} The colours template function from \@gesslar/colours
      */
-    get colours(): any;
+    get colours(): typeof import("@gesslar/colours");
     /**
      * Get a raw logger that outputs without name/tag formatting
      *

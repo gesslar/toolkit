@@ -13,6 +13,7 @@
  * @property {Promise<boolean>} exists - Whether the file exists (async)
  */
 export default class FileObject extends FS {
+    [x: number]: (depth: number, options: object, ins: Function) => string;
     /**
      * Creates a FileObject representing the current working file (the file
      * that called this method). Parses the stack trace to determine the
@@ -291,15 +292,6 @@ export default class FileObject extends FS {
      */
     delete(): Promise<undefined>;
     /**
-     * Custom Node.js inspect implementation for console.log output.
-     *
-     * @param {number} depth - Inspection depth
-     * @param {object} options - Inspect options
-     * @param {Function} ins - The inspect function
-     * @returns {string} Formatted string representation
-     */
-    [inspect.custom](depth: number, options: object, ins: Function): string;
-    /**
      * Returns the file path as a primitive value, enabling natural use in
      * string contexts. String and default hints return the file path; number
      * hint returns NaN.
@@ -311,9 +303,6 @@ export default class FileObject extends FS {
     #private;
 }
 import FS from "./FileSystem.js";
-import { URL } from "node:url";
 import DirectoryObject from "./DirectoryObject.js";
 import Cache from "./Cache.js";
-import { Buffer } from "node:buffer";
-import { inspect } from "node:util";
 //# sourceMappingURL=FileObject.d.ts.map

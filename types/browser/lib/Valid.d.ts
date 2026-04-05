@@ -20,7 +20,7 @@ export default class Valid {
      *                         met (optional)
      */
     static assert(condition: boolean, message: string, arg?: number): void;
-    static "__#private@#restrictedProto": string[];
+    static #restrictedProto: string[];
     /**
      * Protects against prototype pollution by checking keys for dangerous property names.
      * Throws if any restricted prototype properties are found in the keys array.

@@ -33,7 +33,7 @@ export default class OObject {
      * @param {Array<string>} objectPath - Current path array for nested properties
      * @returns {Array<OObjectEntry>} Array of decomposed object entries with path information
      */
-    static "__#private@#decomposeObject"(work: Record<string, any>, objectPath?: Array<string>): Array<OObjectEntry>;
+    static #decomposeObject(work: Record<string, any>, objectPath?: Array<string>): Array<OObjectEntry>;
     /**
      * Constructs an OObject with optional initial data.
      *

@@ -44,7 +44,7 @@ export default class Util extends BrowserUtil {
      * @param {...unknown} args - Arguments to pass to event listeners
      * @returns {Promise<undefined>} Resolves when all listeners have completed
      */
-    static "__#private@#performAsyncEmit"(emitter: object, event: string, ...args: unknown[]): Promise<undefined>;
+    static #performAsyncEmit(emitter: object, event: string, ...args: unknown[]): Promise<undefined>;
     /**
      * Emits an event asynchronously and waits for all listeners to complete.
      * Unlike the standard EventEmitter.emit() which is synchronous, this method
@@ -111,5 +111,4 @@ export default class Util extends BrowserUtil {
     static getEnv(ev: string, def?: unknown): unknown;
 }
 import BrowserUtil from "../../browser/lib/Util.js";
-import { EventEmitter } from "node:events";
 //# sourceMappingURL=Util.d.ts.map

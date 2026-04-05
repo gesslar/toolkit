@@ -8,7 +8,7 @@
  * Validation utility class providing type checking and assertion methods.
  */
 export default class Valid {
-    static "__#private@#restrictedProto": string[];
+    static #restrictedProto: string[];
     /**
      * Validates a value against a type. Uses Data.isType.
      *

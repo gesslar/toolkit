@@ -15,7 +15,7 @@
  * console.log(fonts) // ["FiraCode", "JetBrainsMono", ...]
  */
 export default class Font {
-    static "__#private@#cache": Map<any, any>;
+    static #cache: Map<any, any>;
     /**
      * Finds all Nerd Fonts installed on the system.
      * Detects the current platform and uses platform-specific methods
@@ -54,7 +54,7 @@ export default class Font {
      * @returns {string} The font name without style suffixes.
      * @private
      */
-    private static "__#private@#stripStyles";
+    private static #stripStyles;
     /**
      * Tests if a font name matches any Nerd Font naming patterns.
      *
@@ -63,32 +63,32 @@ export default class Font {
      * @returns {boolean} True if the font name matches any pattern.
      * @private
      */
-    private static "__#private@#isNerdFontName";
+    private static #isNerdFontName;
     /**
      * Finds Nerd Fonts on Windows by scanning system and user font directories.
      *
      * @returns {Promise<Array<string>>} Array of Nerd Font family names.
      * @private
      */
-    private static "__#private@#findNerdFontsWindows";
+    private static #findNerdFontsWindows;
     /**
      * Finds Nerd Fonts on macOS by scanning system and user font directories.
      *
      * @returns {Promise<Array<string>>} Array of Nerd Font family names.
      * @private
      */
-    private static "__#private@#findNerdFontsMac";
+    private static #findNerdFontsMac;
     /**
      * Finds Nerd Fonts on Linux using the fc-list command.
      *
      * @returns {Promise<Array<string>>} Array of Nerd Font family names.
      * @private
      */
-    private static "__#private@#findNerdFontsLinux";
+    private static #findNerdFontsLinux;
     /** @type {Array<RegExp>} Patterns to identify Nerd Fonts by filename */
-    static "__#private@#nerdTests": Array<RegExp>;
+    static #nerdTests: Array<RegExp>;
     /** @type {Array<RegExp>} Patterns to identify Nerd Fonts in fc-list output */
-    static "__#private@#nerdTestsLinux": Array<RegExp>;
+    static #nerdTestsLinux: Array<RegExp>;
     /**
      * Identifies Nerd Fonts from a list of font file objects.
      *
@@ -96,7 +96,7 @@ export default class Font {
      * @returns {Array<string>} Sorted array of unique Nerd Font family names.
      * @private
      */
-    private static "__#private@#identifyNerdFonts";
+    private static #identifyNerdFonts;
     /**
      * Gets spinner animation frames appropriate for the current font environment.
      * Returns Unicode braille characters if Nerd Fonts are available,
