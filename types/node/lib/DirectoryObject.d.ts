@@ -64,6 +64,7 @@
  * const file = dir.getFile("package.json")
  */
 export default class DirectoryObject extends FS {
+    [x: number]: (depth: number, options: object, ins: Function) => string;
     /**
      * Creates a DirectoryObject from the current working directory.
      * Useful when working with pnpx or other tools where the project root
@@ -336,15 +337,6 @@ export default class DirectoryObject extends FS {
      */
     getFile(filename: string): FileObject;
     /**
-     * Custom Node.js inspect implementation for console.log output.
-     *
-     * @param {number} depth - Inspection depth
-     * @param {object} options - Inspect options
-     * @param {Function} ins - The inspect function
-     * @returns {string} Formatted string representation
-     */
-    [inspect.custom](depth: number, options: object, ins: Function): string;
-    /**
      * Returns the directory path as a primitive value, enabling natural use in
      * string contexts. String and default hints return the directory path; number
      * hint returns NaN.
@@ -409,7 +401,5 @@ export type DirectoryMeta = {
     url: URL | null;
 };
 import FS from "./FileSystem.js";
-import { URL } from "node:url";
 import FileObject from "./FileObject.js";
-import { inspect } from "node:util";
 //# sourceMappingURL=DirectoryObject.d.ts.map

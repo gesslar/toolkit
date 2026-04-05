@@ -83,5 +83,4 @@ export type NotifyEventOptions = {
      */
     signal?: AbortSignal;
 };
-import { EventEmitter } from "node:events";
 //# sourceMappingURL=Notify.d.ts.map
