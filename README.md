@@ -151,17 +151,15 @@ Sincerely, Senator Yabba of the Dabba (Doo)
 
 ## License
 
-toolkit is released into the public domain under the
-[Unlicense](UNLICENSE.txt).
+`@gesslar/toolkit` is released into the public domain under the [0BSD](LICENSE.txt).
 
 This package includes or depends on third-party components under their own
 licenses:
 
 | Dependency | License |
 | --- | --- |
-| [@gesslar/colours](https://github.com/gesslar/colours) | Unlicense |
+| [@gesslar/colours](https://github.com/gesslar/colours) | 0BSD |
 | [ajv](https://github.com/ajv-validator/ajv) | MIT |
-| [DOMPurify](https://github.com/cure53/DOMPurify) | Apache-2.0 / MPL-2.0 |
 | [json5](https://github.com/json5/json5) | MIT |
 | [supports-color](https://github.com/chalk/supports-color) | MIT |
 | [yaml](https://github.com/eemeli/yaml) | ISC |
