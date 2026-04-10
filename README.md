@@ -47,7 +47,6 @@ Includes all browser functionality plus Node.js-specific modules for file I/O, l
 | Valid | Validation and assertion methods |
 | Watcher | File and directory change watcher with debounce protection |
 
-
 ## Installation
 
 ```shell
@@ -151,7 +150,7 @@ Sincerely, Senator Yabba of the Dabba (Doo)
 
 ## License
 
-`@gesslar/toolkit` is released into the public domain under the [0BSD](LICENSE.txt).
+`@gesslar/toolkit` is released under the [0BSD](LICENSE.txt).
 
 This package includes or depends on third-party components under their own
 licenses:
