@@ -28,8 +28,7 @@ export default class Valid {
      *                         met (optional)
      */
     static assert(condition: boolean, message: string, arg?: number): void;
-    /** @private */
-    private static _restrictedProto;
+    static #restrictedProto: readonly string[];
     /**
      * Protects against prototype pollution by checking keys for dangerous property names.
      * Throws if any restricted prototype properties are found in the keys array.
