@@ -108,6 +108,24 @@ describe("Valid", () => {
       })
     })
 
+    it("throws for NaN when asserting Number", () => {
+      assert.throws(() => {
+        Valid.type(NaN, "Number")
+      }, (error) => {
+        return error instanceof Sass &&
+               error.message.includes("Invalid type")
+      })
+    })
+
+    it("accepts valid number edge cases", () => {
+      Valid.type(0, "Number")
+      Valid.type(-0, "Number")
+      Valid.type(Infinity, "Number")
+      Valid.type(-Infinity, "Number")
+      Valid.type(Number.MAX_SAFE_INTEGER, "Number")
+      Valid.type(Number.MIN_VALUE, "Number")
+    })
+
     it("works with type specifications", () => {
       // Array types
       Valid.type([1, 2, 3], "Number[]") // Should not throw

@@ -193,7 +193,7 @@ export default class TypeSpec {
       // Handle non-array values
       if(!isArray && !allowedArray) {
         if(valueType === allowedType)
-          return allowEmpty || !empty
+          return Data.isBaseType(value, allowedType) && (allowEmpty || !empty)
 
         if(valueType === "Null" || valueType === "Undefined")
           return false

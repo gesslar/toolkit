@@ -1,4 +1,4 @@
-import Valid from "../../browser/lib/Valid.js"
+import Valid from "./Valid.js"
 import Data from "./Data.js"
 import Sass from "./Sass.js"
 
