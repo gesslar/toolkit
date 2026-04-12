@@ -1,4 +1,5 @@
 import fs from "node:fs/promises"
+import os from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -32,8 +33,7 @@ export class TestUtils {
    * @returns {Promise<string>} Path to the created directory
    */
   static async createTestDir(name) {
-    const testDir = path.join(__dirname, "../fixtures", name)
-    await fs.mkdir(testDir, { recursive: true })
+    const testDir = await fs.mkdtemp(path.join(os.tmpdir(), `${name}-`))
     return testDir
   }
 
