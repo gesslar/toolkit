@@ -65,8 +65,7 @@ export default class Valid {
       throw this._Sass.new(`${message}${arg ? `: ${arg}` : ""}`)
   }
 
-  /** @private */
-  static _restrictedProto = Object.freeze(["__proto__", "constructor", "prototype"])
+  static #restrictedProto = Object.freeze(["__proto__", "constructor", "prototype"])
 
   /**
    * Protects against prototype pollution by checking keys for dangerous property names.
@@ -78,7 +77,7 @@ export default class Valid {
   static prototypePollutionProtection(keys) {
     this.type(keys, "String[]")
 
-    const oopsIDidItAgain = Collection.intersection(this._restrictedProto, keys)
+    const oopsIDidItAgain = Collection.intersection(Valid.#restrictedProto, keys)
 
     this.assert(
       oopsIDidItAgain.length === 0,
