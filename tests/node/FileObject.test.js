@@ -330,6 +330,15 @@ describe("FileObject", () => {
       assert.equal(exists, false)
     })
 
+    it("exists throws if path is a directory", async () => {
+      const dirPath = path.join(testDir, "a-subdir")
+      await fs.mkdir(dirPath)
+      const file = new FileObject(dirPath)
+      await assert.rejects(() => file.exists, {
+        message: `Path exists but is not a file: '${dirPath}'`,
+      })
+    })
+
     it("exists is a Promise", () => {
       const existsPromise = existingFile.exists
       assert.ok(existsPromise instanceof Promise)

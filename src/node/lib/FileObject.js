@@ -324,13 +324,21 @@ export default class FileObject extends FS {
    * Check if a file exists
    *
    * @returns {Promise<boolean>} Whether the file exists
+   * @throws {Sass} If the path exists but is not a file
    */
   async #fileExists() {
     try {
-      await fs.access(this.path, fs.constants.F_OK)
+      const stats = await fs.stat(this.path)
+      if(!stats.isFile()) {
+        throw Sass.new(`Path exists but is not a file: '${this.path}'`)
+      }
 
       return true
-    } catch {
+    } catch(error) {
+      if(error instanceof Sass) {
+        throw error
+      }
+
       return false
     }
   }
