@@ -342,6 +342,7 @@ export default class DirectoryObject extends FS {
    * Check if a directory exists
    *
    * @returns {Promise<boolean>} Whether the directory exists
+   * @throws {Sass} If the path exists but is not a directory
    */
   async #directoryExists() {
     const path = this.path
@@ -351,6 +352,11 @@ export default class DirectoryObject extends FS {
 
       return true
     } catch {
+      const stats = await stat(path).catch(() => null)
+      if(stats) {
+        throw Sass.new(`Path exists but is not a directory: '${path}'`)
+      }
+
       return false
     }
   }
