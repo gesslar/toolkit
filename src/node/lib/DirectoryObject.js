@@ -353,7 +353,7 @@ export default class DirectoryObject extends FS {
       return true
     } catch {
       const stats = await stat(path).catch(() => null)
-      if(stats & !stats.isDirectory()) {
+      if(stats && !stats.isDirectory()) {
         throw Sass.new(`Path exists but is not a directory: '${path}'`)
       }
 
