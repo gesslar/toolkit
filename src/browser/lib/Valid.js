@@ -77,7 +77,9 @@ export default class Valid {
   static prototypePollutionProtection(keys) {
     this.type(keys, "String[]")
 
-    const oopsIDidItAgain = Collection.intersection(Valid.#restrictedProto, keys)
+    const oopsIDidItAgain = Collection.intersection(
+      Valid.#restrictedProto, keys
+    )
 
     this.assert(
       oopsIDidItAgain.length === 0,
