@@ -328,18 +328,20 @@ export default class FileObject extends FS {
    */
   async #fileExists() {
     try {
-      const stats = await fs.stat(this.path)
-      if(!stats.isFile()) {
+      const stats = await fs.stat(this.path).catch(error => error.code === "ENOENT" ? null : error)
+
+      if(stats instanceof Error)
+        throw stats
+
+      if(stats === null)
+        return false
+
+      if(!stats.isFile())
         throw Sass.new(`Path exists but is not a file: '${this.path}'`)
-      }
 
       return true
     } catch(error) {
-      if(error instanceof Sass) {
-        throw error
-      }
-
-      return false
+      throw Sass.new(`Determining status of '${this.path}'`, error)
     }
   }
 

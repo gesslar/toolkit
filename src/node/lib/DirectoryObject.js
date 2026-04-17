@@ -4,7 +4,7 @@
  * resolution and existence checks.
  */
 
-import {glob, mkdir, opendir, readdir, rmdir, stat} from "node:fs/promises"
+import {glob, mkdir, readdir, rmdir, stat} from "node:fs/promises"
 import path, {relative} from "node:path"
 import {URL} from "node:url"
 import {inspect} from "node:util"
@@ -345,19 +345,21 @@ export default class DirectoryObject extends FS {
    * @throws {Sass} If the path exists but is not a directory
    */
   async #directoryExists() {
-    const path = this.path
-
     try {
-      (await opendir(path)).close()
+      const stats = await stat(this.path).catch(error => error.code === "ENOENT" ? null : error)
+
+      if(stats instanceof Error)
+        throw stats
+
+      if(stats === null)
+        return false
+
+      if(!stats.isDirectory())
+        throw Sass.new(`Path exists but is not a directory: '${this.path}'`)
 
       return true
-    } catch {
-      const stats = await stat(path).catch(() => null)
-      if(stats && !stats.isDirectory()) {
-        throw Sass.new(`Path exists but is not a directory: '${path}'`)
-      }
-
-      return false
+    } catch(error) {
+      throw Sass.new(`Determining status of '${this.path}'`, error)
     }
   }
 
@@ -589,9 +591,9 @@ export default class DirectoryObject extends FS {
    * @returns {Promise<boolean>} True if the file exists, false otherwise
    */
   async hasFile(filename) {
-    const file = new FileObject(filename, this)
+    const file = this.getFile(filename)
 
-    return await file.exists
+    return await file.exists.catch(() => false)
   }
 
   /**
@@ -601,10 +603,9 @@ export default class DirectoryObject extends FS {
    * @returns {Promise<boolean>} True if the directory exists, false otherwise
    */
   async hasDirectory(dirname) {
-    const dir = FS.resolvePath(this.path, dirname)
-    const directory = new DirectoryObject(dir)
+    const dir = this.getDirectory(dirname)
 
-    return await directory.exists
+    return await dir.exists.catch(() => false)
   }
 
   /**
