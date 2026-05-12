@@ -393,6 +393,9 @@ export default class FileObject extends FS {
         }
       }
 
+      if(!stats.isFile())
+        throw Sass.new(`Path exists but is not a file: '${this.path}'`)
+
       if(stats.nlink > 1)
         return "hard"
 
