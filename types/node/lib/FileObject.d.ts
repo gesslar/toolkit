@@ -11,6 +11,7 @@
  * @property {boolean} isFile - Always true for files
  * @property {DirectoryObject} parent - The parent directory object
  * @property {Promise<boolean>} exists - Whether the file exists (async)
+ * @property {Promise<("none"|"symbolic"|"broken"|"hard"|null)>} linkType - The link kind at this path (async)
  */
 export default class FileObject extends FS {
     [x: number]: (depth: number, options: object, ins: Function) => string;
@@ -52,6 +53,21 @@ export default class FileObject extends FS {
      * @returns {Promise<boolean>} - A Promise that resolves to true or false
      */
     get exists(): Promise<boolean>;
+    /**
+     * Reports the link kind at this path. Reads the filesystem on every
+     * access, like {@link FileObject#exists}.
+     *
+     * - `"symbolic"` - a symlink whose target exists
+     * - `"broken"` - a symlink whose target does not exist
+     * - `"hard"` - a regular file with additional hard links (`nlink > 1`).
+     *   Hard links are inode-level and indistinguishable from each other,
+     *   so this only reports that *some* other entry shares the inode.
+     * - `"none"` - a regular file with no links
+     * - `null` - the path does not exist
+     *
+     * @returns {Promise<"none"|"symbolic"|"broken"|"hard"|null>} The link kind
+     */
+    get linkType(): Promise<"none" | "symbolic" | "broken" | "hard" | null>;
     /**
      * Return the normalized path that was provided to the constructor.
      *

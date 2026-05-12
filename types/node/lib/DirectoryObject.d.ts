@@ -40,6 +40,7 @@
  * @property {boolean} isDirectory - Always true
  * @property {DirectoryObject|null} parent - The parent directory (null if root)
  * @property {Promise<boolean>} exists - Whether the directory exists (async getter)
+ * @property {Promise<("none"|"symbolic"|null)>} linkType - The link kind at this path (async)
  *
  * @example
  * // Basic usage
@@ -100,6 +101,25 @@ export default class DirectoryObject extends FS {
      * @returns {Promise<boolean>} - A Promise that resolves to true or false
      */
     get exists(): Promise<boolean>;
+    /**
+     * Reports the link kind at this path. Reads the filesystem on every
+     * access, like {@link DirectoryObject#exists}, and throws under the
+     * same conditions: if the path exists but is not a directory (broken
+     * symlink, symlink to a non-directory, or a regular file), this throws
+     * a {@link Sass} error rather than returning a misleading value.
+     *
+     * - `"symbolic"` - a symlink whose target is a directory that exists
+     * - `"none"` - a regular directory
+     * - `null` - the path does not exist at all
+     *
+     * Hard links are not reported for directories: most filesystems do not
+     * allow hard-linked directories at all, and `nlink` on a directory is
+     * not a usable signal (it counts `.` and each subdirectory's `..`).
+     *
+     * @returns {Promise<"none"|"symbolic"|null>} The link kind
+     * @throws {Sass} If the path exists but does not resolve to a directory
+     */
+    get linkType(): Promise<"none" | "symbolic" | null>;
     /**
      * Return the path as passed to the constructor.
      *
@@ -176,8 +196,8 @@ export default class DirectoryObject extends FS {
      *
      * Returns FileObject and DirectoryObject instances. Symbolic links are
      * resolved to their target type: links to files appear in `files`, links
-     * to directories appear in `directories`. Broken symlinks propagate the
-     * stat error to the caller.
+     * to directories appear in `directories`. Broken symlinks (where the
+     * target does not exist) appear in `files` so they can be unlinked.
      *
      * @async
      * @param {string} [pat=""] - Optional glob pattern to filter results (e.g., "*.txt", "test-*")
@@ -202,8 +222,8 @@ export default class DirectoryObject extends FS {
      *
      * Returns FileObject and DirectoryObject instances. Symbolic links are
      * resolved to their target type: links to files appear in `files`, links
-     * to directories appear in `directories`. Broken symlinks propagate the
-     * stat error to the caller.
+     * to directories appear in `directories`. Broken symlinks (where the
+     * target does not exist) appear in `files` so they can be unlinked.
      *
      * @async
      * @param {string} [pat=""] - Glob pattern to filter results

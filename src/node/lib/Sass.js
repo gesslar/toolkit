@@ -40,17 +40,15 @@ export default class Sass extends BrowserSass {
       )
     }
 
-    if(this.cause) {
+    if(this.cause && nerdMode) {
       if(typeof this.cause.report === "function") {
-        if(nerdMode) {
-          Term.error(
-            "\n" +
-            `${Term.terminalBracket(["error", "Caused By"])}`
-          )
-        }
+        Term.error(
+          "\n" +
+          `${Term.terminalBracket(["error", "Caused By"])}`
+        )
 
         this.cause.report(nerdMode, true)
-      } else if(nerdMode && this.cause.stack) {
+      } else if(this.cause.stack) {
         Term.error()
         Term.group()
         Term.error(

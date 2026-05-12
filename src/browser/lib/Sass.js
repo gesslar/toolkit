@@ -89,17 +89,15 @@ export default class Sass extends Error {
       )
     }
 
-    if(this.cause) {
+    if(this.cause && nerdMode) {
       if(typeof this.cause.report === "function") {
-        if(nerdMode) {
-          console.error(
-            "\n" +
-            `[error] Caused By`
-          )
-        }
+        console.error(
+          "\n" +
+          `[error] Caused By`
+        )
 
         this.cause.report(nerdMode, true)
-      } else if(nerdMode && this.cause.stack) {
+      } else if(this.cause.stack) {
         console.error()
         console.group()
         console.error(
