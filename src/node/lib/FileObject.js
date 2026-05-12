@@ -29,6 +29,7 @@ import Valid from "./Valid.js"
  * @property {boolean} isFile - Always true for files
  * @property {DirectoryObject} parent - The parent directory object
  * @property {Promise<boolean>} exists - Whether the file exists (async)
+ * @property {Promise<("none"|"symbolic"|"broken"|"hard"|null)>} linkType - The link kind at this path (async)
  */
 
 export default class FileObject extends FS {
@@ -201,6 +202,24 @@ export default class FileObject extends FS {
   }
 
   /**
+   * Reports the link kind at this path. Reads the filesystem on every
+   * access, like {@link FileObject#exists}.
+   *
+   * - `"symbolic"` - a symlink whose target exists
+   * - `"broken"` - a symlink whose target does not exist
+   * - `"hard"` - a regular file with additional hard links (`nlink > 1`).
+   *   Hard links are inode-level and indistinguishable from each other,
+   *   so this only reports that *some* other entry shares the inode.
+   * - `"none"` - a regular file with no links
+   * - `null` - the path does not exist
+   *
+   * @returns {Promise<"none"|"symbolic"|"broken"|"hard"|null>} The link kind
+   */
+  get linkType() {
+    return this.#fileLinkType()
+  }
+
+  /**
    * Return the normalized path that was provided to the constructor.
    *
    * @returns {string} The sanitized user-supplied file path
@@ -328,7 +347,7 @@ export default class FileObject extends FS {
    */
   async #fileExists() {
     try {
-      const stats = await fs.stat(this.path).catch(error => error.code === "ENOENT" ? null : error)
+      const stats = await fs.lstat(this.path).catch(error => error.code === "ENOENT" ? null : error)
 
       if(stats instanceof Error)
         throw stats
@@ -336,12 +355,50 @@ export default class FileObject extends FS {
       if(stats === null)
         return false
 
-      if(!stats.isFile())
+      if(!stats.isFile() && !stats.isSymbolicLink())
         throw Sass.new(`Path exists but is not a file: '${this.path}'`)
 
       return true
     } catch(error) {
       throw Sass.new(`Determining status of '${this.path}'`, error)
+    }
+  }
+
+  /**
+   * Resolves the link kind at this path.
+   *
+   * @private
+   * @returns {Promise<"none"|"symbolic"|"broken"|"hard"|null>} The link kind
+   */
+  async #fileLinkType() {
+    try {
+      const stats = await fs.lstat(this.path).catch(error => error.code === "ENOENT" ? null : error)
+
+      if(stats instanceof Error)
+        throw stats
+
+      if(stats === null)
+        return null
+
+      if(stats.isSymbolicLink()) {
+        try {
+          await fs.stat(this.path)
+
+          return "symbolic"
+        } catch(error) {
+          if(error.code === "ENOENT")
+            return "broken"
+
+          throw error
+        }
+      }
+
+      if(stats.nlink > 1)
+        return "hard"
+
+      return "none"
+    } catch(error) {
+      throw Sass.new(`Determining link type of '${this.path}'`, error)
     }
   }
 

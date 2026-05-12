@@ -386,6 +386,69 @@ describe("FileObject", () => {
     })
   })
 
+  describe("linkType", () => {
+    let linkTestDir, regularFile
+
+    beforeEach(async () => {
+      linkTestDir = await TestUtils.createTestDir("file-linktype-test")
+      const regularPath = path.join(linkTestDir, "regular.txt")
+      await fs.writeFile(regularPath, "content")
+      regularFile = new FileObject(regularPath)
+    })
+
+    afterEach(async () => {
+      if(linkTestDir) {
+        await TestUtils.cleanupTestDir(linkTestDir)
+      }
+    })
+
+    it("returns 'none' for a regular file", async () => {
+      assert.equal(await regularFile.linkType, "none")
+    })
+
+    it("returns null for a path that does not exist", async () => {
+      const ghost = new FileObject(path.join(linkTestDir, "nope.txt"))
+      assert.equal(await ghost.linkType, null)
+    })
+
+    it("returns 'symbolic' for a symlink whose target exists", async () => {
+      const linkPath = path.join(linkTestDir, "live-link.txt")
+      await fs.symlink(regularFile.path, linkPath)
+
+      const linked = new FileObject(linkPath)
+      assert.equal(await linked.linkType, "symbolic")
+    })
+
+    it("returns 'broken' for a symlink whose target is missing", async () => {
+      const linkPath = path.join(linkTestDir, "broken-link.txt")
+      await fs.symlink(path.join(linkTestDir, "missing.txt"), linkPath)
+
+      const broken = new FileObject(linkPath)
+      assert.equal(await broken.linkType, "broken")
+    })
+
+    it("returns 'hard' for a file with multiple hard links", async () => {
+      const hardLinkPath = path.join(linkTestDir, "hardlink.txt")
+      await fs.link(regularFile.path, hardLinkPath)
+
+      const hardLinked = new FileObject(hardLinkPath)
+      assert.equal(await hardLinked.linkType, "hard")
+      assert.equal(await regularFile.linkType, "hard")
+    })
+
+    it("re-reads the filesystem on each access", async () => {
+      const targetPath = path.join(linkTestDir, "moving-target.txt")
+      const linkPath = path.join(linkTestDir, "watching-link.txt")
+      await fs.symlink(targetPath, linkPath)
+
+      const link = new FileObject(linkPath)
+      assert.equal(await link.linkType, "broken")
+
+      await fs.writeFile(targetPath, "now I exist")
+      assert.equal(await link.linkType, "symbolic")
+    })
+  })
+
   describe("file I/O operations", () => {
     let testFile, testFilePath
 

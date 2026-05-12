@@ -4,7 +4,7 @@
  * resolution and existence checks.
  */
 
-import {glob, mkdir, readdir, rmdir, stat} from "node:fs/promises"
+import {glob, lstat, mkdir, readdir, rmdir, stat} from "node:fs/promises"
 import path, {relative} from "node:path"
 import {URL} from "node:url"
 import {inspect} from "node:util"
@@ -59,6 +59,7 @@ import Valid from "./Valid.js"
  * @property {boolean} isDirectory - Always true
  * @property {DirectoryObject|null} parent - The parent directory (null if root)
  * @property {Promise<boolean>} exists - Whether the directory exists (async getter)
+ * @property {Promise<("none"|"symbolic"|null)>} linkType - The link kind at this path (async)
  *
  * @example
  * // Basic usage
@@ -226,6 +227,28 @@ export default class DirectoryObject extends FS {
   }
 
   /**
+   * Reports the link kind at this path. Reads the filesystem on every
+   * access, like {@link DirectoryObject#exists}, and throws under the
+   * same conditions: if the path exists but is not a directory (broken
+   * symlink, symlink to a non-directory, or a regular file), this throws
+   * a {@link Sass} error rather than returning a misleading value.
+   *
+   * - `"symbolic"` - a symlink whose target is a directory that exists
+   * - `"none"` - a regular directory
+   * - `null` - the path does not exist at all
+   *
+   * Hard links are not reported for directories: most filesystems do not
+   * allow hard-linked directories at all, and `nlink` on a directory is
+   * not a usable signal (it counts `.` and each subdirectory's `..`).
+   *
+   * @returns {Promise<"none"|"symbolic"|null>} The link kind
+   * @throws {Sass} If the path exists but does not resolve to a directory
+   */
+  get linkType() {
+    return this.#directoryLinkType()
+  }
+
+  /**
    * Return the path as passed to the constructor.
    *
    * @returns {string} The directory path
@@ -364,12 +387,46 @@ export default class DirectoryObject extends FS {
   }
 
   /**
+   * Resolves the link kind at this path.
+   *
+   * @private
+   * @returns {Promise<"none"|"symbolic"|null>} The link kind
+   */
+  async #directoryLinkType() {
+    try {
+      const linkStats = await lstat(this.path).catch(error => error.code === "ENOENT" ? null : error)
+
+      if(linkStats instanceof Error)
+        throw linkStats
+
+      if(linkStats === null)
+        return null
+
+      if(linkStats.isSymbolicLink()) {
+        const targetStats = await stat(this.path)
+
+        if(!targetStats.isDirectory())
+          throw Sass.new(`Path exists but is not a directory: '${this.path}'`)
+
+        return "symbolic"
+      }
+
+      if(!linkStats.isDirectory())
+        throw Sass.new(`Path exists but is not a directory: '${this.path}'`)
+
+      return "none"
+    } catch(error) {
+      throw Sass.new(`Determining link type of '${this.path}'`, error)
+    }
+  }
+
+  /**
    * Lists the contents of a directory, optionally filtered by a glob pattern.
    *
    * Returns FileObject and DirectoryObject instances. Symbolic links are
    * resolved to their target type: links to files appear in `files`, links
-   * to directories appear in `directories`. Broken symlinks propagate the
-   * stat error to the caller.
+   * to directories appear in `directories`. Broken symlinks (where the
+   * target does not exist) appear in `files` so they can be unlinked.
    *
    * @async
    * @param {string} [pat=""] - Optional glob pattern to filter results (e.g., "*.txt", "test-*")
@@ -415,8 +472,8 @@ export default class DirectoryObject extends FS {
    *
    * Returns FileObject and DirectoryObject instances. Symbolic links are
    * resolved to their target type: links to files appear in `files`, links
-   * to directories appear in `directories`. Broken symlinks propagate the
-   * stat error to the caller.
+   * to directories appear in `directories`. Broken symlinks (where the
+   * target does not exist) appear in `files` so they can be unlinked.
    *
    * @async
    * @param {string} [pat=""] - Glob pattern to filter results
@@ -451,7 +508,8 @@ export default class DirectoryObject extends FS {
   /**
    * Categorizes an array of Dirent objects into files and directories.
    * Resolves symbolic links to their target type via `fs.stat()`. Broken
-   * symlinks propagate the stat error to the caller.
+   * symlinks (where the target does not exist) are categorized as files
+   * so they can be unlinked.
    *
    * @private
    * @param {Array<import("node:fs").Dirent>} dirents - Directory entries to categorize
@@ -471,12 +529,19 @@ export default class DirectoryObject extends FS {
       } else if(dirent.isDirectory()) {
         result.directories.push(new this.constructor(fullPath))
       } else if(dirent.isSymbolicLink()) {
-        const stats = await stat(fullPath)
+        try {
+          const stats = await stat(fullPath)
 
-        if(stats.isFile())
-          result.files.push(new FileObject(fullPath, this))
-        else if(stats.isDirectory())
-          result.directories.push(new this.constructor(fullPath))
+          if(stats.isFile())
+            result.files.push(new FileObject(fullPath, this))
+          else if(stats.isDirectory())
+            result.directories.push(new this.constructor(fullPath))
+        } catch(error) {
+          if(error.code === "ENOENT")
+            result.files.push(new FileObject(fullPath, this))
+          else
+            throw error
+        }
       }
     }
 

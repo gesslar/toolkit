@@ -570,13 +570,101 @@ describe("DirectoryObject", () => {
       assert.ok(linked instanceof DirectoryObject)
     })
 
-    it("broken symlink causes read() to throw", async () => {
+    it("broken symlink is categorized as a file so it can be unlinked", async () => {
+      const brokenLink = path.join(testDir, "broken-link")
+
       await fs.symlink(
         path.join(testDir, "nonexistent-target"),
-        path.join(testDir, "broken-link")
+        brokenLink
       )
 
-      await assert.rejects(() => testDirObj.read())
+      const {files} = await testDirObj.read()
+      const broken = files.find(f => f.name === "broken-link")
+
+      assert.ok(broken instanceof FileObject)
+
+      await broken.delete()
+      assert.equal(await broken.exists, false)
+    })
+  })
+
+  describe("linkType", () => {
+    let testDirObj
+
+    beforeEach(async () => {
+      testDir = await TestUtils.createTestDir("dir-linktype-test")
+      testDirObj = new DirectoryObject(testDir)
+    })
+
+    afterEach(async () => {
+      if(testDir) {
+        await TestUtils.cleanupTestDir(testDir)
+      }
+    })
+
+    it("returns 'none' for a regular directory", async () => {
+      assert.equal(await testDirObj.linkType, "none")
+    })
+
+    it("returns null for a path that does not exist", async () => {
+      const ghost = new DirectoryObject(path.join(testDir, "nope"))
+      assert.equal(await ghost.linkType, null)
+    })
+
+    it("returns 'symbolic' for a symlink to a directory", async () => {
+      const realDir = path.join(testDir, "real-dir")
+      const linkDir = path.join(testDir, "link-to-dir")
+
+      await fs.mkdir(realDir)
+      await fs.symlink(realDir, linkDir)
+
+      const linked = new DirectoryObject(linkDir)
+      assert.equal(await linked.linkType, "symbolic")
+    })
+
+    it("throws on a broken symlink", async () => {
+      const brokenLink = path.join(testDir, "broken-link")
+
+      await fs.symlink(
+        path.join(testDir, "nonexistent-target"),
+        brokenLink
+      )
+
+      const broken = new DirectoryObject(brokenLink)
+      await assert.rejects(() => broken.linkType, Sass)
+    })
+
+    it("throws on a symlink whose target is not a directory", async () => {
+      const realFile = path.join(testDir, "real-file.txt")
+      const linkFile = path.join(testDir, "link-to-file.txt")
+
+      await fs.writeFile(realFile, "content")
+      await fs.symlink(realFile, linkFile)
+
+      const linked = new DirectoryObject(linkFile)
+      await assert.rejects(() => linked.linkType, Sass)
+    })
+
+    it("throws on a regular file at the path", async () => {
+      const realFile = path.join(testDir, "real-file.txt")
+      await fs.writeFile(realFile, "content")
+
+      const wrongType = new DirectoryObject(realFile)
+      await assert.rejects(() => wrongType.linkType, Sass)
+    })
+
+    it("re-reads the filesystem on each access", async () => {
+      const linkDir = path.join(testDir, "lazy-link")
+      const realDir = path.join(testDir, "lazy-target")
+      await fs.mkdir(realDir)
+      await fs.symlink(realDir, linkDir)
+
+      const linked = new DirectoryObject(linkDir)
+      assert.equal(await linked.linkType, "symbolic")
+
+      await fs.unlink(linkDir)
+      await fs.mkdir(linkDir)
+      assert.equal(await linked.linkType, "none")
     })
   })
 
