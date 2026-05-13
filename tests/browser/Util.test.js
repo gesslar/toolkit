@@ -344,4 +344,119 @@ describe("Util", () => {
       assert.equal(Util.findClosestMatch("bulid", allowed, 3), "build") // 1 edit, within threshold 3
     })
   })
+
+  describe("semver.meetsOrExceeds()", () => {
+    const {meetsOrExceeds} = Util.semver
+
+    it("returns true for equal versions", () => {
+      assert.equal(meetsOrExceeds("1.0.0", "1.0.0"), true)
+      assert.equal(meetsOrExceeds("0.0.0", "0.0.0"), true)
+      assert.equal(meetsOrExceeds("12.34.56", "12.34.56"), true)
+    })
+
+    it("compares by major version first", () => {
+      assert.equal(meetsOrExceeds("2.0.0", "1.99.99"), true)
+      assert.equal(meetsOrExceeds("1.99.99", "2.0.0"), false)
+      assert.equal(meetsOrExceeds("10.0.0", "9.0.0"), true) // numeric, not lexical
+    })
+
+    it("compares by minor when majors are equal", () => {
+      assert.equal(meetsOrExceeds("1.5.0", "1.4.99"), true)
+      assert.equal(meetsOrExceeds("1.4.99", "1.5.0"), false)
+      assert.equal(meetsOrExceeds("1.10.0", "1.9.0"), true) // numeric, not lexical
+    })
+
+    it("compares by patch when major and minor are equal", () => {
+      assert.equal(meetsOrExceeds("1.5.5", "1.5.4"), true)
+      assert.equal(meetsOrExceeds("1.5.4", "1.5.5"), false)
+      assert.equal(meetsOrExceeds("1.5.10", "1.5.9"), true) // numeric, not lexical
+    })
+
+    it("does not let higher major mask lower minor/patch", () => {
+      // supplied major > target major must short-circuit to true
+      assert.equal(meetsOrExceeds("2.0.0", "1.99.99"), true)
+      assert.equal(meetsOrExceeds("3.0.0", "1.5.5"), true)
+    })
+
+    it("does not let higher minor mask lower patch", () => {
+      // supplied minor > target minor must short-circuit to true regardless of patch
+      assert.equal(meetsOrExceeds("1.6.0", "1.5.99"), true)
+    })
+
+    it("accepts zero components", () => {
+      assert.equal(meetsOrExceeds("0.0.0", "0.0.0"), true)
+      assert.equal(meetsOrExceeds("0.1.0", "0.0.99"), true)
+      assert.equal(meetsOrExceeds("0.0.1", "0.0.0"), true)
+    })
+
+    it("rejects malformed supplied version", () => {
+      assert.throws(() => meetsOrExceeds("1.0", "1.0.0"), /Invalid format for supplied semver/)
+      assert.throws(() => meetsOrExceeds("1.0.0.0", "1.0.0"), /Invalid format for supplied semver/)
+      assert.throws(() => meetsOrExceeds("v1.0.0", "1.0.0"), /Invalid format for supplied semver/)
+      assert.throws(() => meetsOrExceeds("1.0.0-beta", "1.0.0"), /Invalid format for supplied semver/)
+      assert.throws(() => meetsOrExceeds("01.0.0", "1.0.0"), /Invalid format for supplied semver/) // leading zero
+    })
+
+    it("rejects malformed target version", () => {
+      assert.throws(() => meetsOrExceeds("1.0.0", "1.0"), /Invalid format for target semver/)
+      assert.throws(() => meetsOrExceeds("1.0.0", "x.y.z"), /Invalid format for target semver/)
+      assert.throws(() => meetsOrExceeds("1.0.0", ""), /Expected String/) // empty caught by Valid.type
+    })
+
+    it("rejects non-string inputs", () => {
+      assert.throws(() => meetsOrExceeds(null, "1.0.0"), /Expected String/)
+      assert.throws(() => meetsOrExceeds("1.0.0", undefined), /Expected String/)
+      assert.throws(() => meetsOrExceeds(100, "1.0.0"), /Expected String/)
+      assert.throws(() => meetsOrExceeds("1.0.0", ["1","0","0"]), /Expected String/)
+    })
+  })
+
+  describe("semver regex patterns", () => {
+    it("basic matches simple major.minor.patch", () => {
+      assert.ok(Util.semver.basic.test("1.0.0"))
+      assert.ok(Util.semver.basic.test("0.0.0"))
+      assert.ok(Util.semver.basic.test("12.345.6789"))
+    })
+
+    it("basic rejects prerelease and build metadata", () => {
+      assert.equal(Util.semver.basic.test("1.0.0-beta"), false)
+      assert.equal(Util.semver.basic.test("1.0.0+build.1"), false)
+      assert.equal(Util.semver.basic.test("1.0.0-rc.1+build.1"), false)
+    })
+
+    it("basic rejects leading zeroes", () => {
+      assert.equal(Util.semver.basic.test("01.0.0"), false)
+      assert.equal(Util.semver.basic.test("1.02.0"), false)
+      assert.equal(Util.semver.basic.test("1.0.03"), false)
+    })
+
+    it("enhanced matches basic versions", () => {
+      assert.ok(Util.semver.enhanced.test("1.0.0"))
+      assert.ok(Util.semver.enhanced.test("0.0.0"))
+    })
+
+    it("enhanced matches prerelease tags", () => {
+      assert.ok(Util.semver.enhanced.test("1.0.0-alpha"))
+      assert.ok(Util.semver.enhanced.test("1.0.0-alpha.1"))
+      assert.ok(Util.semver.enhanced.test("1.0.0-rc.1.2.3"))
+    })
+
+    it("enhanced matches build metadata", () => {
+      assert.ok(Util.semver.enhanced.test("1.0.0+build"))
+      assert.ok(Util.semver.enhanced.test("1.0.0+build.1.2"))
+    })
+
+    it("enhanced matches prerelease combined with build metadata", () => {
+      assert.ok(Util.semver.enhanced.test("1.0.0-beta+exp.sha.5114f85"))
+    })
+
+    it("enhanced exposes named capture groups", () => {
+      const {groups} = Util.semver.enhanced.exec("1.2.3-rc.1+build.42")
+      assert.equal(groups.major, "1")
+      assert.equal(groups.minor, "2")
+      assert.equal(groups.patch, "3")
+      assert.equal(groups.prerelease, "rc.1")
+      assert.equal(groups.build, "build.42")
+    })
+  })
 })
