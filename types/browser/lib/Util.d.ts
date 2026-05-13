@@ -60,6 +60,8 @@ export default class Util {
     static regexify(input: any, trim?: boolean, flags?: any[]): RegExp;
     static semver: {
         meetsOrExceeds: (supplied: any, target: any) => boolean;
+        basic: RegExp;
+        enhanced: RegExp;
     };
 }
 //# sourceMappingURL=Util.d.ts.map
