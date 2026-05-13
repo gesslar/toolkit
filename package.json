@@ -5,7 +5,7 @@
     "name": "gesslar",
     "url": "https://gesslar.dev"
   },
-  "version": "5.3.0",
+  "version": "5.4.0",
   "license": "0BSD",
   "homepage": "https://github.com/gesslar/toolkit#readme",
   "repository": {
@@ -77,17 +77,17 @@
   },
   "dependencies": {
     "@gesslar/colours": "^1.0.0",
-    "ajv": "^8.18.0",
+    "ajv": "^8.20.0",
     "json5": "^2.2.3",
     "supports-color": "^10.2.2",
-    "yaml": "^2.8.3"
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@gesslar/uglier": "^2.4.1",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "eslint": "^10.2.0",
+    "eslint": "^10.3.0",
     "happy-dom": "^20.9.0",
-    "rollup": "^4.60.1",
+    "rollup": "^4.60.3",
     "typescript": "^6.0.3"
   }
 }
