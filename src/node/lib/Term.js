@@ -79,12 +79,27 @@ export default class Term {
   /**
    * Whether the terminal supports color output.
    *
+   * Honours the `NO_COLOR` convention (https://no-color.org): when `NO_COLOR`
+   * is present and not an empty string, colour is disabled. `FORCE_COLOR` takes
+   * precedence over `NO_COLOR` (matching Node/`supports-color`). `supports-color`
+   * itself does not implement `NO_COLOR`, so the check lives here.
+   *
    * @type {boolean}
    */
   static get hasColor() {
-    return this.#cache.has("hasColor")
-      ? this.#cache.get("hasColor")
-      : this.#cache.set("hasColor", Boolean(supportsColor.stdout)).get("hasColor")
+    if(this.#cache.has("hasColor"))
+      return this.#cache.get("hasColor")
+
+    const forced = "FORCE_COLOR" in process.env
+    const noColor = !forced
+      && typeof process.env.NO_COLOR === "string"
+      && process.env.NO_COLOR.length > 0
+
+    const supported = noColor
+      ? false
+      : Boolean(supportsColor.stdout)
+
+    return this.#cache.set("hasColor", supported).get("hasColor")
   }
 
   /**
