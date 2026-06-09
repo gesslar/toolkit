@@ -1,4 +1,4 @@
-import {watch} from "node:fs/promises"
+import {realpath, watch} from "node:fs/promises"
 import Valid from "./Valid.js"
 import Data from "./Data.js"
 import Time from "../../browser/lib/Time.js"
@@ -52,7 +52,8 @@ export default class Watcher {
     this.#abortController = new AbortController()
 
     for(const target of targets) {
-      const watcher = watch(target.url, {
+      const watchPath = await realpath(target.path).catch(() => target.path)
+      const watcher = watch(watchPath, {
         recursive: target.isDirectory ? recursive : false,
         persistent,
         signal: this.#abortController.signal,
