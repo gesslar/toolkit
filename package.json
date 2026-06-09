@@ -77,7 +77,6 @@
   },
   "dependencies": {
     "@gesslar/colours": "^1.0.0",
-    "ajv": "^8.20.0",
     "json5": "^2.2.3",
     "supports-color": "^10.2.2",
     "yaml": "^2.9.0"
@@ -85,9 +84,9 @@
   "devDependencies": {
     "@gesslar/uglier": "^2.4.1",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "eslint": "^10.3.0",
-    "happy-dom": "^20.9.0",
-    "rollup": "^4.60.3",
+    "eslint": "^10.4.1",
+    "happy-dom": "^20.10.2",
+    "rollup": "^4.61.1",
     "typescript": "^6.0.3"
   }
 }

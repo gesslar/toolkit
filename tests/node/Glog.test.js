@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import console from 'node:console'
 import {afterEach,beforeEach,describe,it} from 'node:test'
 
-import {Glog} from "../../src/node/index.js"
+import {Glog, Term} from "../../src/node/index.js"
 
 describe('Glog', () => {
   let originalConsoleLog
@@ -760,12 +760,216 @@ describe('Glog', () => {
       assert.ok(warnOutput[0][0].includes('⚠️'), 'Should use custom warning emoji')
     })
   })
+
+  describe('colour features (paint)', () => {
+    const ESC = '\x1b'
+
+    let originalHasColor
+    let origLog, origInfo, origWarn, origError, origDebug
+    let logOutput, infoOutput, warnOutput, errorOutput, debugOutput
+
+    const setHasColor = value => {
+      Object.defineProperty(Term, 'hasColor', {get: () => value, configurable: true})
+    }
+
+    beforeEach(() => {
+      // Preserve the real (cached) hasColor descriptor so each test can stub it.
+      originalHasColor = Object.getOwnPropertyDescriptor(Term, 'hasColor')
+
+      logOutput = []
+      infoOutput = []
+      warnOutput = []
+      errorOutput = []
+      debugOutput = []
+
+      origLog = console.log
+      origInfo = console.info
+      origWarn = console.warn
+      origError = console.error
+      origDebug = console.debug
+
+      console.log = (...args) => logOutput.push(args)
+      console.info = (...args) => infoOutput.push(args)
+      console.warn = (...args) => warnOutput.push(args)
+      console.error = (...args) => errorOutput.push(args)
+      console.debug = (...args) => debugOutput.push(args)
+
+      Glog.setLogLevel(0).setLogPrefix('')
+      Glog.symbols = null
+      Glog.colours = null
+      Glog.name = ''
+    })
+
+    afterEach(() => {
+      Object.defineProperty(Term, 'hasColor', originalHasColor)
+
+      console.log = origLog
+      console.info = origInfo
+      console.warn = origWarn
+      console.error = origError
+      console.debug = origDebug
+
+      Glog.symbols = null
+      Glog.colours = null
+      Glog.name = ''
+    })
+
+    it('colourize strips ANSI escapes when colour is unsupported', () => {
+      setHasColor(false)
+
+      Glog.colourize`{success}done{/}`
+
+      assert.equal(logOutput.length, 1)
+      assert.equal(logOutput[0][0], '[Log] done')
+    })
+
+    it('colourize preserves ANSI escapes when colour is supported', () => {
+      setHasColor(true)
+
+      Glog.colourize`{success}done{/}`
+
+      assert.equal(logOutput.length, 1)
+
+      const out = logOutput[0][0]
+
+      assert.ok(out.includes(ESC), 'expected ANSI escape sequence')
+      assert.ok(out.includes('done'), 'expected the literal text')
+    })
+
+    it('always resolves colour tokens out of the text, regardless of support', () => {
+      // The format template must be evaluated either way; literal `{F019}` /
+      // `{success}` tokens should never leak into the output.
+      setHasColor(false)
+      Glog.colourize`{F019}blue{/} and {success}green{/}`
+
+      setHasColor(true)
+      Glog.colourize`{F019}blue{/} and {success}green{/}`
+
+      assert.equal(logOutput.length, 2)
+
+      for(const entry of logOutput) {
+        const out = entry[0]
+
+        assert.ok(!out.includes('{F019}'), 'colour code token resolved')
+        assert.ok(!out.includes('{success}'), 'alias token resolved')
+        assert.ok(!out.includes('{/}'), 'reset token resolved')
+        assert.ok(out.includes('blue') && out.includes('green'), 'text preserved')
+      }
+    })
+
+    it('instance colourize uses the logger name and strips ANSI when unsupported', () => {
+      setHasColor(false)
+
+      const logger = Glog.create({name: 'App'})
+
+      logger.colourize`{F019}blue{/} text`
+
+      assert.equal(logOutput.length, 1)
+      assert.equal(logOutput[0][0], '[App] blue text')
+    })
+
+    it('formatted info output strips ANSI when colour is unsupported', () => {
+      setHasColor(false)
+
+      const logger = Glog.create({name: 'App'})
+
+      logger.info('hello')
+
+      assert.equal(infoOutput.length, 1)
+
+      const out = infoOutput[0][0]
+
+      assert.ok(!out.includes(ESC), 'no ANSI escapes when unsupported')
+      assert.ok(out.includes('[App]'), 'includes the logger name')
+      assert.ok(out.includes('hello'), 'includes the message')
+    })
+
+    it('formatted info output keeps ANSI when colour is supported', () => {
+      setHasColor(true)
+
+      const logger = Glog.create({name: 'App'})
+
+      logger.info('hello')
+
+      assert.equal(infoOutput.length, 1)
+      assert.ok(infoOutput[0][0].includes(ESC), 'ANSI escapes preserved when supported')
+    })
+
+    it('warn and error output strip ANSI when colour is unsupported', () => {
+      setHasColor(false)
+
+      const logger = Glog.create({name: 'App'})
+
+      logger.warn('careful')
+      logger.error('boom')
+
+      assert.equal(warnOutput.length, 1)
+      assert.equal(errorOutput.length, 1)
+      assert.ok(!warnOutput[0][0].includes(ESC), 'warn stripped')
+      assert.ok(!errorOutput[0][0].includes(ESC), 'error stripped')
+      assert.ok(warnOutput[0][0].includes('careful'))
+      assert.ok(errorOutput[0][0].includes('boom'))
+    })
+
+    it('debug output strips ANSI when colour is unsupported', () => {
+      setHasColor(false)
+
+      const logger = Glog.create({name: 'App', logLevel: 1})
+
+      logger.debug('dbg')
+
+      assert.equal(debugOutput.length, 1)
+      assert.ok(!debugOutput[0][0].includes(ESC), 'debug stripped')
+      assert.ok(debugOutput[0][0].includes('dbg'))
+    })
+
+    it('debug output keeps ANSI when colour is supported', () => {
+      setHasColor(true)
+
+      const logger = Glog.create({name: 'App', logLevel: 1})
+
+      logger.debug('dbg')
+
+      assert.equal(debugOutput.length, 1)
+      assert.ok(debugOutput[0][0].includes(ESC), 'debug ANSI preserved')
+    })
+
+    it('success output strips ANSI when colour is unsupported', () => {
+      setHasColor(false)
+
+      const logger = Glog.create({name: 'App'})
+
+      logger.success('yay')
+
+      assert.equal(logOutput.length, 1)
+      assert.ok(!logOutput[0][0].includes(ESC), 'success stripped')
+      assert.ok(logOutput[0][0].includes('yay'))
+    })
+
+    it('group labels strip ANSI when colour is unsupported', () => {
+      setHasColor(false)
+
+      const logger = Glog.create({name: 'App'})
+
+      logger.groupSuccess('grp')
+
+      assert.ok(logOutput.length > 0, 'expected a group label')
+      assert.ok(!logOutput[0][0].includes(ESC), 'group label stripped')
+      assert.ok(logOutput[0][0].includes('grp'))
+    })
+
+    it('group labels keep ANSI when colour is supported', () => {
+      setHasColor(true)
+
+      const logger = Glog.create({name: 'App'})
+
+      logger.groupSuccess('grp')
+
+      assert.ok(logOutput.length > 0, 'expected a group label')
+      assert.ok(logOutput[0][0].includes(ESC), 'group label ANSI preserved')
+    })
+  })
 })
 
-// TODO: Add tests for new Glog features (enhanced colour functionality)
-// - Instance usage: new Glog(options)
-// - Fluent instance methods: withName(), withLogLevel(), withColours(), withStackTrace()
-// - Logger-style methods: debug(), info(), warn(), error()
-// - Colour features: colourize(), success(), setAlias()
-// - @gesslar/colours integration and loggerColours configuration
+// TODO: Add tests for remaining Glog features
 // - VSCode integration (vscodeError, vscodeWarn, vscodeInfo)

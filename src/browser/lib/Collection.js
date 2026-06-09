@@ -7,10 +7,10 @@
  */
 
 import Data from "./Data.js"
-import Valid from "./Valid.js"
 import Sass from "./Sass.js"
-import Util from "./Util.js"
 import TypeSpec from "./TypeSpec.js"
+import Util from "./Util.js"
+import Valid from "./Valid.js"
 
 /**
  * Utility class for collection operations.
