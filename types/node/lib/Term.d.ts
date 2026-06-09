@@ -37,6 +37,11 @@ export default class Term {
     /**
      * Whether the terminal supports color output.
      *
+     * Honours the `NO_COLOR` convention (https://no-color.org): when `NO_COLOR`
+     * is present and not an empty string, colour is disabled. `FORCE_COLOR` takes
+     * precedence over `NO_COLOR` (matching Node/`supports-color`). `supports-color`
+     * itself does not implement `NO_COLOR`, so the check lives here.
+     *
      * @type {boolean}
      */
     static get hasColor(): boolean;
