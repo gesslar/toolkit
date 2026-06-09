@@ -12,12 +12,33 @@
  */
 
 import {createRequire} from "node:module"
+import {stripVTControlCharacters} from "node:util"
 
 import c from "@gesslar/colours"
 
 import Data from "../../browser/lib/Data.js"
 import Term from "./Term.js"
 import Util from "../../browser/lib/Util.js"
+
+/**
+ * Apply `@gesslar/colours` formatting, then defer to Term for colour support.
+ *
+ * The colour template must always be evaluated so that `@gesslar/colours`
+ * format tokens (e.g. `{F019}`) are resolved out of the text. When Term reports
+ * that the terminal lacks colour support, the resulting ANSI escape sequences
+ * are stripped so only plain text remains.
+ *
+ * @param {Array<string>} strings - Template strings.
+ * @param {...unknown} values - Template values.
+ * @returns {string} Formatted text, with ANSI stripped when colour is unsupported.
+ */
+function paint(strings, ...values) {
+  const formatted = c(strings, ...values)
+
+  return Term.hasColor
+    ? formatted
+    : stripVTControlCharacters(formatted)
+}
 
 // Auto-detect VS Code extension environment
 let vscodeApi = null
@@ -40,7 +61,7 @@ try {
  * @property {string} success - Colour code for success messages
  * @property {string} reset - Colour reset code
  */
-export const loggerColours = {
+const loggerColours = {
   debug: [
     "{F019}", // Debug level 0: Dark blue
     "{F027}", // Debug level 1: Medium blue
@@ -65,7 +86,7 @@ export const loggerColours = {
  * @property {string} error - Symbol for error messages
  * @property {string} success - Symbol for success messages
  */
-export const logSymbols = {
+const logSymbols = {
   debug: "?",
   info: "i",
   warn: "!",
@@ -547,13 +568,13 @@ class Glog {
       const colourCode = colours[level][debugLevel] || colours[level][0]
 
       return useStrings
-        ? c`${namePrefix}${colourCode}${tag}{/}: ${message}`
-        : c`${namePrefix}${colourCode}${tag}{/} ${message}`
+        ? paint`${namePrefix}${colourCode}${tag}{/}: ${message}`
+        : paint`${namePrefix}${colourCode}${tag}{/} ${message}`
     }
 
     return useStrings
-      ? c`${namePrefix}${colours[level]}${tag}{/}: ${message}`
-      : c`${namePrefix}${colours[level]}${tag}{/} ${message}`
+      ? paint`${namePrefix}${colours[level]}${tag}{/}: ${message}`
+      : paint`${namePrefix}${colours[level]}${tag}{/} ${message}`
   }
 
   /**
@@ -707,7 +728,7 @@ class Glog {
    * @example logger.colourize`{success}Operation completed{/} in {bold}${time}ms{/}`
    */
   colourize(strings, ...values) {
-    const message = c(strings, ...values)
+    const message = paint(strings, ...values)
     const name = this.#name || Glog.name || "Log"
 
     Term.log(`[${name}] ${message}`)
@@ -720,7 +741,7 @@ class Glog {
    * @param {...unknown} values - Template values
    */
   static colourize(strings, ...values) {
-    const message = c(strings, ...values)
+    const message = paint(strings, ...values)
     const name = this.name || "Log"
 
     Term.log(`[${name}] ${message}`)
@@ -750,8 +771,8 @@ class Glog {
     const tag = useStrings ? "Success" : symbols.success
     const colourCode = colours.success || "{F046}"
     const formatted = useStrings
-      ? c`[${name}] ${colourCode}${tag}{/}: ${message}`
-      : c`[${name}] ${colourCode}${tag}{/} ${message}`
+      ? paint`[${name}] ${colourCode}${tag}{/}: ${message}`
+      : paint`[${name}] ${colourCode}${tag}{/} ${message}`
 
     Term.log(formatted, ...args)
   }
@@ -789,8 +810,8 @@ class Glog {
     const tag = useStrings ? "Debug" : symbols.debug
     const colourCode = colours.debug[level] || colours.debug[0]
     const label = useStrings
-      ? c`[${name}] ${colourCode}${tag}{/}: ${message}`
-      : c`[${name}] ${colourCode}${tag}{/} ${message}`
+      ? paint`[${name}] ${colourCode}${tag}{/}: ${message}`
+      : paint`[${name}] ${colourCode}${tag}{/} ${message}`
 
     Term.group(label)
   }
@@ -807,8 +828,8 @@ class Glog {
     const symbols = this.symbols || logSymbols
     const tag = useStrings ? "Info" : symbols.info
     const label = useStrings
-      ? c`[${name}] ${colours.info}${tag}{/}: ${message}`
-      : c`[${name}] ${colours.info}${tag}{/} ${message}`
+      ? paint`[${name}] ${colours.info}${tag}{/}: ${message}`
+      : paint`[${name}] ${colours.info}${tag}{/} ${message}`
 
     Term.group(label)
   }
@@ -824,8 +845,8 @@ class Glog {
     const symbols = this.symbols || logSymbols
     const tag = useStrings ? "Success" : symbols.success
     const label = useStrings
-      ? c`[${name}] {success}${tag}{/}: ${message}`
-      : c`[${name}] {success}${tag}{/} ${message}`
+      ? paint`[${name}] {success}${tag}{/}: ${message}`
+      : paint`[${name}] {success}${tag}{/} ${message}`
 
     Term.group(label)
   }
@@ -883,8 +904,8 @@ class Glog {
     const tag = useStrings ? "Success" : symbols.success
     const namePrefix = showName ? `[${name}] ` : ""
     const label = useStrings
-      ? c`${namePrefix}{success}${tag}{/}: ${message}`
-      : c`${namePrefix}{success}${tag}{/} ${message}`
+      ? paint`${namePrefix}{success}${tag}{/}: ${message}`
+      : paint`${namePrefix}{success}${tag}{/} ${message}`
 
     Term.group(label)
   }
@@ -912,7 +933,7 @@ class Glog {
     }
 
     if(label) {
-      Term.log(c`[${this.#name || Glog.name || "Log"}] {info}Table{/}: ${label}`)
+      Term.log(paint`[${this.#name || Glog.name || "Log"}] {info}Table{/}: ${label}`)
     }
 
     Term.table(data, tableOptions)
@@ -941,7 +962,7 @@ class Glog {
     }
 
     if(label) {
-      Term.log(c`[${this.name || "Log"}] {info}Table{/}: ${label}`)
+      Term.log(paint`[${this.name || "Log"}] {info}Table{/}: ${label}`)
     }
 
     Term.table(data, tableOptions)
