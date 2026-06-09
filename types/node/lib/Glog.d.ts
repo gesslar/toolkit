@@ -1,26 +1,3 @@
-/**
- * Default colour configuration for logger output using @gesslar/colours format
- *
- * @type {object}
- * @property {string[]} debug - Array of 5 colour codes for debug levels 0-4
- * @property {string} info - Colour code for info messages
- * @property {string} warn - Colour code for warning messages
- * @property {string} error - Colour code for error messages
- * @property {string} success - Colour code for success messages
- * @property {string} reset - Colour reset code
- */
-export const loggerColours: object;
-/**
- * Symbol characters used for log level tags when colours are disabled or tagsAsStrings is false
- *
- * @type {object}
- * @property {string} debug - Symbol for debug messages
- * @property {string} info - Symbol for info messages
- * @property {string} warn - Symbol for warning messages
- * @property {string} error - Symbol for error messages
- * @property {string} success - Symbol for success messages
- */
-export const logSymbols: object;
 declare const _default: typeof Glog;
 export default _default;
 declare class Glog {
