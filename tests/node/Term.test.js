@@ -380,6 +380,7 @@ describe("Term", () => {
     })
   })
 
+
   describe("data()", () => {
     it("exists and is a function", () => {
       assert.equal(typeof Term.data, "function")
