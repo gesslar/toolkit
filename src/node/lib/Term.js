@@ -93,7 +93,6 @@ export default class Term {
     const forced = "FORCE_COLOR" in process.env
     const noColor = !forced
       && typeof process.env.NO_COLOR === "string"
-      && process.env.NO_COLOR.length > 0
 
     const supported = noColor
       ? false
