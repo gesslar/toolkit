@@ -504,6 +504,187 @@ describe("FS", () => {
     })
   })
 
+  describe("sane", () => {
+    it("returns true for a clean filename", () => {
+      assert.equal(FileSystem.sane("report.txt"), true)
+      assert.equal(FileSystem.sane("archive.tar.gz"), true)
+      assert.equal(FileSystem.sane(".bashrc"), true)
+    })
+
+    it("returns false when illegal characters are present", () => {
+      assert.equal(FileSystem.sane("a/b.txt"), false)
+      assert.equal(FileSystem.sane("a\\b.txt"), false)
+      assert.equal(FileSystem.sane("a:b.txt"), false)
+      assert.equal(FileSystem.sane("a*b.txt"), false)
+      assert.equal(FileSystem.sane("a?b.txt"), false)
+      assert.equal(FileSystem.sane("a\"b.txt"), false)
+      assert.equal(FileSystem.sane("a<b>.txt"), false)
+      assert.equal(FileSystem.sane("a|b.txt"), false)
+    })
+
+    it("returns false for control characters", () => {
+      assert.equal(FileSystem.sane("a\tb.txt"), false)
+      assert.equal(FileSystem.sane("a\nb.txt"), false)
+    })
+
+    it("returns false for trailing dots or spaces", () => {
+      assert.equal(FileSystem.sane("name "), false)
+      assert.equal(FileSystem.sane("name."), false)
+      assert.equal(FileSystem.sane("name. "), false)
+    })
+
+    it("returns false for Windows reserved device names", () => {
+      assert.equal(FileSystem.sane("CON"), false)
+      assert.equal(FileSystem.sane("con"), false)
+      assert.equal(FileSystem.sane("NUL"), false)
+      assert.equal(FileSystem.sane("LPT1"), false)
+      assert.equal(FileSystem.sane("COM9"), false)
+      // Reserved even with an extension
+      assert.equal(FileSystem.sane("con.txt"), false)
+      assert.equal(FileSystem.sane("COM3.log"), false)
+    })
+
+    it("allows names that merely start with a reserved name", () => {
+      assert.equal(FileSystem.sane("CONsole"), true)
+      assert.equal(FileSystem.sane("LPT10"), true)
+      assert.equal(FileSystem.sane("README"), true)
+    })
+
+    it("returns false for relative path indicators", () => {
+      assert.equal(FileSystem.sane("."), false)
+      assert.equal(FileSystem.sane(".."), false)
+    })
+
+    it("respects the 255-byte length limit", () => {
+      assert.equal(FileSystem.sane("a".repeat(255)), true)
+      assert.equal(FileSystem.sane("a".repeat(256)), false)
+    })
+
+    it("counts length in bytes, not characters", () => {
+      // "é" is two UTF-8 bytes, so 128 of them is 256 bytes.
+      assert.equal(FileSystem.sane("é".repeat(127)), true)   // 254 bytes
+      assert.equal(FileSystem.sane("é".repeat(128)), false)  // 256 bytes
+    })
+
+    it("throws Sass for empty string", () => {
+      assert.throws(
+        () => FileSystem.sane(""),
+        Sass
+      )
+    })
+
+    it("throws Sass for non-string input", () => {
+      assert.throws(
+        () => FileSystem.sane(42),
+        Sass
+      )
+    })
+  })
+
+  describe("sanitize", () => {
+    it("replaces illegal characters with underscore by default", () => {
+      assert.equal(FileSystem.sanitize("a/b:c.txt"), "a_b_c.txt")
+      assert.equal(FileSystem.sanitize("a<b>|c?.txt"), "a_b__c_.txt")
+    })
+
+    it("leaves clean filenames untouched", () => {
+      assert.equal(FileSystem.sanitize("report.txt"), "report.txt")
+    })
+
+    it("replaces control characters", () => {
+      assert.equal(FileSystem.sanitize("a\tb\nc"), "a_b_c")
+    })
+
+    it("accepts a custom replacement", () => {
+      assert.equal(FileSystem.sanitize("a/b:c.txt", "-"), "a-b-c.txt")
+    })
+
+    it("allows an empty replacement that strips illegal characters", () => {
+      assert.equal(FileSystem.sanitize("a/b:c.txt", ""), "abc.txt")
+    })
+
+    it("strips trailing dots and spaces", () => {
+      assert.equal(FileSystem.sanitize("name. "), "name")
+      assert.equal(FileSystem.sanitize("name..."), "name")
+    })
+
+    it("defuses Windows reserved device names", () => {
+      assert.equal(FileSystem.sanitize("CON"), "CON_")
+      assert.equal(FileSystem.sanitize("CON.txt"), "CON_.txt")
+      assert.equal(FileSystem.sanitize("con.txt", "-"), "con-.txt")
+      assert.equal(FileSystem.sanitize("LPT1"), "LPT1_")
+    })
+
+    it("leaves names that only start with a reserved name untouched", () => {
+      assert.equal(FileSystem.sanitize("CONsole.txt"), "CONsole.txt")
+    })
+
+    it("returns an empty string for degenerate inputs", () => {
+      // An empty replacement over an all-illegal name leaves nothing behind.
+      assert.equal(FileSystem.sanitize("/", ""), "")
+      // Relative indicators are stripped to nothing once trailing dots go.
+      assert.equal(FileSystem.sanitize("."), "")
+      assert.equal(FileSystem.sanitize(".."), "")
+    })
+
+    it("truncates names longer than 255 bytes", () => {
+      const result = FileSystem.sanitize("a".repeat(300))
+
+      assert.equal(Buffer.byteLength(result), 255)
+      assert.equal(FileSystem.sane(result), true)
+    })
+
+    it("preserves the extension when truncating", () => {
+      const result = FileSystem.sanitize("a".repeat(300) + ".txt")
+
+      assert.ok(result.endsWith(".txt"))
+      assert.equal(Buffer.byteLength(result), 255)
+      assert.equal(FileSystem.sane(result), true)
+    })
+
+    it("truncates on byte boundaries without splitting codepoints", () => {
+      // 200 two-byte chars = 400 bytes; must truncate to <= 255 bytes and stay
+      // valid UTF-8 (no lone replacement character at the cut).
+      const result = FileSystem.sanitize("é".repeat(200))
+
+      assert.ok(Buffer.byteLength(result) <= 255)
+      assert.ok(!result.includes("�"))
+      assert.equal(FileSystem.sane(result), true)
+    })
+
+    it("produces a sane result", () => {
+      const result = FileSystem.sanitize("a/b:c*d?.txt")
+      assert.equal(FileSystem.sane(result), true)
+    })
+
+    it("produces a sane result for reserved names and trailing junk", () => {
+      assert.equal(FileSystem.sane(FileSystem.sanitize("CON.txt")), true)
+      assert.equal(FileSystem.sane(FileSystem.sanitize("LPT9")), true)
+      assert.equal(FileSystem.sane(FileSystem.sanitize("a:b. ")), true)
+    })
+
+    it("throws Sass for empty string", () => {
+      assert.throws(
+        () => FileSystem.sanitize(""),
+        Sass
+      )
+    })
+
+    it("throws Sass when replacement itself contains illegal characters", () => {
+      assert.throws(
+        () => FileSystem.sanitize("a/b.txt", "/"),
+        Sass
+      )
+    })
+
+    it("throws Sass when replacement is not a string", () => {
+      assert.throws(
+        () => FileSystem.sanitize("a/b.txt", 42),
+        Sass
+      )
+    })
+  })
+
   describe("cwd getter", () => {
     it("returns current working directory", () => {
       const result = FileSystem.cwd

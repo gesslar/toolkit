@@ -27,6 +27,55 @@ const fdType = Object.freeze(
   await Collection.allocateObject(upperFdTypes, fdTypes)
 )
 
+// Characters that are illegal in filenames on common operating systems.
+// Windows is the strictest, forbidding < > : " / \ | ? * along with the
+// control characters (0x00-0x1F); POSIX is a subset of these. Matching the
+// strictest set keeps sanitized names portable everywhere.
+const illegalFilenameChars = /[<>:"/\\|?*\u0000-\u001F]/
+const illegalFilenameCharsGlobal = /[<>:"/\\|?*\u0000-\u001F]/g
+
+// Windows trims trailing dots and spaces, silently changing the name, so a
+// portable filename must not end with either.
+const trailingDotsOrSpaces = /[. ]+$/
+
+// Device names reserved by Windows, illegal as a filename with or without an
+// extension (e.g. "CON", "con.txt", "LPT1"). The match is case-insensitive.
+const reservedFilenames = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i
+
+// The relative path indicators are never usable as real filenames.
+const relativeFilenames = new Set([".", ".."])
+
+// Maximum length, in bytes, of a single path component. ext4, APFS, NTFS and
+// exFAT all cap a name at 255 bytes — note bytes, not characters, so a single
+// multi-byte UTF-8 codepoint counts for more than one against the budget.
+const maxFilenameBytes = 255
+
+/**
+ * Truncate a string to at most `maxBytes` UTF-8 bytes without splitting a
+ * multi-byte codepoint. When the byte limit lands in the middle of a
+ * character, that whole character is dropped rather than left half-encoded.
+ *
+ * @private
+ * @param {string} str - The string to truncate
+ * @param {number} maxBytes - The maximum length in UTF-8 bytes
+ * @returns {string} The truncated string, never exceeding `maxBytes` bytes
+ */
+function truncateToBytes(str, maxBytes) {
+  const buf = Buffer.from(str, "utf8")
+
+  if(buf.length <= maxBytes)
+    return str
+
+  // Back up over UTF-8 continuation bytes (0b10xxxxxx) so the cut never lands
+  // inside a multi-byte sequence, dropping the straddling character entirely.
+  let end = maxBytes
+
+  while(end > 0 && (buf[end] & 0xC0) === 0x80)
+    end--
+
+  return buf.subarray(0, end).toString("utf8")
+}
+
 /**
  * File system utility class for path operations and file discovery.
  */
@@ -412,6 +461,128 @@ export default class FileSystem {
     Valid.type(pathName, "String", {allowEmpty: false})
 
     return path.parse(pathName)
+  }
+
+  /**
+   * Determine whether a string is safe to use as a filename on every common
+   * operating system.
+   *
+   * A name is sane only when it would be legal everywhere, so the checks span
+   * the union of platform rules rather than any single OS:
+   *
+   * - No characters that are illegal on common filesystems. Windows is the
+   *   strictest, forbidding `< > : " / \ | ? *` and the control characters
+   *   (0x00-0x1F); POSIX is a subset of these.
+   * - No trailing dot or space (Windows silently trims them).
+   * - Not a Windows reserved device name, with or without an extension
+   *   (`CON`, `PRN`, `AUX`, `NUL`, `COM1`-`COM9`, `LPT1`-`LPT9`).
+   * - Not the relative path indicators `.` or `..`.
+   * - No longer than 255 bytes — the per-component limit on ext4, APFS, NTFS
+   *   and exFAT. Length is counted in UTF-8 bytes, not characters, so a single
+   *   multi-byte codepoint costs more than one toward the limit.
+   *
+   * @static
+   * @param {string} str - The candidate filename to test
+   * @returns {boolean} True if the string is a legal filename on every common OS
+   * @throws {Sass} If str is not a non-empty string
+   * @example
+   * FS.sane("report.txt")  // true
+   * FS.sane("a/b:c.txt")   // false (illegal character)
+   * FS.sane("name ")       // false (trailing space)
+   * FS.sane("CON")         // false (reserved on Windows)
+   * FS.sane("x".repeat(256))  // false (exceeds 255 bytes)
+   */
+  static sane(str) {
+    Valid.type(str, "String", {allowEmpty: false})
+
+    return !illegalFilenameChars.test(str)
+      && !trailingDotsOrSpaces.test(str)
+      && !reservedFilenames.test(str)
+      && !relativeFilenames.has(str)
+      && Buffer.byteLength(str) <= maxFilenameBytes
+  }
+
+  /**
+   * Rewrite a string into a filename that is legal on every common operating
+   * system.
+   *
+   * Applies the union of platform rules (see {@link FileSystem.sane}) so the
+   * result is portable regardless of where it is used:
+   *
+   * - Every character illegal on common filesystems is replaced with
+   *   `replacement` (defaults to an underscore).
+   * - Trailing dots and spaces are stripped (Windows trims them anyway).
+   * - Windows reserved device names are suffixed with `replacement` so they
+   *   are no longer reserved (e.g. `CON` becomes `CON_`, `CON.txt` becomes
+   *   `CON_.txt`).
+   * - Names longer than 255 bytes are truncated to fit that limit. The base
+   *   name is shortened while the extension is preserved where it fits, and
+   *   truncation never splits a multi-byte UTF-8 codepoint.
+   *
+   * A custom `replacement` is itself validated: it must contain no illegal
+   * characters, otherwise the result could remain unsafe.
+   *
+   * Note that degenerate inputs can sanitize to an empty string — for example
+   * an empty `replacement` applied to a name of only illegal characters, or a
+   * relative indicator such as `"."` or `".."` whose trailing dots are
+   * stripped. The empty string is not itself a legal filename, so callers that
+   * need a guaranteed-usable name should treat an empty result as a signal to
+   * fall back to a default of their own.
+   *
+   * @static
+   * @param {string} str - The filename to sanitize
+   * @param {string} [replacement] - The substitute for illegal characters (defaults to "_")
+   * @returns {string} A filename legal on every common OS, or "" when the input sanitizes to nothing
+   * @throws {Sass} If str is not a non-empty string
+   * @throws {Sass} If replacement is not a string, or itself contains OS-illegal characters
+   * @example
+   * FS.sanitize("a/b:c.txt")        // "a_b_c.txt"
+   * FS.sanitize("a/b:c.txt", "-")   // "a-b-c.txt"
+   * FS.sanitize("name. ")           // "name"
+   * FS.sanitize("CON.txt")          // "CON_.txt"
+   * FS.sanitize("..")               // "" (caller should supply a fallback)
+   */
+  static sanitize(str, replacement="_") {
+    Valid.type(str, "String", {allowEmpty: false})
+    Valid.type(replacement, "String")
+
+    Valid.assert(
+      !illegalFilenameChars.test(replacement),
+      `replacement must not contain OS-illegal characters, got: ${replacement}`
+    )
+
+    // Swap illegal characters, then drop trailing dots/spaces that Windows
+    // would silently strip.
+    const cleaned = str
+      .replace(illegalFilenameCharsGlobal, replacement)
+      .replace(trailingDotsOrSpaces, "")
+
+    // Defuse Windows reserved device names by suffixing the reserved portion,
+    // preserving any extension.
+    const defused = reservedFilenames.test(cleaned)
+      ? cleaned.replace(/^([^.]*)/, `$1${replacement}`)
+      : cleaned
+
+    // Enforce the 255-byte component limit. Truncate the base name while
+    // keeping the extension where it fits; a cut can re-expose a trailing dot
+    // or space, so strip those again before reattaching the extension.
+    if(Buffer.byteLength(defused) <= maxFilenameBytes)
+      return defused
+
+    const dot = defused.lastIndexOf(".")
+    const ext = dot > 0 ? defused.slice(dot) : ""
+    const extBytes = Buffer.byteLength(ext)
+
+    // An extension that alone blows the budget cannot be preserved; truncate
+    // the whole name instead.
+    if(extBytes >= maxFilenameBytes)
+      return truncateToBytes(defused, maxFilenameBytes)
+
+    const base = dot > 0 ? defused.slice(0, dot) : defused
+    const truncatedBase = truncateToBytes(base, maxFilenameBytes - extBytes)
+      .replace(trailingDotsOrSpaces, "")
+
+    return truncatedBase + ext
   }
 
   /**
