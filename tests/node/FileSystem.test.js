@@ -619,6 +619,29 @@ describe("FS", () => {
       assert.equal(FileSystem.sanitize("CONsole.txt"), "CONsole.txt")
     })
 
+    it("falls back to empty when a reserved name cannot be defused", () => {
+      // A replacement that adds nothing usable (or is stripped straight back
+      // off) cannot defuse a reserved name, so the result must not be a still
+      // reserved, non-sane string.
+      assert.equal(FileSystem.sanitize("CON", ""), "")
+      assert.equal(FileSystem.sanitize("CON", "."), "")
+      assert.equal(FileSystem.sanitize("CON", " "), "")
+      assert.equal(FileSystem.sanitize("CON.txt", ""), "")
+    })
+
+    it("never returns a non-empty result that fails sane", () => {
+      for(const input of ["CON", "CON.txt", "LPT1", "nul"]) {
+        for(const replacement of ["_", "", ".", " ", "-"]) {
+          const result = FileSystem.sanitize(input, replacement)
+
+          assert.ok(
+            result === "" || FileSystem.sane(result),
+            `sanitize(${JSON.stringify(input)}, ${JSON.stringify(replacement)}) => ${JSON.stringify(result)}`
+          )
+        }
+      }
+    })
+
     it("returns an empty string for degenerate inputs", () => {
       // An empty replacement over an all-illegal name leaves nothing behind.
       assert.equal(FileSystem.sanitize("/", ""), "")
@@ -639,6 +662,17 @@ describe("FS", () => {
 
       assert.ok(result.endsWith(".txt"))
       assert.equal(Buffer.byteLength(result), 255)
+      assert.equal(FileSystem.sane(result), true)
+    })
+
+    it("stays sane when truncating a name with an oversized extension", () => {
+      // The extension alone exceeds 255 bytes, so the whole name is truncated;
+      // the cut can land on a dot, which must not survive into the result.
+      const input = "a".repeat(254) + "." + "b".repeat(300)
+      const result = FileSystem.sanitize(input)
+
+      assert.ok(!result.endsWith("."))
+      assert.ok(Buffer.byteLength(result) <= 255)
       assert.equal(FileSystem.sane(result), true)
     })
 

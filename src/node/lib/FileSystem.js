@@ -35,15 +35,18 @@ const illegalFilenameChars = /[<>:"/\\|?*\u0000-\u001F]/
 const illegalFilenameCharsGlobal = /[<>:"/\\|?*\u0000-\u001F]/g
 
 // Windows trims trailing dots and spaces, silently changing the name, so a
-// portable filename must not end with either.
-const trailingDotsOrSpaces = /[. ]+$/
+// portable filename must not end with either. This also rejects the relative
+// path indicators "." and "..", since both end with a dot. A name ends with a
+// run of these characters exactly when its final character is one, so a
+// single-character class (no `+`) detects the condition without the
+// super-linear backtracking that an anchored `/[. ]+$/` exhibits on
+// adversarial input. Stripping the whole run is handled by
+// stripTrailingDotsSpaces, a linear scan, for the same reason.
+const trailingDotOrSpace = /[. ]$/
 
 // Device names reserved by Windows, illegal as a filename with or without an
 // extension (e.g. "CON", "con.txt", "LPT1"). The match is case-insensitive.
 const reservedFilenames = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i
-
-// The relative path indicators are never usable as real filenames.
-const relativeFilenames = new Set([".", ".."])
 
 // Maximum length, in bytes, of a single path component. ext4, APFS, NTFS and
 // exFAT all cap a name at 255 bytes — note bytes, not characters, so a single
@@ -74,6 +77,25 @@ function truncateToBytes(str, maxBytes) {
     end--
 
   return buf.subarray(0, end).toString("utf8")
+}
+
+/**
+ * Strip any trailing dots and spaces from a string. Windows trims these
+ * silently, so a portable name must not end with them. Implemented as a linear
+ * scan rather than an anchored `/[. ]+$/` replace, which can backtrack
+ * super-linearly on adversarial input.
+ *
+ * @private
+ * @param {string} str - The string to trim
+ * @returns {string} The string with any trailing dots and spaces removed
+ */
+function stripTrailingDotsSpaces(str) {
+  let end = str.length
+
+  while(end > 0 && (str[end - 1] === "." || str[end - 1] === " "))
+    end--
+
+  return str.slice(0, end)
 }
 
 /**
@@ -496,9 +518,8 @@ export default class FileSystem {
     Valid.type(str, "String", {allowEmpty: false})
 
     return !illegalFilenameChars.test(str)
-      && !trailingDotsOrSpaces.test(str)
+      && !trailingDotOrSpace.test(str)
       && !reservedFilenames.test(str)
-      && !relativeFilenames.has(str)
       && Buffer.byteLength(str) <= maxFilenameBytes
   }
 
@@ -553,15 +574,25 @@ export default class FileSystem {
 
     // Swap illegal characters, then drop trailing dots/spaces that Windows
     // would silently strip.
-    const cleaned = str
-      .replace(illegalFilenameCharsGlobal, replacement)
-      .replace(trailingDotsOrSpaces, "")
+    const cleaned = stripTrailingDotsSpaces(
+      str.replace(illegalFilenameCharsGlobal, replacement)
+    )
 
     // Defuse Windows reserved device names by suffixing the reserved portion,
-    // preserving any extension.
-    const defused = reservedFilenames.test(cleaned)
-      ? cleaned.replace(/^([^.]*)/, `$1${replacement}`)
-      : cleaned
+    // preserving any extension (e.g. "CON" -> "CON_"). A replacement that
+    // cannot actually change the name -- an empty string, or dots/spaces that
+    // get stripped straight back off -- leaves it reserved; like any other
+    // input that cannot be made safe, fall back to the empty string.
+    let defused = cleaned
+
+    if(reservedFilenames.test(cleaned)) {
+      defused = stripTrailingDotsSpaces(
+        cleaned.replace(/^([^.]*)/, `$1${replacement}`)
+      )
+
+      if(reservedFilenames.test(defused))
+        return ""
+    }
 
     // Enforce the 255-byte component limit. Truncate the base name while
     // keeping the extension where it fits; a cut can re-expose a trailing dot
@@ -574,13 +605,15 @@ export default class FileSystem {
     const extBytes = Buffer.byteLength(ext)
 
     // An extension that alone blows the budget cannot be preserved; truncate
-    // the whole name instead.
+    // the whole name instead. The cut can land on a dot or space, so strip any
+    // the same way the base-truncation path below does.
     if(extBytes >= maxFilenameBytes)
-      return truncateToBytes(defused, maxFilenameBytes)
+      return stripTrailingDotsSpaces(truncateToBytes(defused, maxFilenameBytes))
 
     const base = dot > 0 ? defused.slice(0, dot) : defused
-    const truncatedBase = truncateToBytes(base, maxFilenameBytes - extBytes)
-      .replace(trailingDotsOrSpaces, "")
+    const truncatedBase = stripTrailingDotsSpaces(
+      truncateToBytes(base, maxFilenameBytes - extBytes)
+    )
 
     return truncatedBase + ext
   }
