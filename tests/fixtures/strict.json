@@ -1,0 +1,12 @@
+{
+  "name": "strict-fixture",
+  "enabled": true,
+  "count": 3,
+  "nested": {
+    "key": "value"
+  },
+  "list": [
+    "a",
+    "b"
+  ]
+}

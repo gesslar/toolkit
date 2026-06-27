@@ -28,7 +28,7 @@ describe("Data", () => {
       assert.deepEqual(result, {key: "value", list: ["a", "b"]})
     })
 
-    it("auto-detects JSON5 with type any", () => {
+    it("auto-detects JSON with type any", () => {
       const result = Data.textAsData('{"n": 42}', "any")
 
       assert.deepEqual(result, {n: 42})
@@ -40,8 +40,21 @@ describe("Data", () => {
       assert.deepEqual(result, {n: 42})
     })
 
-    it("accepts type json as alias for json5", () => {
+    it("parses strict JSON with type json", () => {
       const result = Data.textAsData('{"a": 1}', "json")
+
+      assert.deepEqual(result, {a: 1})
+    })
+
+    it("rejects JSON5 syntax when type is json", () => {
+      assert.throws(
+        () => Data.textAsData("{a: 1, /* comment */}", "json"),
+        /Content is not valid JSON/
+      )
+    })
+
+    it("parses JSON5 syntax when type is json5", () => {
+      const result = Data.textAsData("{a: 1, /* comment */}", "json5")
 
       assert.deepEqual(result, {a: 1})
     })
@@ -55,28 +68,28 @@ describe("Data", () => {
     it("throws for unsupported type", () => {
       assert.throws(
         () => Data.textAsData("{}", "xml"),
-        /Unsupported data type 'xml'/
+        /Type must be one of any, json, json5, yaml/
       )
     })
 
     it("throws for unparseable content", () => {
       assert.throws(
         () => Data.textAsData("{{not valid", "any"),
-        /Content is neither valid JSON5 nor valid YAML/
+        /Content is not valid JSON or JSON5 or YAML/
       )
     })
 
     it("throws for unparseable content with json type", () => {
       assert.throws(
         () => Data.textAsData("{{not valid", "json"),
-        /Content is neither valid JSON5 nor valid YAML/
+        /Content is not valid JSON/
       )
     })
 
     it("throws for unparseable content with yaml type", () => {
       assert.throws(
         () => Data.textAsData("{: bad", "yaml"),
-        /Content is neither valid JSON5 nor valid YAML/
+        /Content is not valid YAML/
       )
     })
 
