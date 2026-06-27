@@ -587,8 +587,9 @@ export default class FileObject extends FS {
   }
 
   /**
-   * Loads an object from JSON or YAML file. Attempts to parse content as JSON5
-   * first, then falls back to YAML if specified.
+   * Loads an object from a JSON, JSON5, or YAML file. With the default "any"
+   * type, attempts each format from least to most permissive (JSON, then JSON5,
+   * then YAML); a specific type restricts parsing to that format.
    *
    * @param {object} [options] - Load options
    * @param {string} [options.type="any"] - The expected type of data to parse ("json", "json5", "yaml", or "any")

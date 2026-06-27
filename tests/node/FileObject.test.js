@@ -1056,7 +1056,7 @@ describe("FileObject", () => {
     })
 
     it("loads JSON data successfully", async () => {
-      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "strict.json"))
       const data = await file.loadData({type: "json"})
 
       assert.ok(data)
@@ -1088,7 +1088,7 @@ describe("FileObject", () => {
     })
 
     it("uses toLowerCase for type normalization (not toLocaleLowerCase)", async () => {
-      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "strict.json"))
 
       // These should work regardless of locale
       const data1 = await file.loadData({type: "JSON"})
@@ -1101,7 +1101,7 @@ describe("FileObject", () => {
     })
 
     it("handles different encoding", async () => {
-      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "strict.json"))
       const data = await file.loadData({type: "json", encoding: "utf8"})
 
       assert.ok(data)
@@ -1115,7 +1115,7 @@ describe("FileObject", () => {
         () => file.loadData({type: "xml"}),
         (error) => {
           assert.ok(error instanceof Sass)
-          assert.match(error.message, /Unsupported data type 'xml'/)
+          assert.match(error.message, /Type must be one of any, json, json5, yaml/)
           return true
         }
       )
@@ -1128,7 +1128,7 @@ describe("FileObject", () => {
         () => file.loadData({type: "json5"}),
         (error) => {
           assert.ok(error instanceof Sass)
-          assert.match(error.message, /Content is neither valid JSON5 nor valid YAML/)
+          assert.match(error.message, /Content is not valid JSON5/)
           return true
         }
       )
@@ -1141,16 +1141,16 @@ describe("FileObject", () => {
         () => file.loadData({type: "yaml"}),
         (error) => {
           assert.ok(error instanceof Sass)
-          assert.match(error.message, /Content is neither valid JSON5 nor valid YAML/)
+          assert.match(error.message, /Content is not valid YAML/)
           return true
         }
       )
     })
 
-    it("falls back from JSON5 to YAML with 'any' type", async () => {
+    it("falls back from JSON through JSON5 to YAML with 'any' type", async () => {
       const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "colors.yaml"))
 
-      // Should try JSON5 first, fail, then succeed with YAML
+      // Should try JSON, then JSON5, fail both, then succeed with YAML
       const data = await file.loadData({type: "any"})
 
       assert.ok(data)
@@ -1166,7 +1166,7 @@ describe("FileObject", () => {
     })
 
     it("type parameter is case-insensitive", async () => {
-      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "settings.json"))
+      const file = new FileObject(path.join(process.cwd(), "tests", "fixtures", "strict.json"))
 
       const testCases = ["JSON5", "Json5", "json5", "JSON", "Json", "json"]
 

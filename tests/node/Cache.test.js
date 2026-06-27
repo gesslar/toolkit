@@ -337,14 +337,14 @@ describe('Cache', () => {
       await assert.rejects(
         () => cache.loadDataFromCache(brokenJsonFile),
         {
-          message: /Content is neither valid JSON5 nor valid YAML/
+          message: /Content is not valid JSON or JSON5 or YAML/
         }
       )
 
       await assert.rejects(
         () => cache.loadDataFromCache(brokenYamlFile),
         {
-          message: /Content is neither valid JSON5 nor valid YAML/
+          message: /Content is not valid JSON or JSON5 or YAML/
         }
       )
     })
