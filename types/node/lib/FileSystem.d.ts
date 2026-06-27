@@ -181,6 +181,77 @@ export default class FileSystem {
         name: string;
     };
     /**
+     * Determine whether a string is safe to use as a filename on every common
+     * operating system.
+     *
+     * A name is sane only when it would be legal everywhere, so the checks span
+     * the union of platform rules rather than any single OS:
+     *
+     * - No characters that are illegal on common filesystems. Windows is the
+     *   strictest, forbidding `< > : " / \ | ? *` and the control characters
+     *   (0x00-0x1F); POSIX is a subset of these.
+     * - No trailing dot or space (Windows silently trims them).
+     * - Not a Windows reserved device name, with or without an extension
+     *   (`CON`, `PRN`, `AUX`, `NUL`, `COM1`-`COM9`, `LPT1`-`LPT9`).
+     * - Not the relative path indicators `.` or `..`.
+     * - No longer than 255 bytes — the per-component limit on ext4, APFS, NTFS
+     *   and exFAT. Length is counted in UTF-8 bytes, not characters, so a single
+     *   multi-byte codepoint costs more than one toward the limit.
+     *
+     * @static
+     * @param {string} str - The candidate filename to test
+     * @returns {boolean} True if the string is a legal filename on every common OS
+     * @throws {Sass} If str is not a non-empty string
+     * @example
+     * FS.sane("report.txt")  // true
+     * FS.sane("a/b:c.txt")   // false (illegal character)
+     * FS.sane("name ")       // false (trailing space)
+     * FS.sane("CON")         // false (reserved on Windows)
+     * FS.sane("x".repeat(256))  // false (exceeds 255 bytes)
+     */
+    static sane(str: string): boolean;
+    /**
+     * Rewrite a string into a filename that is legal on every common operating
+     * system.
+     *
+     * Applies the union of platform rules (see {@link FileSystem.sane}) so the
+     * result is portable regardless of where it is used:
+     *
+     * - Every character illegal on common filesystems is replaced with
+     *   `replacement` (defaults to an underscore).
+     * - Trailing dots and spaces are stripped (Windows trims them anyway).
+     * - Windows reserved device names are suffixed with `replacement` so they
+     *   are no longer reserved (e.g. `CON` becomes `CON_`, `CON.txt` becomes
+     *   `CON_.txt`).
+     * - Names longer than 255 bytes are truncated to fit that limit. The base
+     *   name is shortened while the extension is preserved where it fits, and
+     *   truncation never splits a multi-byte UTF-8 codepoint.
+     *
+     * A custom `replacement` is itself validated: it must contain no illegal
+     * characters, otherwise the result could remain unsafe.
+     *
+     * Note that degenerate inputs can sanitize to an empty string — for example
+     * an empty `replacement` applied to a name of only illegal characters, or a
+     * relative indicator such as `"."` or `".."` whose trailing dots are
+     * stripped. The empty string is not itself a legal filename, so callers that
+     * need a guaranteed-usable name should treat an empty result as a signal to
+     * fall back to a default of their own.
+     *
+     * @static
+     * @param {string} str - The filename to sanitize
+     * @param {string} [replacement] - The substitute for illegal characters (defaults to "_")
+     * @returns {string} A filename legal on every common OS, or "" when the input sanitizes to nothing
+     * @throws {Sass} If str is not a non-empty string
+     * @throws {Sass} If replacement is not a string, or itself contains OS-illegal characters
+     * @example
+     * FS.sanitize("a/b:c.txt")        // "a_b_c.txt"
+     * FS.sanitize("a/b:c.txt", "-")   // "a-b-c.txt"
+     * FS.sanitize("name. ")           // "name"
+     * FS.sanitize("CON.txt")          // "CON_.txt"
+     * FS.sanitize("..")               // "" (caller should supply a fallback)
+     */
+    static sanitize(str: string, replacement?: string): string;
+    /**
      * Returns the current working directory as a string.
      *
      * @returns {string} The current working directory
