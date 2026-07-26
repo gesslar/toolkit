@@ -27,7 +27,7 @@ export default class Promised {
      * @returns {Promise<Array<{status: 'fulfilled'|'rejected', value?: unknown, reason?: unknown}>>} Results of all settled promises with status and value/reason
      */
     static settle(promises: Array<Promise<unknown>>): Promise<Array<{
-        status: "fulfilled" | "rejected";
+        status: 'fulfilled' | 'rejected';
         value?: unknown;
         reason?: unknown;
     }>>;
@@ -38,7 +38,7 @@ export default class Promised {
      * @returns {boolean} True if any result is rejected, false otherwise
      */
     static hasRejected(settled: Array<{
-        status: "fulfilled" | "rejected";
+        status: 'fulfilled' | 'rejected';
         value?: unknown;
         reason?: unknown;
     }>): boolean;
@@ -49,7 +49,7 @@ export default class Promised {
      * @returns {boolean} True if any result is fulfilled, false otherwise
      */
     static hasFulfilled(settled: Array<{
-        status: "fulfilled" | "rejected";
+        status: 'fulfilled' | 'rejected';
         value?: unknown;
         reason?: unknown;
     }>): boolean;
@@ -60,11 +60,11 @@ export default class Promised {
      * @returns {Array<{status: 'rejected', reason: unknown}>} Array of rejected results
      */
     static rejected(settled: Array<{
-        status: "fulfilled" | "rejected";
+        status: 'fulfilled' | 'rejected';
         value?: unknown;
         reason?: unknown;
     }>): Array<{
-        status: "rejected";
+        status: 'rejected';
         reason: unknown;
     }>;
     /**
@@ -74,11 +74,11 @@ export default class Promised {
      * @returns {Array<{status: 'fulfilled', value: unknown}>} Array of fulfilled results
      */
     static fulfilled(result: Array<{
-        status: "fulfilled" | "rejected";
+        status: 'fulfilled' | 'rejected';
         value?: unknown;
         reason?: unknown;
     }>): Array<{
-        status: "fulfilled";
+        status: 'fulfilled';
         value: unknown;
     }>;
     /**
@@ -88,7 +88,7 @@ export default class Promised {
      * @returns {Array<unknown>} Array of rejection reasons
      */
     static reasons(settled: Array<{
-        status: "fulfilled" | "rejected";
+        status: 'fulfilled' | 'rejected';
         value?: unknown;
         reason?: unknown;
     }>): Array<unknown>;
@@ -99,7 +99,7 @@ export default class Promised {
      * @returns {Array<unknown>} Array of fulfilled values
      */
     static values(settled: Array<{
-        status: "fulfilled" | "rejected";
+        status: 'fulfilled' | 'rejected';
         value?: unknown;
         reason?: unknown;
     }>): Array<unknown>;
@@ -111,7 +111,7 @@ export default class Promised {
      * @throws {Tantrum} Throws a Tantrum error with rejection reasons
      */
     static throw(message: string, settled: Array<{
-        status: "fulfilled" | "rejected";
+        status: 'fulfilled' | 'rejected';
         value?: unknown;
         reason?: unknown;
     }>): void;

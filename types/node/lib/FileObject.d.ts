@@ -1,4 +1,15 @@
 /**
+ * @file FileObject.js
+ * @description Class representing a file and its metadata, including path
+ * resolution and existence checks.
+ */
+import { Buffer } from "node:buffer";
+import { URL } from "node:url";
+import { inspect } from "node:util";
+import Cache from "./Cache.js";
+import DirectoryObject from "./DirectoryObject.js";
+import FS from "./FileSystem.js";
+/**
  * FileObject encapsulates metadata and operations for a file, including path
  * resolution and existence checks.
  *
@@ -14,20 +25,16 @@
  * @property {Promise<("none"|"symbolic"|"broken"|"hard"|null)>} linkType - The link kind at this path (async)
  */
 export default class FileObject extends FS {
-    [x: number]: (depth: number, options: object, ins: Function) => string;
+    #private;
     /**
-     * Creates a FileObject representing the current working file (the file
-     * that called this method). Parses the stack trace to determine the
-     * caller's file path.
+     * Custom Node.js inspect implementation for console.log output.
      *
-     * @returns {FileObject} A new FileObject instance for the calling file
-     * @throws {Sass} If unable to determine caller file from stack trace
-     * @example
-     * // In /home/user/project/src/app.js:
-     * const thisFile = FileObject.fromCwf()
-     * console.log(thisFile.path) // /home/user/project/src/app.js
+     * @param {number} depth - Inspection depth
+     * @param {object} options - Inspect options
+     * @param {Function} ins - The inspect function
+     * @returns {string} Formatted string representation
      */
-    static fromCwf(): FileObject;
+    [inspect.custom]: (depth: number, options: object, ins: Function) => string;
     /**
      * Constructs a FileObject instance.
      *
@@ -36,11 +43,26 @@ export default class FileObject extends FS {
      */
     constructor(submitted: string, parent?: DirectoryObject | string | null);
     /**
+     * Returns a string representation of the FileObject.
+     *
+     * @returns {string} String representation of the FileObject
+     */
+    toString(): string;
+    /**
      * Returns a JSON-serializable representation of the FileObject.
      *
      * @returns {object} Plain object with file metadata
      */
     toJSON(): object;
+    /**
+     * Returns the file path as a primitive value, enabling natural use in
+     * string contexts. String and default hints return the file path; number
+     * hint returns NaN.
+     *
+     * @param {"string"|"number"|"default"} hint - The coercion type hint
+     * @returns {string|number} The file path, or NaN for numeric coercion
+     */
+    [Symbol.toPrimitive](hint: "string" | "number" | "default"): string | number;
     /**
      * Returns the file path as a primitive string value.
      *
@@ -144,6 +166,13 @@ export default class FileObject extends FS {
      * @returns {Promise<boolean>} Whether the file can be written
      */
     canWrite(): Promise<boolean>;
+    /**
+     * Resolves the link kind at this path.
+     *
+     * @private
+     * @returns {Promise<"none"|"symbolic"|"broken"|"hard"|null>} The link kind
+     */
+    private #fileLinkType;
     /**
      * Determines the size of a file.
      *
@@ -309,17 +338,17 @@ export default class FileObject extends FS {
      */
     delete(): Promise<undefined>;
     /**
-     * Returns the file path as a primitive value, enabling natural use in
-     * string contexts. String and default hints return the file path; number
-     * hint returns NaN.
+     * Creates a FileObject representing the current working file (the file
+     * that called this method). Parses the stack trace to determine the
+     * caller's file path.
      *
-     * @param {"string"|"number"|"default"} hint - The coercion type hint
-     * @returns {string|number} The file path, or NaN for numeric coercion
+     * @returns {FileObject} A new FileObject instance for the calling file
+     * @throws {Sass} If unable to determine caller file from stack trace
+     * @example
+     * // In /home/user/project/src/app.js:
+     * const thisFile = FileObject.fromCwf()
+     * console.log(thisFile.path) // /home/user/project/src/app.js
      */
-    [Symbol.toPrimitive](hint: "string" | "number" | "default"): string | number;
-    #private;
+    static fromCwf(): FileObject;
 }
-import FS from "./FileSystem.js";
-import DirectoryObject from "./DirectoryObject.js";
-import Cache from "./Cache.js";
 //# sourceMappingURL=FileObject.d.ts.map

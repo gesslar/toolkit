@@ -1,3 +1,23 @@
+/**
+ * @file Data utility functions for type checking, object manipulation, and
+ * array operations.
+ *
+ * Provides comprehensive utilities for working with JavaScript data types and
+ * structures.
+ */
+import TypeSpec from "./TypeSpec.js";
+export type TypeSpecOptions = {
+    /**
+     * - The delimiter for union types
+     */
+    delimiter?: string;
+};
+export type TypeValidationOptions = {
+    /**
+     * - Whether empty values are allowed
+     */
+    allowEmpty?: boolean;
+};
 export default class Data {
     /**
      * Array of JavaScript primitive type names.
@@ -117,12 +137,7 @@ export default class Data {
      * @param {TypeValidationOptions} [options] Additional options for checking
      * @returns {boolean} Whether the value is of the specified type
      */
-    static isType(value: unknown, type: string | TypeSpec, options?: {
-        /**
-         * - Whether empty values are allowed
-         */
-        allowEmpty?: boolean;
-    }): boolean;
+    static isType(value: unknown, type: string | TypeSpec, options?: TypeValidationOptions): boolean;
     /**
      * Checks if a type is valid
      *
@@ -263,5 +278,4 @@ export default class Data {
      */
     static isBinary(value: unknown): boolean;
 }
-import TypeSpec from "./TypeSpec.js";
 //# sourceMappingURL=Data.d.ts.map

@@ -5,8 +5,7 @@
  * output with colour styling via `@gesslar/colours`.
  */
 export default class Term {
-    static #cache: Map<any, any>;
-    static #preformat(text: any): any;
+    #private;
     /**
      * Terminal width in columns.
      *

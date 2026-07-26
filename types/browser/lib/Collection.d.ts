@@ -1,4 +1,11 @@
 /**
+ * @file Collection.js
+ *
+ * Provides utility functions for working with collections (arrays, objects, sets, maps).
+ * Includes methods for iteration, transformation, validation, and manipulation of
+ * various collection types.
+ */
+/**
  * Utility class for collection operations.
  * Provides static methods for working with arrays, objects, sets, and maps.
  */
@@ -188,7 +195,7 @@ export default class Collection {
      * @param {boolean} mutate Whether to mutate the original object
      * @returns {Promise<object>} The mapped object
      */
-    static mapObject(original: object, transformer: (arg0: unknown) => unknown, mutate?: boolean): Promise<object>;
+    static mapObject(original: object, transformer: Function, mutate?: boolean): Promise<object>;
     /**
      * Allocates an object from a source array and a spec array or function.
      *
@@ -196,7 +203,7 @@ export default class Collection {
      * @param {Array<unknown>|function(Array<unknown>): Promise<Array<unknown>>|Array<unknown>} spec The spec array or function
      * @returns {Promise<object>} The allocated object
      */
-    static allocateObject(source: Array<unknown>, spec: Array<unknown> | ((arg0: Array<unknown>) => Promise<Array<unknown>> | Array<unknown>)): Promise<object>;
+    static allocateObject(source: Array<unknown>, spec: Array<unknown> | Function): Promise<object>;
     /**
      * Trims falsy values from both ends of an array (in-place).
      * Optionally preserves specific falsy values.

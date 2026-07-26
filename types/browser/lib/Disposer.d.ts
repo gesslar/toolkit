@@ -2,7 +2,8 @@
  * Simple lifecycle helper that tracks disposer callbacks.
  * Register any teardown functions and call dispose() to run them in reverse.
  */
-export class Disposer {
+export declare class Disposer {
+    #private;
     /**
      * Registers a disposer callback to be executed when disposed.
      *
@@ -26,7 +27,6 @@ export class Disposer {
      * @returns {Array<() => void>} Snapshot of disposer callbacks.
      */
     get disposers(): Array<() => void>;
-    #private;
 }
 declare const _default: Disposer;
 export default _default;

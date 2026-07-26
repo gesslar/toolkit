@@ -1,12 +1,15 @@
+import type FileObject from "./FileObject.js";
+import type DirectoryObject from "./DirectoryObject.js";
 /**
  * @import FileObject from "./FileObject.js"
  * @import DirectoryObject from "./DirectoryObject.js"
  */
-export const OverFlowBehaviour: Readonly<{
+export declare const OverFlowBehaviour: Readonly<{
     IGNORE: "ignore";
     THROW: "throw";
 }>;
 export default class Watcher {
+    #private;
     /**
      * Watch one or more file/directory targets for changes, invoking a callback
      * with debounce protection.
@@ -31,8 +34,5 @@ export default class Watcher {
      * Stop watching all targets.
      */
     stopWatching(): void;
-    #private;
 }
-import type FileObject from "./FileObject.js";
-import type DirectoryObject from "./DirectoryObject.js";
 //# sourceMappingURL=Watcher.d.ts.map

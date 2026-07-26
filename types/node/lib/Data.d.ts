@@ -1,3 +1,6 @@
+import JSON5 from "json5";
+import YAML from "yaml";
+import BrowserData from "../../browser/lib/Data.js";
 /**
  * Node-side extension of Data with parsing utilities that require
  * node-specific dependencies.
@@ -23,7 +26,4 @@ export default class Data extends BrowserData {
      */
     static textAsData(source: string, type?: string): unknown;
 }
-import BrowserData from "../../browser/lib/Data.js";
-import JSON5 from "json5";
-import YAML from "yaml";
 //# sourceMappingURL=Data.d.ts.map

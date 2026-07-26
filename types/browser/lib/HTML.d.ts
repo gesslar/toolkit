@@ -1,4 +1,5 @@
-export class HTML {
+export declare class HTML {
+    #private;
     /**
      * Lightweight HTML helper utilities for browser contexts.
      *
@@ -33,7 +34,6 @@ export class HTML {
      * @param {Element} element - Element to clear.
      */
     clearHTMLContent(element: Element): void;
-    #private;
 }
 declare const _default: HTML;
 export default _default;
