@@ -278,6 +278,48 @@ describe('Cache', () => {
       })
     })
 
+    it('serves fresh data to every concurrent caller after a modification', async () => {
+      const copyPath = path.join(testDir, 'concurrent-invalidation.json')
+      await fs.writeFile(copyPath, '{"v": 1}')
+
+      // Separate FileObjects for one path — consumers building several
+      // artefacts from a shared import each construct their own.
+      const mk = () => new FileObject(copyPath)
+
+      await cache.loadDataFromCache(mk())
+
+      await new Promise(resolve => setTimeout(resolve, 10))
+      await fs.writeFile(copyPath, '{"v": 2}')
+
+      const results = await Promise.all([
+        cache.loadDataFromCache(mk()),
+        cache.loadDataFromCache(mk()),
+        cache.loadDataFromCache(mk()),
+      ])
+
+      results.forEach(data => assert.equal(data.v, 2))
+    })
+
+    it('serves fresh raw content to every concurrent caller after a modification', async () => {
+      const copyPath = path.join(testDir, 'concurrent-invalidation-raw.txt')
+      await fs.writeFile(copyPath, 'before')
+
+      const mk = () => new FileObject(copyPath)
+
+      await cache.loadFromCache(mk())
+
+      await new Promise(resolve => setTimeout(resolve, 10))
+      await fs.writeFile(copyPath, 'after')
+
+      const results = await Promise.all([
+        cache.loadFromCache(mk()),
+        cache.loadFromCache(mk()),
+        cache.loadFromCache(mk()),
+      ])
+
+      results.forEach(data => assert.equal(data, 'after'))
+    })
+
     it('cleans up cache properly on invalidation', async () => {
       // Create a modifiable copy
       const copyPath = path.join(testDir, 'cleanup-test.json')

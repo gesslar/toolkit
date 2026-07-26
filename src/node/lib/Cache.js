@@ -28,6 +28,14 @@ export default class Cache {
   #cache = new Map()
 
   /**
+   * In-flight reads, keyed by file path and modification time, so that
+   * concurrent callers coalesce onto one read instead of racing each other.
+   *
+   * @type {Map<string, Promise<CacheData>>}
+   */
+  #reading = new Map()
+
+  /**
    * Removes cached data for a specific file from the #cache map.
    * Used when files are modified or when cache consistency needs to be
    * maintained.
@@ -64,34 +72,78 @@ export default class Cache {
     if(lastModified === null)
       throw Sass.new(`No such file '${fileObject}'`)
 
-    const rec = this.#cache.get(fileObject.path) ?? Object.seal({
-      modified: new Date(0),
-      raw: null,
-      structured: null,
-    })
-
-    if(lastModified.getTime() === rec.modified.getTime()) {
-      if(kind === "raw" && rec.raw !== null)
-        return rec.raw
-
-      if(kind === "structured" && rec.structured !== null)
-        return rec.structured
-    }
-
-    this.#cache.set(fileObject.path, rec)
-    rec.modified = lastModified
-    rec.raw = await fileObject.read({
-      encoding: options.encoding,
-      skipCache: true,
-    })
-    rec.structured = null
+    const rec = await this.#record(fileObject, lastModified, options)
 
     if(kind === "raw")
       return rec.raw
 
-    rec.structured = Data.textAsData(rec.raw, options.type)
+    // Parsing is synchronous, so a record can never be observed with raw
+    // content from one revision and structured data from another.
+    rec.structured ??= Data.textAsData(rec.raw, options.type)
 
     return rec.structured
+  }
+
+  /**
+   * Resolves the cache record for a file at a given modification time,
+   * reading from disk when no record exists or the existing one is stale.
+   *
+   * Concurrent callers asking for the same file at the same mtime share a
+   * single read, and a record only enters the map once its contents are in
+   * hand. Without both of those, a second caller arriving while the first is
+   * still awaiting the read would find a record already stamped with the new
+   * mtime but still holding the previous revision's data, and happily return
+   * it as fresh.
+   *
+   * @private
+   * @param {FileObject} fileObject - The file object to resolve
+   * @param {Date} lastModified - The file's current modification time
+   * @param {object} options - Options forwarded to read
+   * @returns {Promise<CacheData>} The populated cache record
+   */
+  async #record(fileObject, lastModified, options) {
+    const cached = this.#cache.get(fileObject.path)
+
+    if(cached && cached.modified.getTime() === lastModified.getTime())
+      return cached
+
+    const key = `${fileObject.path}\u0000${lastModified.getTime()}`
+    let reading = this.#reading.get(key)
+
+    if(!reading) {
+      reading = this.#read(fileObject, lastModified, options)
+        .finally(() => this.#reading.delete(key))
+
+      this.#reading.set(key, reading)
+    }
+
+    return await reading
+  }
+
+  /**
+   * Reads a file from disk and publishes it as a cache record.
+   *
+   * @private
+   * @param {FileObject} fileObject - The file object to read
+   * @param {Date} lastModified - The modification time the read represents
+   * @param {object} options - Options forwarded to read
+   * @param {string} [options.encoding="utf8"] - File encoding
+   * @returns {Promise<CacheData>} The freshly populated cache record
+   */
+  async #read(fileObject, lastModified, options) {
+    const raw = await fileObject.read({
+      encoding: options.encoding,
+      skipCache: true,
+    })
+
+    const rec = Object.seal({modified: lastModified, raw, structured: null})
+    const cached = this.#cache.get(fileObject.path)
+
+    // Don't let a slower read of an older revision clobber a newer one.
+    if(!cached || cached.modified.getTime() <= lastModified.getTime())
+      this.#cache.set(fileObject.path, rec)
+
+    return rec
   }
 
   /**
