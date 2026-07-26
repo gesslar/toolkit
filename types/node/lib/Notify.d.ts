@@ -1,4 +1,20 @@
 /**
+ * @file Notify.js
+ * @description Node.js event notification system using EventEmitter.
+ * Provides a centralized API for event emission and handling.
+ */
+import { EventEmitter } from "node:events";
+export type NotifyEventOptions = {
+    /**
+     * - Whether the listener should be invoked only once.
+     */
+    once?: boolean;
+    /**
+     * - An AbortSignal to remove the listener.
+     */
+    signal?: AbortSignal;
+};
+/**
  * @typedef {object} NotifyEventOptions
  * @property {boolean} [once] - Whether the listener should be invoked only once.
  * @property {AbortSignal} [signal] - An AbortSignal to remove the listener.
@@ -7,7 +23,8 @@
  * Notify class provides a thin wrapper around EventEmitter for centralized
  * event handling in Node.js applications. Mirrors the browser Notify API.
  */
-export class Notify {
+export declare class Notify {
+    #private;
     /** @type {string} Display name for debugging. */
     name: string;
     /**
@@ -69,18 +86,7 @@ export class Notify {
      * @returns {undefined}
      */
     off(type: string, handler: (payload: unknown) => undefined, emitter?: EventEmitter): undefined;
-    #private;
 }
 declare const _default: Notify;
 export default _default;
-export type NotifyEventOptions = {
-    /**
-     * - Whether the listener should be invoked only once.
-     */
-    once?: boolean;
-    /**
-     * - An AbortSignal to remove the listener.
-     */
-    signal?: AbortSignal;
-};
 //# sourceMappingURL=Notify.d.ts.map

@@ -1,6 +1,17 @@
-declare const _default: typeof Glog;
-export default _default;
+/**
+ * @file Glog.js
+ *
+ * Enhanced Global logging utility that combines simple logging with advanced Logger features.
+ *
+ * Can be used in multiple ways:
+ * 1. Simple function call: Glog(data)
+ * 2. With levels: Glog(2, "debug message")
+ * 3. Configured instance: new Glog(options)
+ * 4. Fluent setup: Glog.create().withName("App").withColours()
+ * 5. Traditional logger: logger.debug("message", level)
+ */
 declare class Glog {
+    #private;
     static logLevel: number;
     static logPrefix: string;
     static colours: any;
@@ -8,6 +19,59 @@ declare class Glog {
     static name: string;
     static tagsAsStrings: boolean;
     static symbols: any;
+    /**
+     * Create a new Glog logger instance with optional configuration
+     *
+     * @param {object} [options={}] - Configuration options
+     * @param {string} [options.name] - Logger name to display in output
+     * @param {number} [options.debugLevel] - Debug verbosity level (0-5, default: 0)
+     * @param {number} [options.logLevel] - Alias for debugLevel
+     * @param {string} [options.prefix] - Prefix to prepend to all log messages
+     * @param {object} [options.colours] - Colour configuration object
+     * @param {object} [options.symbols] - Custom log level symbols (e.g., {info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
+     * @param {boolean} [options.stackTrace=false] - Enable stack trace extraction
+     * @param {boolean} [options.tagsAsStrings=false] - Use string tags instead of symbols
+     * @param {boolean} [options.displayName=true] - Display logger name in output
+     * @param {object} [options.vscode] - VS Code API object (auto-detected if not provided)
+     */
+    constructor(options?: {
+        name?: string;
+        debugLevel?: number;
+        logLevel?: number;
+        prefix?: string;
+        colours?: object;
+        symbols?: object;
+        stackTrace?: boolean;
+        tagsAsStrings?: boolean;
+        displayName?: boolean;
+        vscode?: object;
+    });
+    /**
+     * Set configuration options for this logger instance
+     *
+     * @param {object} options - Configuration options
+     * @param {string} [options.name] - Logger name to display in output
+     * @param {number} [options.debugLevel] - Debug verbosity level (0-5)
+     * @param {number} [options.logLevel] - Alias for debugLevel
+     * @param {string} [options.prefix] - Prefix to prepend to all log messages
+     * @param {object} [options.colours] - Colour configuration object
+     * @param {object} [options.symbols] - Custom log level symbols (e.g., {info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
+     * @param {boolean} [options.stackTrace] - Enable stack trace extraction
+     * @param {boolean} [options.tagsAsStrings] - Use string tags instead of symbols
+     * @param {boolean} [options.displayName] - Display logger name in output
+     * @returns {Glog} This Glog instance for chaining
+     */
+    setOptions(options: {
+        name?: string;
+        debugLevel?: number;
+        logLevel?: number;
+        prefix?: string;
+        colours?: object;
+        symbols?: object;
+        stackTrace?: boolean;
+        tagsAsStrings?: boolean;
+        displayName?: boolean;
+    }): Glog;
     /**
      * Set the log prefix for global usage
      *
@@ -85,147 +149,6 @@ declare class Glog {
      * @returns {Glog} New Glog instance
      */
     static create(options?: object): Glog;
-    /**
-     * Core execute method for simple static usage
-     * Can be called as: Glog(data) or Glog(level, data)
-     *
-     * @param {...unknown} args - Arguments (optional level number, then data)
-     */
-    static execute(...args: unknown[]): void;
-    /**
-     * Static version of colourize for global usage
-     *
-     * @param {Array<string>} strings - Template strings
-     * @param {...unknown} values - Template values
-     */
-    static colourize(strings: Array<string>, ...values: unknown[]): void;
-    /**
-     * Static success method
-     *
-     * @param {string} message - Success message to log
-     * @param {...unknown} args - Additional arguments to log
-     */
-    static success(message: string, ...args: unknown[]): void;
-    /**
-     * Static group method - start a console group for indented output
-     *
-     * @param {...unknown} args - Optional group label
-     */
-    static group(...args: unknown[]): void;
-    /**
-     * Static groupEnd method - end the current console group
-     */
-    static groupEnd(): void;
-    /**
-     * Static groupDebug - start a debug-tagged group
-     *
-     * @param {string} message - Group label
-     * @param {number} [level=1] - Debug level
-     */
-    static groupDebug(message: string, level?: number): void;
-    /**
-     * Static groupInfo - start an info-tagged group
-     *
-     * @param {string} message - Group label
-     */
-    static groupInfo(message: string): void;
-    /**
-     * Static groupSuccess - start a success-tagged group
-     *
-     * @param {string} message - Group label
-     */
-    static groupSuccess(message: string): void;
-    /**
-     * Static table method
-     *
-     * @param {object | Array} data - Object or array to display
-     * @param {string | object} [labelOrOptions] - Optional label (string) or options (object)
-     * @param {object} [options] - Optional options when label is provided
-     * @param {Array<string>} [options.properties] - Column properties to display
-     * @param {boolean} [options.showHeader=false] - Whether to show the header row
-     * @param {boolean} [options.quotedStrings=false] - Whether to show quotes around strings
-     */
-    static table(data: object | any[], labelOrOptions?: string | object, options?: {
-        properties?: Array<string>;
-        showHeader?: boolean;
-        quotedStrings?: boolean;
-    }): void;
-    /**
-     * Set a colour alias for convenient usage
-     *
-     * @param {string} alias - Alias name
-     * @param {string} colourCode - Colour code (e.g., "{F196}" or "{<B}")
-     * @returns {Glog} The Glog class for chaining.
-     */
-    static setAlias(alias: string, colourCode: string): Glog;
-    /**
-     * Static raw logger that outputs without name/tag formatting
-     *
-     * @returns {object} Raw logger interface
-     * @returns {Function} return.debug - Raw debug output function
-     * @returns {Function} return.info - Raw info output function
-     * @returns {Function} return.warn - Raw warning output function
-     * @returns {Function} return.error - Raw error output function
-     * @returns {Function} return.log - Raw log output function
-     * @returns {Function} return.success - Raw success output function
-     * @returns {Function} return.table - Raw table output function
-     * @returns {Function} return.group - Raw group start function
-     * @returns {Function} return.groupEnd - Raw group end function
-     */
-    static get raw(): object;
-    /**
-     * Create a new Glog logger instance with optional configuration
-     *
-     * @param {object} [options={}] - Configuration options
-     * @param {string} [options.name] - Logger name to display in output
-     * @param {number} [options.debugLevel] - Debug verbosity level (0-5, default: 0)
-     * @param {number} [options.logLevel] - Alias for debugLevel
-     * @param {string} [options.prefix] - Prefix to prepend to all log messages
-     * @param {object} [options.colours] - Colour configuration object
-     * @param {object} [options.symbols] - Custom log level symbols (e.g., {info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
-     * @param {boolean} [options.stackTrace=false] - Enable stack trace extraction
-     * @param {boolean} [options.tagsAsStrings=false] - Use string tags instead of symbols
-     * @param {boolean} [options.displayName=true] - Display logger name in output
-     * @param {object} [options.vscode] - VS Code API object (auto-detected if not provided)
-     */
-    constructor(options?: {
-        name?: string;
-        debugLevel?: number;
-        logLevel?: number;
-        prefix?: string;
-        colours?: object;
-        symbols?: object;
-        stackTrace?: boolean;
-        tagsAsStrings?: boolean;
-        displayName?: boolean;
-        vscode?: object;
-    });
-    /**
-     * Set configuration options for this logger instance
-     *
-     * @param {object} options - Configuration options
-     * @param {string} [options.name] - Logger name to display in output
-     * @param {number} [options.debugLevel] - Debug verbosity level (0-5)
-     * @param {number} [options.logLevel] - Alias for debugLevel
-     * @param {string} [options.prefix] - Prefix to prepend to all log messages
-     * @param {object} [options.colours] - Colour configuration object
-     * @param {object} [options.symbols] - Custom log level symbols (e.g., {info: '🚒', warn: '🚨', error: '🔥', success: '💧', debug: '🧯'})
-     * @param {boolean} [options.stackTrace] - Enable stack trace extraction
-     * @param {boolean} [options.tagsAsStrings] - Use string tags instead of symbols
-     * @param {boolean} [options.displayName] - Display logger name in output
-     * @returns {Glog} This Glog instance for chaining
-     */
-    setOptions(options: {
-        name?: string;
-        debugLevel?: number;
-        logLevel?: number;
-        prefix?: string;
-        colours?: object;
-        symbols?: object;
-        stackTrace?: boolean;
-        tagsAsStrings?: boolean;
-        displayName?: boolean;
-    }): Glog;
     /**
      * Set the logger name for this instance
      *
@@ -365,6 +288,13 @@ declare class Glog {
      */
     error(message: string, ...arg: unknown[]): void;
     /**
+     * Core execute method for simple static usage
+     * Can be called as: Glog(data) or Glog(level, data)
+     *
+     * @param {...unknown} args - Arguments (optional level number, then data)
+     */
+    static execute(...args: unknown[]): void;
+    /**
      * Instance execute method for configured loggers
      * Can be called as: logger(data) or logger(level, data)
      *
@@ -380,12 +310,55 @@ declare class Glog {
      */
     colourize(strings: Array<string>, ...values: unknown[]): void;
     /**
+     * Static version of colourize for global usage
+     *
+     * @param {Array<string>} strings - Template strings
+     * @param {...unknown} values - Template values
+     */
+    static colourize(strings: Array<string>, ...values: unknown[]): void;
+    /**
      * Log a success message with green colour
      *
      * @param {string} message - Success message
      * @param {...unknown} args - Additional arguments
      */
     success(message: string, ...args: unknown[]): void;
+    /**
+     * Static success method
+     *
+     * @param {string} message - Success message to log
+     * @param {...unknown} args - Additional arguments to log
+     */
+    static success(message: string, ...args: unknown[]): void;
+    /**
+     * Static group method - start a console group for indented output
+     *
+     * @param {...unknown} args - Optional group label
+     */
+    static group(...args: unknown[]): void;
+    /**
+     * Static groupEnd method - end the current console group
+     */
+    static groupEnd(): void;
+    /**
+     * Static groupDebug - start a debug-tagged group
+     *
+     * @param {string} message - Group label
+     * @param {number} [level=1] - Debug level
+     */
+    static groupDebug(message: string, level?: number): void;
+    /**
+     * Static groupInfo - start an info-tagged group
+     *
+     * @param {string} message - Group label
+     */
+    static groupInfo(message: string): void;
+    /**
+     * Static groupSuccess - start a success-tagged group
+     *
+     * @param {string} message - Group label
+     */
+    static groupSuccess(message: string): void;
     /**
      * Start a console group for indented output
      *
@@ -431,11 +404,34 @@ declare class Glog {
         quotedStrings?: boolean;
     }): void;
     /**
+     * Static table method
+     *
+     * @param {object | Array} data - Object or array to display
+     * @param {string | object} [labelOrOptions] - Optional label (string) or options (object)
+     * @param {object} [options] - Optional options when label is provided
+     * @param {Array<string>} [options.properties] - Column properties to display
+     * @param {boolean} [options.showHeader=false] - Whether to show the header row
+     * @param {boolean} [options.quotedStrings=false] - Whether to show quotes around strings
+     */
+    static table(data: object | any[], labelOrOptions?: string | object, options?: {
+        properties?: Array<string>;
+        showHeader?: boolean;
+        quotedStrings?: boolean;
+    }): void;
+    /**
+     * Set a colour alias for convenient usage
+     *
+     * @param {string} alias - Alias name
+     * @param {string} colourCode - Colour code (e.g., "{F196}" or "{<B}")
+     * @returns {Glog} The Glog class for chaining.
+     */
+    static setAlias(alias: string, colourCode: string): Glog;
+    /**
      * Get access to the colours template function for instance usage
      *
      * @returns {import('@gesslar/colours')} The colours template function from \@gesslar/colours
      */
-    get colours(): typeof import("@gesslar/colours");
+    get colours(): import('@gesslar/colours');
     /**
      * Get a raw logger that outputs without name/tag formatting
      *
@@ -451,6 +447,22 @@ declare class Glog {
      * @returns {Function} return.groupEnd - Raw group end function
      */
     get raw(): object;
-    #private;
+    /**
+     * Static raw logger that outputs without name/tag formatting
+     *
+     * @returns {object} Raw logger interface
+     * @returns {Function} return.debug - Raw debug output function
+     * @returns {Function} return.info - Raw info output function
+     * @returns {Function} return.warn - Raw warning output function
+     * @returns {Function} return.error - Raw error output function
+     * @returns {Function} return.log - Raw log output function
+     * @returns {Function} return.success - Raw success output function
+     * @returns {Function} return.table - Raw table output function
+     * @returns {Function} return.group - Raw group start function
+     * @returns {Function} return.groupEnd - Raw group end function
+     */
+    static get raw(): object;
 }
+declare const _default: typeof Glog;
+export default _default;
 //# sourceMappingURL=Glog.d.ts.map

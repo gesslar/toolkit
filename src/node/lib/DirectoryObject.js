@@ -16,12 +16,6 @@ import Sass from "./Sass.js"
 import Valid from "./Valid.js"
 
 /**
- * @typedef {object} GeneratorType
- * @property {function(): {value: DirectoryObject, done: boolean}} next
- * @property {function(): GeneratorType} [Symbol.iterator]
- */
-
-/**
  * @typedef {object} DirectoryMeta
  *
  * @property {boolean} isDirectory - Always true for directories
@@ -584,7 +578,7 @@ export default class DirectoryObject extends FS {
    *
    * @generator
    * @yields {DirectoryObject} Parent directory objects from current to root
-   * @returns {GeneratorType}
+   * @returns {Generator<DirectoryObject>}
    */
   *#walkUp() {
     const {root, base, dir} = FS.pathParts(this.path)
@@ -606,7 +600,7 @@ export default class DirectoryObject extends FS {
    * Generator that walks up the directory tree, yielding each parent directory.
    * Starts from the current directory and yields each parent until reaching the root.
    *
-   * @returns {DirectoryObject} Generator yielding parent DirectoryObject instances
+   * @returns {IterableIterator<DirectoryObject>} Generator yielding parent DirectoryObject instances
    * @example
    * const dir = new DirectoryObject('/path/to/deep/directory')
    * for(const parent of dir.walkUp) {

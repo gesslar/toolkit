@@ -278,6 +278,100 @@ describe('Cache', () => {
       })
     })
 
+    it('serves fresh data to every concurrent caller after a modification', async () => {
+      const copyPath = path.join(testDir, 'concurrent-invalidation.json')
+      await fs.writeFile(copyPath, '{"v": 1}')
+
+      // Separate FileObjects for one path — consumers building several
+      // artefacts from a shared import each construct their own.
+      const mk = () => new FileObject(copyPath)
+
+      await cache.loadDataFromCache(mk())
+
+      await new Promise(resolve => setTimeout(resolve, 10))
+      await fs.writeFile(copyPath, '{"v": 2}')
+
+      const results = await Promise.all([
+        cache.loadDataFromCache(mk()),
+        cache.loadDataFromCache(mk()),
+        cache.loadDataFromCache(mk()),
+      ])
+
+      results.forEach(data => assert.equal(data.v, 2))
+    })
+
+    it('serves fresh raw content to every concurrent caller after a modification', async () => {
+      const copyPath = path.join(testDir, 'concurrent-invalidation-raw.txt')
+      await fs.writeFile(copyPath, 'before')
+
+      const mk = () => new FileObject(copyPath)
+
+      await cache.loadFromCache(mk())
+
+      await new Promise(resolve => setTimeout(resolve, 10))
+      await fs.writeFile(copyPath, 'after')
+
+      const results = await Promise.all([
+        cache.loadFromCache(mk()),
+        cache.loadFromCache(mk()),
+        cache.loadFromCache(mk()),
+      ])
+
+      results.forEach(data => assert.equal(data, 'after'))
+    })
+
+    it('does not republish a record that was reset mid-read', async () => {
+      const copyPath = path.join(testDir, 'reset-mid-read.txt')
+      // A fixed stamp, applied the same way both times, so the two writes are
+      // indistinguishable by mtime — only an honoured reset forces a re-read.
+      const stamp = new Date(1700000000000)
+
+      await fs.writeFile(copyPath, 'before')
+      await fs.utimes(copyPath, stamp, stamp)
+
+      const file = new FileObject(copyPath)
+
+      // Hold the read open so the reset provably lands mid-flight rather than
+      // before the read has even begun.
+      let release
+      const held = new Promise(resolve => { release = resolve })
+      const read = file.read.bind(file)
+
+      file.read = async options => {
+        await held
+
+        return await read(options)
+      }
+
+      const pending = cache.loadFromCache(file)
+
+      await new Promise(resolve => setTimeout(resolve, 10))
+      cache.resetCache(file)
+      release()
+      await pending
+
+      await fs.writeFile(copyPath, 'after')
+      await fs.utimes(copyPath, stamp, stamp)
+
+      assert.equal(await cache.loadFromCache(new FileObject(copyPath)), 'after')
+    })
+
+    it('keeps concurrent reads of different encodings apart', async () => {
+      const copyPath = path.join(testDir, 'encoding-race.txt')
+
+      // 0xe9 is 'é' in latin1 and not valid UTF-8, so the two decodings of
+      // the same bytes can't be confused for one another.
+      await fs.writeFile(copyPath, Buffer.from([0xe9]))
+
+      const [utf8, latin1] = await Promise.all([
+        cache.loadFromCache(new FileObject(copyPath), {encoding: 'utf8'}),
+        cache.loadFromCache(new FileObject(copyPath), {encoding: 'latin1'}),
+      ])
+
+      assert.equal(latin1, 'é')
+      assert.notEqual(utf8, 'é')
+    })
+
     it('cleans up cache properly on invalidation', async () => {
       // Create a modifiable copy
       const copyPath = path.join(testDir, 'cleanup-test.json')

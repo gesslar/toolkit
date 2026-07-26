@@ -1,8 +1,58 @@
 /**
- * @typedef {object} GeneratorType
- * @property {function(): {value: DirectoryObject, done: boolean}} next
- * @property {function(): GeneratorType} [Symbol.iterator]
+ * @file DirectoryObject.js
+ * @description Class representing a directory and its metadata, including path
+ * resolution and existence checks.
  */
+import { URL } from "node:url";
+import { inspect } from "node:util";
+import FileObject from "./FileObject.js";
+import FS from "./FileSystem.js";
+export type DirectoryMeta = {
+    /**
+     * - Always true for directories
+     */
+    isDirectory: boolean;
+    /**
+     * - The directory extension (if any)
+     */
+    extension: string | null;
+    /**
+     * - The directory name without extension
+     */
+    module: string | null;
+    /**
+     * - The directory name
+     */
+    name: string | null;
+    /**
+     * - The parent DirectoryObject
+     */
+    parent: DirectoryObject | undefined;
+    /**
+     * - The parent directory path
+     */
+    parentPath: string | null;
+    /**
+     * - The absolute directory path
+     */
+    path: string | null;
+    /**
+     * - Path separator
+     */
+    sep: string | null;
+    /**
+     * - User-supplied path
+     */
+    supplied: string | null;
+    /**
+     * - Path segments
+     */
+    trail: Array<string> | null;
+    /**
+     * - The directory URL
+     */
+    url: URL | null;
+};
 /**
  * @typedef {object} DirectoryMeta
  *
@@ -65,7 +115,22 @@
  * const file = dir.getFile("package.json")
  */
 export default class DirectoryObject extends FS {
-    [x: number]: (depth: number, options: object, ins: Function) => string;
+    #private;
+    /**
+     * Custom Node.js inspect implementation for console.log output.
+     *
+     * @param {number} depth - Inspection depth
+     * @param {object} options - Inspect options
+     * @param {Function} ins - The inspect function
+     * @returns {string} Formatted string representation
+     */
+    [inspect.custom]: (depth: number, options: object, ins: Function) => string;
+    /**
+     * Constructs a DirectoryObject instance.
+     *
+     * @param {string?} [supplied="."] - The directory path (defaults to current directory)
+     */
+    constructor(supplied?: string | null);
     /**
      * Creates a DirectoryObject from the current working directory.
      * Useful when working with pnpx or other tools where the project root
@@ -78,17 +143,26 @@ export default class DirectoryObject extends FS {
      */
     static fromCwd(): DirectoryObject;
     /**
-     * Constructs a DirectoryObject instance.
+     * Returns a string representation of the DirectoryObject.
      *
-     * @param {string?} [supplied="."] - The directory path (defaults to current directory)
+     * @returns {string} string representation of the DirectoryObject
      */
-    constructor(supplied?: string | null);
+    toString(): string;
     /**
      * Returns a JSON-serializable representation of the DirectoryObject.
      *
      * @returns {object} Plain object with directory metadata
      */
     toJSON(): object;
+    /**
+     * Returns the directory path as a primitive value, enabling natural use in
+     * string contexts. String and default hints return the directory path; number
+     * hint returns NaN.
+     *
+     * @param {"string"|"number"|"default"} hint - The coercion type hint
+     * @returns {string|number} The directory path, or NaN for numeric coercion
+     */
+    [Symbol.toPrimitive](hint: "string" | "number" | "default"): string | number;
     /**
      * Returns the directory path as a primitive string value.
      *
@@ -192,6 +266,13 @@ export default class DirectoryObject extends FS {
      */
     get isDirectory(): boolean;
     /**
+     * Resolves the link kind at this path.
+     *
+     * @private
+     * @returns {Promise<"none"|"symbolic"|null>} The link kind
+     */
+    private #directoryLinkType;
+    /**
      * Lists the contents of a directory, optionally filtered by a glob pattern.
      *
      * Returns FileObject and DirectoryObject instances. Symbolic links are
@@ -242,6 +323,17 @@ export default class DirectoryObject extends FS {
         directories: Array<DirectoryObject>;
     }>;
     /**
+     * Categorizes an array of Dirent objects into files and directories.
+     * Resolves symbolic links to their target type via `fs.stat()`. Broken
+     * symlinks (where the target does not exist) are categorized as files
+     * so they can be unlinked.
+     *
+     * @private
+     * @param {Array<import("node:fs").Dirent>} dirents - Directory entries to categorize
+     * @returns {Promise<{files: Array<FileObject>, directories: Array<DirectoryObject>}>} Categorized entries
+     */
+    private #categorize;
+    /**
      * Ensures a directory exists, creating it if necessary.
      * Gracefully handles the case where the directory already exists.
      *
@@ -259,7 +351,7 @@ export default class DirectoryObject extends FS {
      * Generator that walks up the directory tree, yielding each parent directory.
      * Starts from the current directory and yields each parent until reaching the root.
      *
-     * @returns {DirectoryObject} Generator yielding parent DirectoryObject instances
+     * @returns {IterableIterator<DirectoryObject>} Generator yielding parent DirectoryObject instances
      * @example
      * const dir = new DirectoryObject('/path/to/deep/directory')
      * for(const parent of dir.walkUp) {
@@ -271,7 +363,7 @@ export default class DirectoryObject extends FS {
      *   // /
      * }
      */
-    get walkUp(): DirectoryObject;
+    get walkUp(): IterableIterator<DirectoryObject>;
     /**
      * Deletes an empty directory from the filesystem.
      *
@@ -356,70 +448,5 @@ export default class DirectoryObject extends FS {
      * console.log(escaped.path) // "/projects/git/toolkit/foo/bar.js"
      */
     getFile(filename: string): FileObject;
-    /**
-     * Returns the directory path as a primitive value, enabling natural use in
-     * string contexts. String and default hints return the directory path; number
-     * hint returns NaN.
-     *
-     * @param {"string"|"number"|"default"} hint - The coercion type hint
-     * @returns {string|number} The directory path, or NaN for numeric coercion
-     */
-    [Symbol.toPrimitive](hint: "string" | "number" | "default"): string | number;
-    #private;
 }
-export type GeneratorType = {
-    next: () => {
-        value: DirectoryObject;
-        done: boolean;
-    };
-    iterator?: () => GeneratorType;
-};
-export type DirectoryMeta = {
-    /**
-     * - Always true for directories
-     */
-    isDirectory: boolean;
-    /**
-     * - The directory extension (if any)
-     */
-    extension: string | null;
-    /**
-     * - The directory name without extension
-     */
-    module: string | null;
-    /**
-     * - The directory name
-     */
-    name: string | null;
-    /**
-     * - The parent DirectoryObject
-     */
-    parent: DirectoryObject | undefined;
-    /**
-     * - The parent directory path
-     */
-    parentPath: string | null;
-    /**
-     * - The absolute directory path
-     */
-    path: string | null;
-    /**
-     * - Path separator
-     */
-    sep: string | null;
-    /**
-     * - User-supplied path
-     */
-    supplied: string | null;
-    /**
-     * - Path segments
-     */
-    trail: Array<string> | null;
-    /**
-     * - The directory URL
-     */
-    url: URL | null;
-};
-import FS from "./FileSystem.js";
-import FileObject from "./FileObject.js";
 //# sourceMappingURL=DirectoryObject.d.ts.map

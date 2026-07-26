@@ -1,10 +1,71 @@
 /**
+ * @file FS.js
+ *
+ * File system utilities for path manipulation, file discovery, and path
+ * resolution.
+ *
+ * Provides glob-based file search, URI conversion, and intelligent path
+ * merging.
+ */
+export type PathParts = {
+    /**
+     * - The file name with extension
+     */
+    base: string;
+    /**
+     * - The directory path
+     */
+    dir: string;
+    /**
+     * - The file extension (including dot)
+     */
+    ext: string;
+    /**
+     * - The root of the path
+     */
+    root: string;
+    /**
+     * - The file name without extension
+     */
+    name: string;
+};
+/**
  * File system utility class for path operations and file discovery.
  */
 export default class FileSystem {
+    #private;
     static fdTypes: readonly string[];
     static upperFdTypes: readonly string[];
-    static fdType: any;
+    static fdType: object;
+    /**
+     * Compute the relative path from another file or directory to this instance.
+     *
+     * If the target is outside the source (i.e., the relative path starts with ".."),
+     * returns the absolute path to this instance instead.
+     *
+     * @param {import("./FileObject.js").default|import("./DirectoryObject.js").default} fileOrDirectoryObject - The source file or directory object
+     * @returns {string} The relative path from the source to this instance, or the absolute path if not reachable
+     * @throws {Sass} If the parameter is not a FileObject or DirectoryObject
+     */
+    relativeTo(fileOrDirectoryObject: import("./FileObject.js").default | import("./DirectoryObject.js").default): string;
+    /**
+     * Watch this file or directory for changes.
+     *
+     * @param {object} [options] - Watch options
+     * @param {Function} [options.onChange] - Callback invoked on change
+     * @param {number} [options.debounceMs] - Debounce interval in milliseconds
+     * @param {boolean} [options.persistent] - Keep the process alive while watching
+     * @returns {Promise<undefined>}
+     */
+    watch(options?: {
+        onChange?: Function;
+        debounceMs?: number;
+        persistent?: boolean;
+    }): Promise<undefined>;
+    /**
+     * Stop watching this file or directory for changes.
+     */
+    stopWatching(): void;
     /**
      * Fix slashes in a path
      *
@@ -158,28 +219,7 @@ export default class FileSystem {
      * @returns {PathParts} The filename parts
      * @throws {Sass} If not a string of more than 1 character
      */
-    static pathParts(pathName: string): {
-        /**
-         * - The file name with extension
-         */
-        base: string;
-        /**
-         * - The directory path
-         */
-        dir: string;
-        /**
-         * - The file extension (including dot)
-         */
-        ext: string;
-        /**
-         * - The root of the path
-         */
-        root: string;
-        /**
-         * - The file name without extension
-         */
-        name: string;
-    };
+    static pathParts(pathName: string): PathParts;
     /**
      * Determine whether a string is safe to use as a filename on every common
      * operating system.
@@ -257,35 +297,5 @@ export default class FileSystem {
      * @returns {string} The current working directory
      */
     static get cwd(): string;
-    /**
-     * Compute the relative path from another file or directory to this instance.
-     *
-     * If the target is outside the source (i.e., the relative path starts with ".."),
-     * returns the absolute path to this instance instead.
-     *
-     * @param {import("./FileObject.js").default|import("./DirectoryObject.js").default} fileOrDirectoryObject - The source file or directory object
-     * @returns {string} The relative path from the source to this instance, or the absolute path if not reachable
-     * @throws {Sass} If the parameter is not a FileObject or DirectoryObject
-     */
-    relativeTo(fileOrDirectoryObject: import("./FileObject.js").default | import("./DirectoryObject.js").default): string;
-    /**
-     * Watch this file or directory for changes.
-     *
-     * @param {object} [options] - Watch options
-     * @param {Function} [options.onChange] - Callback invoked on change
-     * @param {number} [options.debounceMs] - Debounce interval in milliseconds
-     * @param {boolean} [options.persistent] - Keep the process alive while watching
-     * @returns {Promise<undefined>}
-     */
-    watch(options?: {
-        onChange?: Function;
-        debounceMs?: number;
-        persistent?: boolean;
-    }): Promise<undefined>;
-    /**
-     * Stop watching this file or directory for changes.
-     */
-    stopWatching(): void;
-    #private;
 }
 //# sourceMappingURL=FileSystem.d.ts.map

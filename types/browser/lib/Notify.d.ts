@@ -3,13 +3,28 @@
  * Uses `globalThis` for safe resolution in server-side build environments
  * (e.g. esm.sh) while defaulting to `window` at runtime.
  */
+export type NotifyEventOptions = {
+    /**
+     * - Whether the event bubbles up the DOM tree.
+     */
+    bubbles?: boolean;
+    /**
+     * - Whether the event can be canceled.
+     */
+    cancelable?: boolean;
+    /**
+     * - Whether the event can cross the shadow DOM boundary.
+     */
+    composed?: boolean;
+};
 /**
  * @typedef {object} NotifyEventOptions
  * @property {boolean} [bubbles] - Whether the event bubbles up the DOM tree.
  * @property {boolean} [cancelable] - Whether the event can be canceled.
  * @property {boolean} [composed] - Whether the event can cross the shadow DOM boundary.
  */
-export class Notify {
+export declare class Notify {
+    #private;
     /** @type {string} Display name for debugging. */
     name: string;
     /**
@@ -51,22 +66,7 @@ export class Notify {
      * @returns {void}
      */
     off(type: string, handler: (evt: Event) => void, element?: EventTarget, options?: boolean | object): void;
-    #private;
 }
 declare const _default: Notify;
 export default _default;
-export type NotifyEventOptions = {
-    /**
-     * - Whether the event bubbles up the DOM tree.
-     */
-    bubbles?: boolean;
-    /**
-     * - Whether the event can be canceled.
-     */
-    cancelable?: boolean;
-    /**
-     * - Whether the event can cross the shadow DOM boundary.
-     */
-    composed?: boolean;
-};
 //# sourceMappingURL=Notify.d.ts.map

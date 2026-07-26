@@ -1,8 +1,11 @@
+import { EventEmitter } from "node:events";
+import BrowserUtil from "../../browser/lib/Util.js";
 /**
  * Utility class providing common helper functions for string manipulation,
  * timing, hashing, and option parsing.
  */
 export default class Util extends BrowserUtil {
+    #private;
     /**
      * Compute sha256 hash (hex) of the provided string.
      *
@@ -35,16 +38,6 @@ export default class Util extends BrowserUtil {
      * @returns {Array<string>} Array of canonical option names (long preferred, short if no long present).
      */
     static generateOptionNames(object: object): Array<string>;
-    /**
-     * Private method that performs the actual async emission logic.
-     * Handles listener execution, error aggregation, and result processing.
-     *
-     * @param {object} emitter - The emitter object (already validated)
-     * @param {string} event - The event name to emit
-     * @param {...unknown} args - Arguments to pass to event listeners
-     * @returns {Promise<undefined>} Resolves when all listeners have completed
-     */
-    static #performAsyncEmit(emitter: object, event: string, ...args: unknown[]): Promise<undefined>;
     /**
      * Emits an event asynchronously and waits for all listeners to complete.
      * Unlike the standard EventEmitter.emit() which is synchronous, this method
@@ -110,5 +103,4 @@ export default class Util extends BrowserUtil {
      */
     static getEnv(ev: string, def?: unknown): unknown;
 }
-import BrowserUtil from "../../browser/lib/Util.js";
 //# sourceMappingURL=Util.d.ts.map

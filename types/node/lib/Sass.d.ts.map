@@ -1,1 +1,1 @@
-{"version":3,"file":"Sass.d.ts","sourceRoot":"","sources":["../../../src/node/lib/Sass.js"],"names":[],"mappings":"AAgBA;;;GAGG;AACH;IACE;;;;;OAKG;IACH,kBAFW,OAAO,QAqCjB;;CAiCF;wBAlFuB,2BAA2B"}
+{"version":3,"file":"Sass.d.ts","sourceRoot":"","sources":["../../../src/node/lib/Sass.js"],"names":[],"mappings":"AAAA;;;;;;;;;;;GAWG;AAEH,OAAO,WAAW,MAAM,2BAA2B,CAAA;AAGnD;;;GAGG;AACH,MAAM,CAAC,OAAO,OAAO,IAAK,SAAQ,WAAW;;IAC3C;;;;;OAKG;IACH,MAAM,CAAC,QAAQ,AAFZ,CACF,EADU,OAEU,QAmCpB;CAiCF"}

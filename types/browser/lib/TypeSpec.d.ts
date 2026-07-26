@@ -1,17 +1,29 @@
 /**
+ * @file Type specification and validation utilities.
+ * Provides TypeSpec class for parsing and validating complex type specifications
+ * including arrays, unions, and options.
+ */
+export type TypeMatchOptions = {
+    /**
+     * - Permit a spec of {@link Data.emptyableTypes} to be empty
+     */
+    allowEmpty?: boolean;
+};
+/**
  * Type specification class for parsing and validating complex type definitions.
  * Supports union types, array types, and validation options.
  */
 export default class TypeSpec {
+    #private;
+    specs: any;
+    length: any;
+    stringRepresentation: string;
     /**
      * Creates a new TypeSpec instance.
      *
      * @param {string} string - The type specification string (e.g., "string|number", "object[]")
      */
     constructor(string: string);
-    specs: any[];
-    length: number;
-    stringRepresentation: string;
     /**
      * Returns a string representation of the type specification.
      *
@@ -29,35 +41,35 @@ export default class TypeSpec {
      *
      * @param {function(unknown): void} callback - Function to execute for each spec
      */
-    forEach(callback: (arg0: unknown) => void): void;
+    forEach(callback: Function): void;
     /**
      * Tests whether all type specifications pass the provided test function.
      *
      * @param {function(unknown): boolean} callback - Function to test each spec
      * @returns {boolean} True if all specs pass the test
      */
-    every(callback: (arg0: unknown) => boolean): boolean;
+    every(callback: Function): boolean;
     /**
      * Tests whether at least one type specification passes the provided test function.
      *
      * @param {function(unknown): boolean} callback - Function to test each spec
      * @returns {boolean} True if at least one spec passes the test
      */
-    some(callback: (arg0: unknown) => boolean): boolean;
+    some(callback: Function): boolean;
     /**
      * Creates a new array with all type specifications that pass the provided test function.
      *
      * @param {function(unknown): boolean} callback - Function to test each spec
      * @returns {Array<unknown>} New array with filtered specs
      */
-    filter(callback: (arg0: unknown) => boolean): Array<unknown>;
+    filter(callback: Function): Array<unknown>;
     /**
      * Creates a new array populated with the results of calling the provided function on every spec.
      *
      * @param {function(unknown): unknown} callback - Function to call on each spec
      * @returns {Array<unknown>} New array with mapped values
      */
-    map(callback: (arg0: unknown) => unknown): Array<unknown>;
+    map(callback: Function): Array<unknown>;
     /**
      * Executes a reducer function on each spec, resulting in a single output value.
      *
@@ -65,14 +77,14 @@ export default class TypeSpec {
      * @param {unknown} initialValue - Initial value for the accumulator
      * @returns {unknown} The final accumulated value
      */
-    reduce(callback: (arg0: unknown, arg1: unknown) => unknown, initialValue: unknown): unknown;
+    reduce(callback: Function, initialValue: unknown): unknown;
     /**
      * Returns the first type specification that satisfies the provided testing function.
      *
      * @param {function(unknown): boolean} callback - Function to test each spec
      * @returns {object|undefined} The first spec that matches, or undefined
      */
-    find(callback: (arg0: unknown) => boolean): object | undefined;
+    find(callback: Function): object | undefined;
     /**
      * Tests whether a value matches any of the type specifications.
      * Handles array types, union types, and empty value validation.
@@ -81,12 +93,7 @@ export default class TypeSpec {
      * @param {TypeMatchOptions} [options] - Validation options
      * @returns {boolean} True if the value matches any type specification
      */
-    matches(value: unknown, options?: {
-        /**
-         * - Permit a spec of {@link Data.emptyableTypes} to be empty
-         */
-        allowEmpty?: boolean;
-    }): boolean;
+    matches(value: unknown, options?: TypeMatchOptions): boolean;
     /**
      * Options that can be passed to {@link TypeSpec.match}
      *
@@ -100,12 +107,15 @@ export default class TypeSpec {
      * @param {TypeMatchOptions} [options] - Validation options
      * @returns {Array<object>} Array of matching type specifications
      */
-    match(value: unknown, { allowEmpty, }?: {
-        /**
-         * - Permit a spec of {@link Data.emptyableTypes} to be empty
-         */
-        allowEmpty?: boolean;
-    }): Array<object>;
-    #private;
+    match(value: unknown, { allowEmpty, }?: TypeMatchOptions): Array<object>;
+    /**
+     * Parses a type specification string into individual type specs.
+     * Handles union types separated by delimiters and array notation.
+     *
+     * @private
+     * @param {string} string - The type specification string to parse
+     * @throws {Sass} If the type specification is invalid
+     */
+    private #parse;
 }
 //# sourceMappingURL=TypeSpec.d.ts.map

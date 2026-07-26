@@ -1,4 +1,8 @@
 /**
+ * @file Font.js
+ * @description Utility class for detecting Nerd Fonts installed on the system.
+ */
+/**
  * Utility class for detecting and identifying Nerd Fonts installed on the system.
  * Supports Windows, macOS, and Linux platforms.
  *
@@ -15,7 +19,7 @@
  * console.log(fonts) // ["FiraCode", "JetBrainsMono", ...]
  */
 export default class Font {
-    static #cache: Map<any, any>;
+    #private;
     /**
      * Finds all Nerd Fonts installed on the system.
      * Detects the current platform and uses platform-specific methods
@@ -85,10 +89,6 @@ export default class Font {
      * @private
      */
     private static #findNerdFontsLinux;
-    /** @type {Array<RegExp>} Patterns to identify Nerd Fonts by filename */
-    static #nerdTests: Array<RegExp>;
-    /** @type {Array<RegExp>} Patterns to identify Nerd Fonts in fc-list output */
-    static #nerdTestsLinux: Array<RegExp>;
     /**
      * Identifies Nerd Fonts from a list of font file objects.
      *
