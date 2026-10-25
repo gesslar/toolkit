@@ -71,31 +71,11 @@ export default class Watcher {
               return
             }
 
-            if(state.busy) {
-              state.pending = true
-              continue
+            state.pending = true
+
+            if(!state.busy) {
+              this.#settle(target, state, debounceMs, onChange)
             }
-
-            state.pending = false
-            state.busy = true
-
-            while(true) {
-              await Time.after(debounceMs)
-
-              if(state.pending) {
-                state.pending = false
-                continue
-              }
-
-              break
-            }
-
-            try {
-              await onChange(target)
-            } catch(callbackErr) {
-              console.error("Watcher onChange callback error:", callbackErr)
-            }
-            state.busy = false
           }
         } catch(err) {
           if(err.name === "AbortError") {
@@ -105,6 +85,46 @@ export default class Watcher {
           console.error("Watcher error:", err)
         }
       })()
+    }
+  }
+
+  /**
+   * Waits for a target's events to go quiet for `debounceMs`, then calls
+   * `onChange` once. Events that arrive during the callback start another
+   * round. Runs separately from the event loop so events keep draining
+   * while it waits.
+   *
+   * @private
+   * @param {FileObject|DirectoryObject} target - The watched target
+   * @param {{busy: boolean, pending: boolean}} state - The target's state
+   * @param {number} debounceMs - Quiet interval in milliseconds
+   * @param {(target: FileObject|DirectoryObject) => void} onChange - Callback invoked on change
+   * @returns {Promise<undefined>}
+   */
+  async #settle(target, state, debounceMs, onChange) {
+    state.busy = true
+
+    try {
+      while(state.pending) {
+        state.pending = false
+        await Time.after(debounceMs)
+
+        // More events arrived while waiting, so wait again
+        if(state.pending)
+          continue
+
+        // Stopped (or re-watched) while waiting
+        if(this.#state.get(target) !== state)
+          return
+
+        try {
+          await onChange(target)
+        } catch(callbackErr) {
+          console.error("Watcher onChange callback error:", callbackErr)
+        }
+      }
+    } finally {
+      state.busy = false
     }
   }
 
