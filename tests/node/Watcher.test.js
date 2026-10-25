@@ -166,6 +166,86 @@ describe("Watcher", () => {
       watcher.stopWatching()
     })
 
+    it("runs once more for changes made during a callback, without overlap", async() => {
+      const filePath = path.join(testDir, "held-callback-test.txt")
+      await fs.writeFile(filePath, "initial", "utf8")
+
+      const file = new FileObject(filePath)
+      watcher = new Watcher()
+
+      let callCount = 0
+      let running = 0
+      let maxRunning = 0
+      let release
+      const held = new Promise(resolve => release = resolve)
+
+      await watcher.watch(file, {
+        onChange: async() => {
+          callCount++
+          running++
+          maxRunning = Math.max(maxRunning, running)
+
+          // Hold the first callback open while another change arrives
+          if(callCount === 1)
+            await held
+
+          running--
+        },
+        debounceMs: 20,
+        persistent: false,
+      })
+
+      await TestUtils.sleep(50)
+      await fs.writeFile(filePath, "first", "utf8")
+
+      for(let i = 0; i < 100 && callCount < 1; i++)
+        await TestUtils.sleep(10)
+
+      assert.equal(callCount, 1)
+
+      await fs.writeFile(filePath, "during", "utf8")
+      await TestUtils.sleep(100)
+
+      // Still held, so the new change is waiting rather than running
+      assert.equal(callCount, 1)
+
+      release()
+
+      for(let i = 0; i < 100 && callCount < 2; i++)
+        await TestUtils.sleep(10)
+
+      watcher.stopWatching()
+
+      assert.ok(callCount >= 2, `Expected a call for the held change, got ${callCount}`)
+      assert.equal(maxRunning, 1)
+    })
+
+    it("skips the waiting callback when stopped during the debounce", async() => {
+      const filePath = path.join(testDir, "stop-during-debounce-test.txt")
+      await fs.writeFile(filePath, "initial", "utf8")
+
+      const file = new FileObject(filePath)
+      watcher = new Watcher()
+
+      let callCount = 0
+      await watcher.watch(file, {
+        onChange: () => {
+          callCount++
+        },
+        debounceMs: 300,
+        persistent: false,
+      })
+
+      await TestUtils.sleep(50)
+      await fs.writeFile(filePath, "changed", "utf8")
+      await TestUtils.sleep(50)
+
+      watcher.stopWatching()
+      await TestUtils.sleep(400)
+
+      assert.equal(callCount, 0)
+    })
+
     it("rejects invalid targets", async() => {
       watcher = new Watcher()
 
