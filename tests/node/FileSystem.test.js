@@ -218,6 +218,23 @@ describe("FS", () => {
       assert.equal(result, path.join("/home", "user", "project", "src"))
     })
 
+    it("mergeOverlappingPaths handles Windows roots", {skip: process.platform !== "win32"}, () => {
+      assert.equal(FileSystem.mergeOverlappingPaths("C:\\a\\b", "C:\\a\\b"), "C:\\a\\b")
+      assert.equal(FileSystem.mergeOverlappingPaths("C:folder", "child"), "C:folder\\child")
+      assert.equal(FileSystem.mergeOverlappingPaths("\\\\server\\share", "folder"), "\\\\server\\share\\folder")
+      assert.equal(FileSystem.mergeOverlappingPaths("\\\\server\\share\\a", "\\\\server\\share\\a"), "\\\\server\\share\\a")
+      assert.equal(FileSystem.mergeOverlappingPaths("C:\\a\\b", "C:\\b\\c"), "C:\\a\\b\\c")
+      assert.equal(FileSystem.mergeOverlappingPaths("C:\\", "x"), "C:\\x")
+      assert.equal(FileSystem.mergeOverlappingPaths("C:\\", "C:\\"), "C:\\")
+      assert.equal(FileSystem.mergeOverlappingPaths("C:", "x"), "C:x")
+    })
+
+    it("mergeOverlappingPaths handles root-only inputs", () => {
+      assert.equal(FileSystem.mergeOverlappingPaths(path.sep, "x"), path.join(path.sep, "x"))
+      assert.equal(FileSystem.mergeOverlappingPaths(path.sep, path.sep), path.sep)
+      assert.equal(FileSystem.mergeOverlappingPaths(path.join(path.sep, "a"), path.sep), path.join(path.sep, "a"))
+    })
+
     it("mergeOverlappingPaths joins when no overlap", () => {
       const result = FileSystem.mergeOverlappingPaths("home/user", "documents/file.txt")
       assert.equal(result, path.join("home", "user", "documents", "file.txt"))
