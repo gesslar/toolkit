@@ -395,6 +395,17 @@ export default class DirectoryObject extends FS {
      */
     hasDirectory(dirname: string): Promise<boolean>;
     /**
+     * Resolves a path as a child of this directory. Leading `..` segments and
+     * absolute roots (including other drives on Windows) are stripped so the
+     * result cannot escape. An absolute path already inside this directory is
+     * kept as-is.
+     *
+     * @private
+     * @param {string} supplied - The path to resolve under this directory
+     * @returns {string} The absolute path of the child
+     */
+    private #childPath;
+    /**
      * Creates a new DirectoryObject by extending this directory's path.
      *
      * Paths are always resolved relative to THIS directory. Any attempt to
@@ -405,7 +416,7 @@ export default class DirectoryObject extends FS {
      * are also constrained - the drive root is stripped and the path is resolved
      * relative to this directory.
      *
-     * Uses overlapping path segment detection to intelligently combine paths.
+     * An absolute path already inside this directory is used as-is.
      *
      * @param {string} newPath - The path to append to this directory's path.
      * @returns {DirectoryObject} A new DirectoryObject with the extended path.
@@ -432,7 +443,7 @@ export default class DirectoryObject extends FS {
      * are also constrained - the drive root is stripped and the path is resolved
      * relative to this directory.
      *
-     * Uses overlapping path segment detection to intelligently combine paths.
+     * An absolute path already inside this directory is used as-is.
      *
      * @param {string} filename - The filename to append to this directory's path.
      * @returns {FileObject} A new FileObject with the extended path.

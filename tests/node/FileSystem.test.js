@@ -203,6 +203,21 @@ describe("FS", () => {
       assert.equal(result, "home/user")
     })
 
+    it("mergeOverlappingPaths merges the longest trailing overlap", () => {
+      const result = FileSystem.mergeOverlappingPaths("/a/b/c", "b/c/d")
+      assert.equal(result, path.join("/a", "b", "c", "d"))
+    })
+
+    it("mergeOverlappingPaths only counts an overlap at the end of path1", () => {
+      const result = FileSystem.mergeOverlappingPaths("/a/b/c", "b/x")
+      assert.equal(result, path.join("/a", "b", "c", "b", "x"))
+    })
+
+    it("mergeOverlappingPaths keeps path1 absolute", () => {
+      const result = FileSystem.mergeOverlappingPaths("/home/user/project", "project/src")
+      assert.equal(result, path.join("/home", "user", "project", "src"))
+    })
+
     it("mergeOverlappingPaths joins when no overlap", () => {
       const result = FileSystem.mergeOverlappingPaths("home/user", "documents/file.txt")
       assert.equal(result, path.join("home", "user", "documents", "file.txt"))
@@ -218,9 +233,20 @@ describe("FS", () => {
       assert.equal(result, path.resolve("/home/user/project", path.normalize("../other/file.txt")))
     })
 
-    it("resolvePath uses overlap merging for simple paths", () => {
+    it("resolvePath joins simple paths without merging", () => {
       const result = FileSystem.resolvePath("home/user", "user/documents")
-      assert.equal(result, path.join("home", "user", "documents"))
+      assert.equal(result, path.join("home", "user", "user", "documents"))
+    })
+
+    it("resolvePath joins a child named like an ancestor", () => {
+      assert.equal(
+        FileSystem.resolvePath(path.resolve("/home/u/src"), "src"),
+        path.resolve("/home/u/src/src")
+      )
+      assert.equal(
+        FileSystem.resolvePath(path.resolve("/a/b/c"), "b/x"),
+        path.resolve("/a/b/c/b/x")
+      )
     })
 
     it("resolvePath handles empty inputs", () => {

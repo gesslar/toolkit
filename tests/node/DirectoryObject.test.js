@@ -294,6 +294,16 @@ describe("DirectoryObject", () => {
       assert.ok(directories[0] instanceof DirectoryObject)
     })
 
+    it("lists entries named like this directory", async () => {
+      await fs.mkdir(path.join(subDir, "subdir"))
+      await fs.writeFile(path.join(subDir, "test.txt"), "nested")
+
+      const {files, directories} = await new DirectoryObject(subDir).read()
+
+      assert.equal(directories[0].path, path.join(subDir, "subdir"))
+      assert.equal(files[0].path, path.join(subDir, "test.txt"))
+    })
+
     it("handles empty directory", async () => {
       const emptyDir = path.join(testDir, "empty")
       await fs.mkdir(emptyDir)
@@ -1439,6 +1449,40 @@ describe("DirectoryObject", () => {
       assert.ok(absolute.path.startsWith(path.resolve("/test")))
     })
 
+    it("resolves a child named like this directory", () => {
+      const dir = new DirectoryObject("/x/scripts")
+
+      assert.equal(dir.getDirectory("scripts").path, path.resolve("/x/scripts/scripts"))
+    })
+
+    it("resolves a child named like a distant ancestor", () => {
+      const dir = new DirectoryObject("/home/u/src/proj")
+      const deeper = new DirectoryObject("/home/u/proj/src/scripts")
+
+      assert.equal(dir.getDirectory("src").path, path.resolve("/home/u/src/proj/src"))
+      assert.equal(deeper.getDirectory("proj").path, path.resolve("/home/u/proj/src/scripts/proj"))
+    })
+
+    it("resolves a multi-segment child whose first segment matches an ancestor", () => {
+      const dir = new DirectoryObject("/a/b/c")
+
+      assert.equal(dir.getDirectory("b/x").path, path.resolve("/a/b/c/b/x"))
+    })
+
+    it("keeps an absolute path already inside this directory", () => {
+      const dir = new DirectoryObject("/a/b")
+
+      assert.equal(dir.getDirectory(path.resolve("/a/b/c/d")).path, path.resolve("/a/b/c/d"))
+      assert.equal(dir.getDirectory(path.resolve("/a/b")).path, path.resolve("/a/b"))
+    })
+
+    it("nests an absolute path outside this directory", () => {
+      const dir = new DirectoryObject("/a/b")
+
+      assert.equal(dir.getDirectory("/a/bc").path, path.resolve("/a/b/a/bc"))
+      assert.equal(dir.getDirectory("/other").path, path.resolve("/a/b/other"))
+    })
+
   })
 
   describe("fromCwd() static method", () => {
@@ -1506,6 +1550,40 @@ describe("DirectoryObject", () => {
       // Absolute paths are constrained to this directory
       const absolute = dir.getFile("/absolute/file.txt")
       assert.ok(absolute.path.startsWith(path.resolve("/test")))
+    })
+
+    it("resolves a file named like this directory", () => {
+      const dir = new DirectoryObject("/x/scripts")
+
+      assert.equal(dir.getFile("scripts").path, path.resolve("/x/scripts/scripts"))
+    })
+
+    it("resolves a file named like a distant ancestor", () => {
+      const dir = new DirectoryObject("/a/mfile/p")
+      const deeper = new DirectoryObject("/home/u/proj/src/scripts")
+
+      assert.equal(dir.getFile("mfile").path, path.resolve("/a/mfile/p/mfile"))
+      assert.equal(deeper.getFile("proj").path, path.resolve("/home/u/proj/src/scripts/proj"))
+    })
+
+    it("resolves a nested file whose first segment matches an ancestor", () => {
+      const dir = new DirectoryObject("/a/b/c")
+      const file = dir.getFile("b/x.json")
+
+      assert.equal(file.path, path.resolve("/a/b/c/b/x.json"))
+      assert.equal(file.parentPath, path.resolve("/a/b/c/b"))
+    })
+
+    it("keeps an absolute path already inside this directory", () => {
+      const dir = new DirectoryObject("/a/b")
+
+      assert.equal(dir.getFile(path.resolve("/a/b/c/d.txt")).path, path.resolve("/a/b/c/d.txt"))
+    })
+
+    it("nests an absolute path outside this directory", () => {
+      const dir = new DirectoryObject("/a/b")
+
+      assert.equal(dir.getFile("/a/bc.txt").path, path.resolve("/a/b/a/bc.txt"))
     })
 
     it("works with files with complex names", () => {

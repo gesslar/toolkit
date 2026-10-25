@@ -74,46 +74,20 @@ export default class FileObject extends FS {
     const normalizedFile = FS.fixSlashes(submitted)
     const absOrRelPath = normalizedFile
     const pathParts = FS.pathParts(absOrRelPath)
-    const {dir, base, ext} = pathParts
+    const {base, ext} = pathParts
     const name = base.slice(0, base.length - ext.length)
 
-    const [parentObject, fullPath] = (() => {
-      if(Data.isType(parent, "String")) {
-        const parentPath = /** @type {string} */ (parent)
-        const resolved = FS.resolvePath(parentPath, absOrRelPath)
-        const {dir} = FS.pathParts(resolved)
-
-        return [
-          new DirectoryObject(dir),
-          resolved,
-        ]
-      }
-
-      if(Data.isType(parent, "DirectoryObject") && parent !== null) {
-        const parentDir = /** @type {DirectoryObject} */ (parent)
-        const parentPath = parentDir.path
-        const resolved = FS.resolvePath(parentPath, absOrRelPath)
-        const parts = FS.pathParts(resolved)
-
-        return [
-          parentDir.path === parts.dir
-            ? parentDir
-            : new DirectoryObject(parts.dir),
-          resolved,
-        ]
-      }
-
-      const directory = new DirectoryObject(dir)
-      const resolved = FS.resolvePath(directory.path, absOrRelPath)
-
-      return [
-        directory,
-        resolved,
-      ]
-    })()
-
+    // A string or missing parent becomes a directory (the cwd when missing)
+    // so the path is resolved once, against an absolute base.
+    const baseDir = Data.isType(parent, "DirectoryObject")
+      ? /** @type {DirectoryObject} */ (parent)
+      : new DirectoryObject(/** @type {string?} */ (parent))
+    const resolved = FS.resolvePath(baseDir.path, absOrRelPath)
+    const {dir} = FS.pathParts(resolved)
+    const parentObject = baseDir.path === dir
+      ? baseDir
+      : new DirectoryObject(dir)
     const parentPath = parentObject.path
-    const resolved = FS.resolvePath(parentPath, fullPath)
     const url = new URL(FS.pathToUrl(resolved))
 
     this.#meta.supplied = submitted
