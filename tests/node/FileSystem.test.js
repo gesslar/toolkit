@@ -370,6 +370,14 @@ describe("FS", () => {
       assert.equal(result, "src")
     })
 
+    it("keeps later repeats of the final segment", () => {
+      const result = FileSystem.toLocalRelativePath(
+        path.join(path.sep, "a", "x"),
+        path.join(path.sep, "a", "x", "b", "x", "c")
+      )
+      assert.equal(result, path.join("b", "x", "c"))
+    })
+
     it("returns empty string for identical paths", () => {
       const result = FileSystem.toLocalRelativePath(path.join(path.sep, "home", "user"), path.join(path.sep, "home", "user"))
       assert.equal(result, "")
@@ -421,8 +429,7 @@ describe("FS", () => {
   })
 
   describe("getCommonRootPath", () => {
-    it("returns from path when last segment found in to", () => {
-      // "toolkit" (last segment of from) is found in to at index 2
+    it("returns from path when to is inside it", () => {
       const result = FileSystem.getCommonRootPath(
         path.join("projects", "toolkit"),
         path.join("projects", "toolkit", "src")
@@ -435,30 +442,37 @@ describe("FS", () => {
       assert.equal(result, path.join(path.sep, "home", "user"))
     })
 
-    it("returns null when last segment not found in to", () => {
-      // "app" is not in "/completely/different"
+    it("returns null when only the root is shared", () => {
       const result = FileSystem.getCommonRootPath(path.join(path.sep, "projects", "app"), path.join(path.sep, "completely", "different"))
       assert.equal(result, null)
     })
 
-    it("returns null when paths diverge at end", () => {
-      // "src" is not in "/projects/toolkit/tests"
+    it("returns the shared prefix when paths diverge at end", () => {
       const result = FileSystem.getCommonRootPath(
         path.join(path.sep, "projects", "toolkit", "src"),
         path.join(path.sep, "projects", "toolkit", "tests")
       )
-      assert.equal(result, null)
+      assert.equal(result, path.join(path.sep, "projects", "toolkit"))
     })
 
-    it("slices from based on position in to", () => {
-      // "d" (last segment of from) found at index 2 in to
-      // Returns fromTrail.slice(0, 3) = "/a/b"
-      const from = path.join(path.sep, "a", "b", "c", "d")
-      const to = path.join(path.sep, "a", "d", "e")
-      const expected = path.join(path.sep, "a", "b")
+    it("returns to when it is a prefix of from", () => {
+      const result = FileSystem.getCommonRootPath(
+        path.join(path.sep, "a", "b", "c"),
+        path.join(path.sep, "a", "b")
+      )
+      assert.equal(result, path.join(path.sep, "a", "b"))
+    })
 
-      const result = FileSystem.getCommonRootPath(from, to)
-      assert.equal(result, expected)
+    it("ignores matching names after the paths diverge", () => {
+      const result = FileSystem.getCommonRootPath(
+        path.join(path.sep, "a", "b", "c", "d"),
+        path.join(path.sep, "a", "d", "e")
+      )
+      assert.equal(result, path.join(path.sep, "a"))
+    })
+
+    it("returns null for relative paths with nothing shared", () => {
+      assert.equal(FileSystem.getCommonRootPath("a/b", "c/d", "/"), null)
     })
 
     it("throws Sass for empty from path", () => {

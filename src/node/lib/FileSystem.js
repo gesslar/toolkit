@@ -356,7 +356,7 @@ export default class FileSystem {
 
   /**
    * Convert an absolute path to a relative path by finding overlapping segments.
-   * Returns the relative portion of the 'to' path after the last occurrence
+   * Returns the relative portion of the 'to' path after the first occurrence
    * of the final segment from the 'from' path.
    *
    * @static
@@ -367,6 +367,7 @@ export default class FileSystem {
    * @example
    * FS.toLocalRelativePath("/projects/toolkit", "/projects/toolkit/src") // "src"
    * FS.toLocalRelativePath("/home/user", "/home/user") // ""
+   * FS.toLocalRelativePath("/a/x", "/a/x/b/x/c") // "b/x/c"
    * FS.toLocalRelativePath("/projects/app", "/other/path") // null
    */
   static toLocalRelativePath(from, to, sep=path.sep) {
@@ -413,23 +414,20 @@ export default class FileSystem {
   }
 
   /**
-   * Find where a path's final segment appears in another path, returning the
-   * portion of 'from' up to that overlap point.
-   *
-   * Looks for the last segment of `from` within `to`. If found, returns `from`
-   * sliced to the index where that segment appears in `to`.
+   * Find the longest leading run of segments two paths share.
    *
    * @static
    * @param {string} from - The source path whose final segment to search for
    * @param {string} to - The target path to search within
    * @param {string} [sep=path.sep] - The path separator to use (defaults to system separator)
-   * @returns {string|null} The sliced portion of from, the original path if identical, or null if no overlap
+   * @returns {string|null} The shared leading path, the original path if identical, or null if only the root (or nothing) is shared
    * @throws {Sass} If from is not a non-empty string
    * @throws {Sass} If to is not a non-empty string
    * @example
    * FS.getCommonRootPath("/projects/toolkit", "/projects/toolkit/src") // "/projects/toolkit"
+   * FS.getCommonRootPath("/a/b/c", "/a/b/d") // "/a/b"
    * FS.getCommonRootPath("/home/user", "/home/user") // "/home/user"
-   * FS.getCommonRootPath("/projects/app", "/other/path") // null (no overlap)
+   * FS.getCommonRootPath("/projects/app", "/other/path") // null (only the root)
    */
   static getCommonRootPath(from, to, sep=path.sep) {
     Valid.type(from, "String", {allowEmpty: false})
@@ -441,19 +439,17 @@ export default class FileSystem {
 
     const fromTrail = from.split(sep)
     const toTrail = to.split(sep)
-    const overlapIndex = toTrail.findLastIndex(
-      curr => curr === fromTrail.at(-1)
+    const diverge = fromTrail.findIndex((curr, i) => curr !== toTrail[i])
+    const common = fromTrail.slice(
+      0,
+      diverge === -1 ? fromTrail.length : diverge
     )
 
-    // If overlap is found, slice and join
-    if(overlapIndex !== -1) {
-      const relative = fromTrail.slice(0, overlapIndex+1)
+    // Sharing only the root (or nothing) isn't a common root, soz.
+    if(common.length < (path.isAbsolute(from) ? 2 : 1))
+      return null
 
-      return relative.join(sep)
-    }
-
-    // If no overlap, we got nothing, soz.
-    return null
+    return common.join(sep)
   }
 
   /**
