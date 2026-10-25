@@ -188,6 +188,19 @@ describe("Watcher", () => {
       )
     })
 
+    it("rejects a negative debounceMs", async() => {
+      const filePath = path.join(testDir, "negative-debounce-test.txt")
+      await fs.writeFile(filePath, "test", "utf8")
+
+      const file = new FileObject(filePath)
+      watcher = new Watcher()
+
+      await assert.rejects(
+        () => watcher.watch(file, {onChange: () => {}, debounceMs: -1}),
+        /debounceMs/,
+      )
+    })
+
     it("rejects invalid overflow value", async() => {
       const filePath = path.join(testDir, "overflow-test.txt")
       await fs.writeFile(filePath, "test", "utf8")

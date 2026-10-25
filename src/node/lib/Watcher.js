@@ -40,6 +40,7 @@ export default class Watcher {
     Valid.type(targets, "FileObject|DirectoryObject|(FileObject|DirectoryObject)[]")
     Valid.type(onChange, "Function")
     Valid.type(debounceMs, "Number")
+    Valid.assert(debounceMs >= 0, "debounceMs must be non-negative.")
     Valid.type(persistent, "Boolean")
     Valid.type(recursive, "Undefined|Boolean")
     Valid.type(overflow, "String")
@@ -75,6 +76,7 @@ export default class Watcher {
 
             if(!state.busy) {
               this.#settle(target, state, debounceMs, onChange)
+                .catch(err => console.error("Watcher error:", err))
             }
           }
         } catch(err) {

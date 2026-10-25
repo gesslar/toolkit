@@ -31,6 +31,20 @@ export default class Watcher {
         overflow?: string;
     }): Promise<undefined>;
     /**
+     * Waits for a target's events to go quiet for `debounceMs`, then calls
+     * `onChange` once. Events that arrive during the callback start another
+     * round. Runs separately from the event loop so events keep draining
+     * while it waits.
+     *
+     * @private
+     * @param {FileObject|DirectoryObject} target - The watched target
+     * @param {{busy: boolean, pending: boolean}} state - The target's state
+     * @param {number} debounceMs - Quiet interval in milliseconds
+     * @param {(target: FileObject|DirectoryObject) => void} onChange - Callback invoked on change
+     * @returns {Promise<undefined>}
+     */
+    private #settle;
+    /**
      * Stop watching all targets.
      */
     stopWatching(): void;
