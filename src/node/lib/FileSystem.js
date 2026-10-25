@@ -272,16 +272,19 @@ export default class FileSystem {
    * FS.mergeOverlappingPaths("/a/b/c", "b/x") // "/a/b/c/b/x"
    */
   static mergeOverlappingPaths(path1, path2, sep=path.sep) {
+    // If they're the same, just return path1
+    if(path.normalize(path1) === path.normalize(path2))
+      return path1
+
+    // Segments are compared without roots; path1's root is put back as-is
+    // so drive-relative paths (C:folder) stay relative
     const root = path.parse(path1).root
-    const from = path.normalize(path1)
-      .slice(root.length)
+    const split = p => path.normalize(p)
+      .slice(path.parse(p).root.length)
       .split(sep)
       .filter(Boolean)
-    const to = path.normalize(path2).split(sep).filter(Boolean)
-
-    // If they're the same, just return path1
-    if(to.length === from.length && from.every((f, i) => to[i] === f))
-      return path1
+    const from = split(path1)
+    const to = split(path2)
 
     // Longest run where the tail of path1 matches the head of path2
     const overlap = Array.from(
@@ -289,7 +292,11 @@ export default class FileSystem {
       (_, i) => i + 1
     ).findLast(n => from.slice(-n).every((seg, i) => seg === to[i])) ?? 0
 
-    return path.join(root, ...from, ...to.slice(overlap))
+    const segments = [...from, ...to.slice(overlap)]
+
+    return segments.length
+      ? root + path.join(...segments)
+      : root || "."
   }
 
   /**
