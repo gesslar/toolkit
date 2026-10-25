@@ -272,19 +272,20 @@ export default class FileSystem {
    * FS.mergeOverlappingPaths("/a/b/c", "b/x") // "/a/b/c/b/x"
    */
   static mergeOverlappingPaths(path1, path2, sep=path.sep) {
+    const [normal1, normal2] = [path1, path2].map(p => path.normalize(p))
+
     // If they're the same, just return path1
-    if(path.normalize(path1) === path.normalize(path2))
+    if(normal1 === normal2)
       return path1
 
     // Segments are compared without roots; path1's root is put back as-is
     // so drive-relative paths (C:folder) stay relative
-    const root = path.parse(path1).root
-    const split = p => path.normalize(p)
-      .slice(path.parse(p).root.length)
+    const root = path.parse(normal1).root
+    const split = p => p.slice(path.parse(p).root.length)
       .split(sep)
       .filter(Boolean)
-    const from = split(path1)
-    const to = split(path2)
+    const from = split(normal1)
+    const to = split(normal2)
 
     // Longest run where the tail of path1 matches the head of path2
     const overlap = Array.from(

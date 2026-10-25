@@ -1476,6 +1476,13 @@ describe("DirectoryObject", () => {
       assert.equal(dir.getDirectory(path.resolve("/a/b")).path, path.resolve("/a/b"))
     })
 
+    it("treats a differently cased absolute path as inside on Windows", {skip: process.platform !== "win32"}, () => {
+      const dir = new DirectoryObject("C:\\Base")
+
+      assert.equal(dir.getDirectory("C:\\base\\x").path, "C:\\Base\\x")
+      assert.equal(dir.getDirectory("D:\\foo").path, "C:\\Base\\foo")
+    })
+
     it("nests an absolute path outside this directory", () => {
       const dir = new DirectoryObject("/a/b")
 
