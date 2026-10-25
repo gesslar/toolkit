@@ -289,8 +289,8 @@ describe("FS", () => {
     it("mergeOverlappingPaths respects custom separator", () => {
       const result = FileSystem.mergeOverlappingPaths("home\\user", "user\\docs", "\\")
 
-      // Should use the custom separator in the result
-      assert.ok(result.includes("\\") || result.includes("/")) // Platform dependent but should work
+      // Segments split on the custom separator are rejoined as real segments
+      assert.equal(result, path.join("home", "user", "docs"))
     })
 
     it("handles mixed separators in paths", () => {
