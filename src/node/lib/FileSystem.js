@@ -255,17 +255,23 @@ export default class FileSystem {
   }
 
   /**
-   * Merge two paths by finding overlapping segments and combining them
-   * efficiently
+   * Merge two paths where the start of the second restates the end of the
+   * first, so the shared segments appear once. Only a trailing overlap of
+   * `path1` counts; with none, the paths are joined as-is.
+   *
+   * Use this when `path2` is known to possibly repeat part of `path1`. For a
+   * plain "resolve this relative to that", use {@link FileSystem.resolvePath}.
    *
    * @static
    * @param {string} path1 - The first path
    * @param {string} path2 - The second path to merge with the first
    * @param {string} [sep] - The path separator to use (defaults to system separator)
    * @returns {string} The merged path
+   * @example
+   * FS.mergeOverlappingPaths("/home/user/project", "project/src") // "/home/user/project/src"
+   * FS.mergeOverlappingPaths("/a/b/c", "b/x") // "/a/b/c/b/x"
    */
   static mergeOverlappingPaths(path1, path2, sep=path.sep) {
-    const isAbsolutePath1 = path.isAbsolute(path1)
     const from = path.normalize(path1).split(sep).filter(Boolean)
     const to = path.normalize(path2).split(sep).filter(Boolean)
 
@@ -273,30 +279,19 @@ export default class FileSystem {
     if(to.length === from.length && from.every((f, i) => to[i] === f))
       return path1
 
-    const overlapIndex = from.findLastIndex(curr => curr === to.at(0))
+    // Longest run where the tail of path1 matches the head of path2
+    const overlap = Array.from(
+      {length: Math.min(from.length, to.length)},
+      (_, i) => i + 1
+    ).findLast(n => from.slice(-n).every((seg, i) => seg === to[i])) ?? 0
 
-    // If overlap is found, slice and join
-    if(overlapIndex !== -1) {
-      const prefix = from.slice(0, overlapIndex)
-      const result = path.join(...prefix, ...to)
-
-      // If original path1 was absolute, ensure result is also absolute
-      if(isAbsolutePath1 && !path.isAbsolute(result)) {
-        const root = path.parse(path1).root || path.sep
-
-        return path.join(root, result)
-      }
-
-      return result
-    }
-
-    // If no overlap, just join the paths
-    return path.join(path1, path2)
+    return path.join(path1, ...to.slice(overlap))
   }
 
   /**
-   * Resolve a path relative to another path using various strategies
-   * Handles absolute paths, relative navigation, and overlap-based merging
+   * Resolve a path relative to another path. An absolute `toPath` stands
+   * alone, `..` navigates from `fromPath`, and anything else is joined onto
+   * `fromPath`.
    *
    * @static
    * @param {string} fromPath - The base path to resolve from
@@ -333,9 +328,8 @@ export default class FileSystem {
     if(to.startsWith(this.fixSlashes("../")) || to === "..")
       return path.resolve(from, to)
 
-    // Strategy 3: Try overlap-based merging, which will default to a basic
-    // join if no overlap
-    return FileSystem.mergeOverlappingPaths(from, to)
+    // Strategy 3: Plain join
+    return path.join(from, to)
   }
 
   /**

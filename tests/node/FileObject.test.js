@@ -14,6 +14,12 @@ describe("FileObject", () => {
   let testDir
 
   describe("constructor and basic properties", () => {
+    it("resolves against a parent named like the path's first segment", () => {
+      const file = new FileObject("src/x.js", path.resolve("/home/u/src"))
+
+      assert.equal(file.path, path.resolve("/home/u/src/src/x.js"))
+    })
+
     it("creates FileObject with absolute path", () => {
       const file = new FileObject("/home/user/test.txt")
 

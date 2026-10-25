@@ -516,7 +516,7 @@ export default class DirectoryObject extends FS {
     }
 
     for(const dirent of dirents) {
-      const fullPath = FS.resolvePath(dirent.parentPath, dirent.name)
+      const fullPath = path.join(dirent.parentPath, dirent.name)
 
       if(dirent.isFile()) {
         result.files.push(new FileObject(fullPath, this))
@@ -668,6 +668,36 @@ export default class DirectoryObject extends FS {
   }
 
   /**
+   * Resolves a path as a child of this directory. Leading `..` segments and
+   * absolute roots (including other drives on Windows) are stripped so the
+   * result cannot escape. An absolute path already inside this directory is
+   * kept as-is.
+   *
+   * @private
+   * @param {string} supplied - The path to resolve under this directory
+   * @returns {string} The absolute path of the child
+   */
+  #childPath(supplied) {
+    const thisPath = this.path
+    let local = FS.fixSlashes(supplied)
+
+    if(path.isAbsolute(local)) {
+      const absolute = path.resolve(local)
+
+      local = absolute === thisPath || FS.pathContains(thisPath, absolute)
+        ? relative(thisPath, absolute)
+        : local.slice(path.parse(local).root.length)
+    }
+
+    const parts = path.normalize(local).split(path.sep)
+
+    while(parts[0] === "..")
+      parts.shift()
+
+    return path.join(thisPath, ...parts)
+  }
+
+  /**
    * Creates a new DirectoryObject by extending this directory's path.
    *
    * Paths are always resolved relative to THIS directory. Any attempt to
@@ -678,7 +708,7 @@ export default class DirectoryObject extends FS {
    * are also constrained - the drive root is stripped and the path is resolved
    * relative to this directory.
    *
-   * Uses overlapping path segment detection to intelligently combine paths.
+   * An absolute path already inside this directory is used as-is.
    *
    * @param {string} newPath - The path to append to this directory's path.
    * @returns {DirectoryObject} A new DirectoryObject with the extended path.
@@ -696,23 +726,7 @@ export default class DirectoryObject extends FS {
   getDirectory(newPath) {
     Valid.type(newPath, "String", {allowEmpty: false})
 
-    const thisPath = this.path
-    const merged = FS.mergeOverlappingPaths(thisPath, newPath)
-    const resolved = FS.resolvePath(thisPath, merged)
-    let local = relative(thisPath, resolved)
-
-    // On Windows, cross-drive paths return absolute - strip the root
-    if(path.isAbsolute(local))
-      local = local.slice(path.parse(local).root.length)
-
-    const parts = local.split(this.sep)
-
-    while(parts[0] === "..")
-      parts.shift()
-
-    const newLocal = parts.join(this.sep)
-
-    return new this.constructor(FS.resolvePath(this.path, newLocal))
+    return new this.constructor(this.#childPath(newPath))
   }
 
   /**
@@ -726,7 +740,7 @@ export default class DirectoryObject extends FS {
    * are also constrained - the drive root is stripped and the path is resolved
    * relative to this directory.
    *
-   * Uses overlapping path segment detection to intelligently combine paths.
+   * An absolute path already inside this directory is used as-is.
    *
    * @param {string} filename - The filename to append to this directory's path.
    * @returns {FileObject} A new FileObject with the extended path.
@@ -744,22 +758,6 @@ export default class DirectoryObject extends FS {
   getFile(filename) {
     Valid.type(filename, "String", {allowEmpty: false})
 
-    const thisPath = this.path
-    const merged = FS.mergeOverlappingPaths(thisPath, filename)
-    const resolved = FS.resolvePath(thisPath, merged)
-    let local = relative(thisPath, resolved)
-
-    // On Windows, cross-drive paths return absolute - strip the root
-    if(path.isAbsolute(local))
-      local = local.slice(path.parse(local).root.length)
-
-    const parts = local.split(this.sep)
-
-    while(parts[0] === "..")
-      parts.shift()
-
-    const newLocal = parts.join(this.sep)
-
-    return new FileObject(newLocal, this)
+    return new FileObject(this.#childPath(filename), this)
   }
 }

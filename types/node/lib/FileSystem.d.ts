@@ -117,19 +117,27 @@ export default class FileSystem {
      */
     static relativeOrAbsolutePath(from: string, to: string): string;
     /**
-     * Merge two paths by finding overlapping segments and combining them
-     * efficiently
+     * Merge two paths where the start of the second restates the end of the
+     * first, so the shared segments appear once. Only a trailing overlap of
+     * `path1` counts; with none, the paths are joined as-is.
+     *
+     * Use this when `path2` is known to possibly repeat part of `path1`. For a
+     * plain "resolve this relative to that", use {@link FileSystem.resolvePath}.
      *
      * @static
      * @param {string} path1 - The first path
      * @param {string} path2 - The second path to merge with the first
      * @param {string} [sep] - The path separator to use (defaults to system separator)
      * @returns {string} The merged path
+     * @example
+     * FS.mergeOverlappingPaths("/home/user/project", "project/src") // "/home/user/project/src"
+     * FS.mergeOverlappingPaths("/a/b/c", "b/x") // "/a/b/c/b/x"
      */
     static mergeOverlappingPaths(path1: string, path2: string, sep?: string): string;
     /**
-     * Resolve a path relative to another path using various strategies
-     * Handles absolute paths, relative navigation, and overlap-based merging
+     * Resolve a path relative to another path. An absolute `toPath` stands
+     * alone, `..` navigates from `fromPath`, and anything else is joined onto
+     * `fromPath`.
      *
      * @static
      * @param {string} fromPath - The base path to resolve from
