@@ -272,7 +272,11 @@ export default class FileSystem {
    * FS.mergeOverlappingPaths("/a/b/c", "b/x") // "/a/b/c/b/x"
    */
   static mergeOverlappingPaths(path1, path2, sep=path.sep) {
-    const from = path.normalize(path1).split(sep).filter(Boolean)
+    const root = path.parse(path1).root
+    const from = path.normalize(path1)
+      .slice(root.length)
+      .split(sep)
+      .filter(Boolean)
     const to = path.normalize(path2).split(sep).filter(Boolean)
 
     // If they're the same, just return path1
@@ -285,7 +289,7 @@ export default class FileSystem {
       (_, i) => i + 1
     ).findLast(n => from.slice(-n).every((seg, i) => seg === to[i])) ?? 0
 
-    return path.join(path1, ...to.slice(overlap))
+    return path.join(root, ...from, ...to.slice(overlap))
   }
 
   /**

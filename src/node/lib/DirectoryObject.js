@@ -682,11 +682,16 @@ export default class DirectoryObject extends FS {
     let local = FS.fixSlashes(supplied)
 
     if(path.isAbsolute(local)) {
-      const absolute = path.resolve(local)
+      // relative() honours the platform's case rules; outside (or another
+      // drive) shows up as a leading ".." or an absolute result
+      const inside = relative(thisPath, path.resolve(local))
+      const outside = inside === ".."
+        || inside.startsWith(`..${path.sep}`)
+        || path.isAbsolute(inside)
 
-      local = absolute === thisPath || FS.pathContains(thisPath, absolute)
-        ? relative(thisPath, absolute)
-        : local.slice(path.parse(local).root.length)
+      local = outside
+        ? local.slice(path.parse(local).root.length)
+        : inside
     }
 
     const parts = path.normalize(local).split(path.sep)
